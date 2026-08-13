@@ -1,0 +1,28 @@
+{
+    "titre": "Ressources en ligne",
+    "description": "Des outils et des plans d'entraînement pour progresser à votre rythme, seul ou en complément des séances du club.",
+
+    "ressource1Titre": "Guide du débutant",
+    "ressource1Description": "Tout savoir pour bien démarrer la course à pied : matériel, échauffement, prévention des blessures.",
+
+    "ressource2Titre": "Lexique du coureur",
+    "ressource2Description": "Comprenez les principaux termes de la course à pied.",
+
+    "ressource3Titre": "Générateur de plan de préparation",
+    "ressource3Description": "Programmes (5 km, 10 km, 21 km et 42 km) adaptés à la VMA et au volume.",
+
+    "ressource4Titre": "Tableau des allures VMA",
+    "ressource4Description": "Retrouvez vos allures d'entraînement (endurance, seuil, fractionné) ou de course selon votre VMA.",
+
+    "ressource5Titre": "Différents tests VMA",
+    "ressource5Description": "Présentation et explications de ces différents tests.",
+
+    "ressource6Titre": "Nutrition du coureur",
+    "ressource6Description": "Conseils d'alimentation avant, pendant et après l'effort, et pour les jours de course.",
+
+    "ressource7Titre": "Trombinoscope",
+    "ressource7Description": "Découvrez les membres du club à travers une photo de chacun.",
+
+    "ressource8Titre": "Spécialistes de santé",
+    "ressource8Description": "Retrouvez les spécialistes de santé recommandés par les adhérents pour accompagner votre pratique de la course à pied."
+}

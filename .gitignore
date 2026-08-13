@@ -1,0 +1,44 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+.env
+.pgdata
+ChosesAFaire.md
+Deploiment texte.md
+aide.md
+/backend/medias/adherents/
+/backend/medias/galerie/
+/frontend/public/img/logo.jpg
+/frontend/public/img/thomas.jpg
+/frontend/public/img/banniere.jpg
+/frontend/public/img/favicon.jpg
+arborescence.txt
+fichiersProjet.py
+compteurLignes.py
+extraireLignes.py
+affichageContenuDossier.py
+contenu.txt
+contenu-extraction.txt
+dozzle-users.yml

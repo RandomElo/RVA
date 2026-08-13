@@ -1,0 +1,5 @@
+{
+  "titre": "Générateur de plans d'entraînement",
+  "description": "Choisissez la distance, la VMA et le nombre de séances par semaine : les allures et volumes de chaque séance se calculent automatiquement, avec des semaines d'assimilation à volume réduit et un affûtage avant la course.",
+  "repereAllures": "<b>Repères d'allure :</b> EF = endurance fondamentale (65–75% VMA) · Seuil = tempo continu (85–90% VMA) · Fractionné long = 400–1000m (90–95% VMA) · Fractionné court = 200–400m (100–110% VMA) · Allure spécifique = allure visée le jour de la course. <b>Jamais plus de 2 séances d'intensité par semaine</b> (le reste est EF, récup active ou PPG). Une semaine sur quatre est allégée, et les 1 à 2 dernières semaines sont affûtées avant la course."
+}

@@ -1,0 +1,82 @@
+{
+    "titre": "Politique de confidentialité",
+    "dateDerniereMiseAJour": "Dernière mise à jour : 30 juillet 2026",
+
+    "introParagraphe": "Cette politique explique quelles données personnelles nous collectons sur ce site, pourquoi, et comment vous pouvez exercer vos droits, conformément au Règlement Général sur la Protection des Données (RGPD).",
+
+    "section1Titre": "1. Responsable du traitement",
+    "section1Paragraphe1": "Running Vincennes Association attache une importance particulière à la protection des données personnelles de ses adhérents et des utilisateurs de son site internet.",
+    "section1Paragraphe2": "La présente politique a pour objet d’expliquer quelles données sont collectées, pour quelles finalités, pendant combien de temps elles sont conservées et quels sont vos droits.",
+
+    "section2Titre": "2. Responsable de traitement",
+    "section2Intro": "Le responsable du traitement est :",
+    "section2Nom": "Running Vincennes Association",
+    "section2Adresse1": "28 bis rue de l’Église",
+    "section2Adresse2": "94300 Vincennes",
+    "section2Representation": "L’association est représentée par son Président.",
+    "section2ContactLabel": "Pour toute question relative aux données personnelles :",
+    "section2ContactBouton": "Contactez-nous",
+
+    "section3Titre": "3. Données collectées",
+    "section3Intro": "Selon votre utilisation du Site, nous pouvons être amenés à traiter :",
+    "section3Li1": "nom",
+    "section3Li2": "prénom",
+    "section3Li3": "adresse électronique",
+    "section3Li4": "photographies publiées avec votre autorisation",
+    "section3Li5": "identifiants de connexion",
+    "section3Li6": "journaux techniques nécessaires à la sécurité du Site (adresse IP, ...)",
+    "section3Paragraphe2": "Aucune donnée de santé n’est collectée par le Site.",
+
+    "section4Titre": "4. Finalités",
+    "section4Intro": "Ces données sont utilisées exclusivement afin de :",
+    "section4Li1": "gérer les comptes adhérents ;",
+    "section4Li2": "assurer le fonctionnement du Site ;",
+    "section4Li3": "communiquer avec les adhérents ;",
+    "section4Li4": "publier les informations relatives à la vie associative ;",
+    "section4Li5": "assurer la sécurité informatique du Site.",
+
+    "section5Titre": "5. Base juridique",
+    "section5Intro": "Les traitements reposent selon les cas sur :",
+    "section5Li1": "l’exécution de la relation associative ;",
+    "section5Li2": "le consentement (notamment pour les photographies) ;",
+    "section5Li3": "l’intérêt légitime de l’association pour assurer le fonctionnement et la sécurité du Site.",
+
+    "section6Titre": "6. Destinataires",
+    "section6Intro": "Les données sont accessibles uniquement :",
+    "section6Li1": "aux membres habilités du bureau ;",
+    "section6Li2": "aux administrateurs du Site lorsque cela est nécessaire à leurs missions ;",
+    "section6Li3": "à l’hébergeur OVH dans le cadre de sa prestation technique.",
+    "section6Paragraphe2": "Aucune donnée n’est vendue ou cédée à des tiers.",
+
+    "section7Titre": "7. Durée de conservation",
+    "section7Paragraphe1": "Les données sont conservées pendant la durée de l’adhésion.",
+    "section7Paragraphe2": "Elles peuvent être conservées plus longtemps lorsque la loi l’impose ou lorsqu’elles sont nécessaires à la défense des droits de l’association.",
+
+    "section8Titre": "8. Sécurité",
+    "section8Paragraphe1": "L’association met en œuvre des mesures techniques et organisationnelles destinées à assurer la confidentialité, l’intégrité et la sécurité des données personnelles.",
+
+    "section9Titre": "9. Cookies",
+    "section9Paragraphe1": "Le Site utilise uniquement les cookies strictement nécessaires à son fonctionnement.",
+    "section9Paragraphe2": "Il utilise également un outil interne de mesure d’audience respectueux de la vie privée, ne reposant ni sur des cookies ni sur l’identification des utilisateurs, mais uniquement sur le type d'utilisateur (visiteur ou adhérent).",
+
+    "section10Titre": "10. Vos droits",
+    "section10Intro": "Conformément au RGPD, vous disposez notamment des droits suivants :",
+    "section10Li1": "accès ;",
+    "section10Li2": "rectification ;",
+    "section10Li3": "effacement ;",
+    "section10Li4": "limitation ;",
+    "section10Li5": "opposition ;",
+    "section10Li6": "portabilité lorsque la réglementation le prévoit.",
+    "section10Paragraphe2Avant": "Vous pouvez exercer ces droits à tout moment via le",
+    "section10Paragraphe2Lien": "formulaire de contact",
+    "section10Paragraphe2Apres": "ou par courrier électronique.",
+    "section10Paragraphe3": "Vous pouvez également introduire une réclamation auprès de la CNIL.",
+
+    "section11Titre": "11. Mineurs",
+    "section11Paragraphe1": "Lorsque le compte concerne un adhérent mineur, les traitements réalisés dans le cadre du Site interviennent sous la responsabilité de son représentant légal.",
+
+    "section12Titre": "12. Modification de la politique",
+    "section12Paragraphe1": "La présente politique peut être modifiée afin de tenir compte des évolutions législatives ou du fonctionnement du Site.",
+
+    "finParagraphe": "La version applicable est celle publiée en ligne"
+}

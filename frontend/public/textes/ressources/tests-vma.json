@@ -1,0 +1,35 @@
+{
+    "titre": "Comprendre et tester sa VMA",
+    "intro": "Pourquoi tester sa vitesse maximale aérobie, comment lire les zones d'allure qui en découlent, et deux protocoles de terrain pour la mesurer : le VAMEVAL et le test Daniel Mercier.",
+
+    "titreAQuoiSertTestVMA": "À quoi sert un test de VMA ?",
+    "paragraphe1AQuoiSertTestVMA": "La <b>VMA</b> (vitesse maximale aérobie) est la vitesse de course à laquelle votre corps consomme le maximum d'oxygène qu'il est capable d'utiliser (VO2max). C'est la vitesse de référence à partir de laquelle on construit toutes les allures d'entraînement — un peu comme la FTP en cyclisme.",
+    "paragraphe2AQuoiSertTestVMA": "La tester régulièrement permet trois choses : <b>caler précisément les allures de chaque type de séance</b> (footing, seuil, fractionné) plutôt que de les estimer au ressenti, <b>suivre sa progression</b> dans la saison pour ajuster les plans d'entraînement, et <b>fixer des allures de course réalistes</b> sur 5 km, 10 km, semi ou marathon.",
+    "paragraphe3AQuoiSertTestVMA": "Une fois la VMA connue, chaque zone d'entraînement se définit comme un pourcentage de cette vitesse :",
+
+    "titreZone1TableauAllure": "Endurance fondamentale (EF)",
+    "descriptionZone1TableauAllure": "Allure de footing, respiration facile, on peut parler.",
+    "ceQueCaTravailleZone1TableauAllure": "Base du volume hebdomadaire, récupération active.",
+
+    "titreZone2TableauAllure": "Seuil (tempo)",
+    "descriptionZone2TableauAllure": "Effort soutenu mais tenu longtemps, à la limite du « confortable ».",
+    "ceQueCaTravailleZone2TableauAllure": "Développe la capacité à maintenir une allure élevée sans s'effondrer.",
+
+    "titreZone3TableauAllure": "Fractionné long (400–1000 m)",
+    "descriptionZone3TableauAllure": "Effort proche du maximum aérobie, sur des répétitions de plusieurs minutes.",
+    "ceQueCaTravailleZone3TableauAllure": "Développe le temps de soutien à VMA.",
+
+    "titreZone4TableauAllure": "Fractionné court (200–400 m)",
+    "descriptionZone4TableauAllure": "Allure au-dessus de la VMA, répétitions courtes.",
+    "ceQueCaTravailleZone4TableauAllure": "Développe la VMA elle-même et la puissance aérobie.",
+
+    "alluresCourse": "L'allure spécifique de course (celle visée le jour J) vient s'ajouter à ces zones : environ 95–98% VMA pour un 5 km, 90–93% pour un 10 km, 85–88% pour un semi, 78–82% pour un marathon.",
+
+    "titreTestVameval": "Le test VAMEVAL",
+    "paragraphe1TestVameval": "Créé par Georges Cazorla, le VAMEVAL est un test progressif et continu réalisé sur une piste (200 m ou un tour balisé, multiple de 20 m). Un signal sonore impose l'allure : on démarre à <b>8 km/h</b>, et la vitesse augmente de <b>0,5 km/h toutes les minutes</b>. Le coureur doit passer à chaque plot au moment du bip ; le test s'arrête dès qu'il ne parvient plus à suivre le rythme sur deux bips consécutifs.",
+    "paragraphe2TestVameval": "La <b>VMA correspond à la vitesse du dernier palier complété</b>. C'est un test progressif, donc moins traumatisant qu'un test « à fond » type Cooper, et reproductible plusieurs fois dans la saison pour suivre l'évolution du groupe.",
+
+    "titreTestDanielMercier": "Le test Daniel Mercier (3-3)",
+    "paragraphe1TestDanielMercier": "Le test Mercier 3-3 est une alternative au VAMEVAL : contrairement à un protocole continu, c'est un test <b>progressif et discontinu</b> qui alterne <b>3 minutes de course</b> à une allure imposée (avec une distance objectif à atteindre à chaque palier) et <b>3 minutes de récupération</b> active ou passive. À chaque palier, l'allure augmente, donc la distance à couvrir dans les 3 minutes devient de plus en plus exigeante. Le coureur passe au palier suivant après sa récupération, et le test s'arrête quand il ne parvient plus à tenir le repère de distance imposé.",
+    "paragraphe2TestDanielMercier": "La VMA se lit ensuite sur une table de correspondance propre au protocole (palier atteint, éventuellement affinée par la distance parcourue dans le dernier palier non terminé). <b>L'intérêt de ce format</b> : les pauses de 3 minutes rendent le chronométrage et le passage des plots plus faciles à gérer pour l'encadrant qu'un test continu, et elles permettent de surveiller la récupération cardiaque entre les efforts — un indicateur intéressant en plus de la VMA elle-même. En contrepartie, il <b>demande davantage d'organisation</b> (calcul des repères de distance pour chaque palier) et un balisage précis, une erreur de quelques mètres pouvant fausser le résultat. C'est un test plus volontiers utilisé en préparation physique de sports collectifs qu'en club d'endurance pure, mais il reste tout à fait exploitable pour évaluer un groupe si vous disposez du matériel (bande son et table de correspondance officielles du protocole)."
+}

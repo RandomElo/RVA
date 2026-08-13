@@ -1,0 +1,14 @@
+{
+    "titre": "Calculateur d'allures",
+    "description": "Renseigne ta VMA pour obtenir, pour chaque distance, plusieurs temps cibles selon le niveau d'ambition : un repère prudent, un objectif cohérent, et des scénarios plus ambitieux.",
+    
+    "palier1Titre": "Accessible",
+    "palier1Description": "Une base solide, sans forcer",
+    "palier2Titre": "Réaliste",
+    "palier2Description": "Cohérent avec ta VMA actuelle",
+    "palier3Titre": "Ambitieux",
+    "palier3Description": "Demande une bonne préparation spécifique",
+    "palier4Titre": "Excellent jour",
+    "palier4Description": "Le jour où tout est parfait",
+    "paragrapheAvertissement": "Les % de VMA utilisés par distance sont des repères d'entraînement usuels, pas une formule scientifique exacte — ils varient selon le profil du coureur (plus \"vitesse\" ou plus \"endurance\")."
+}

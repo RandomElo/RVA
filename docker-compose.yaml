@@ -1,0 +1,143 @@
+services:
+  # 1. Base de données PostgreSQL
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    command: >
+      postgres
+      -c log_destination=stderr
+      -c log_statement=ddl
+      -c log_min_duration_statement=200
+      -c log_connections=on
+      -c log_disconnections=on
+      -c log_line_prefix='%m [%p] %q%u@%d '
+      -c log_timezone='UTC'
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    logging: &default-logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # 2. Back-end Express
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      DOSSIER_TEXTES: "/app/donnees/textes"
+      DOSSIER_IMAGES: "/app/donnees/img"
+      DATABASE_URL: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}"
+      NODE_ENV: production
+      PORT: 8100
+      IP_FRONTEND: "https://rva.smce.ovh"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./frontend/public/textes:/app/donnees/textes
+      - ./frontend/public/img:/app/donnees/img
+      - ./backend/medias:/app/medias
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:8100/autres/health-check || exit 1",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  # 3. Front-end React (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_URL_BACKEND=https://rva.smce.ovh
+        - VITE_API_INTERNAL_URL=http://backend:8100
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./frontend/public/textes:/usr/share/nginx/html/textes
+      - ./frontend/public/img:/usr/share/nginx/html/img
+      - certbot_etc:/etc/letsencrypt
+      - certbot_var:/var/lib/letsencrypt
+      - certbot_www:/var/www/certbot
+    env_file:
+      - ./frontend/.env
+    depends_on:
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 512M
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+  # 4. Certbot - Génération & Renouvellement automatique SSL
+  certbot:
+    image: certbot/certbot:latest
+    restart: unless-stopped
+    volumes:
+      - certbot_etc:/etc/letsencrypt
+      - certbot_var:/var/lib/letsencrypt
+      - certbot_www:/var/www/certbot
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+  # 5. Dozzle - Visualiseur de logs Docker
+  dozzle:
+    image: amir20/dozzle:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8888:8080"
+    environment:
+      DOZZLE_AUTH_PROVIDER: simple
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./dozzle-users.yml:/data/users.yml:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+
+# DÉCLARATION  DE TOUS LES VOLUMES NOMMÉS ICI
+volumes:
+  pgdata:
+  certbot_etc:
+  certbot_var:
+  certbot_www:

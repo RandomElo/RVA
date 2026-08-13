@@ -1,0 +1,145 @@
+<!--
+    Template : récapitulatif des statistiques du site (mail admin).
+
+    Variables attendues (à passer déjà formatées/calculées côté back, aucun helper
+    Handlebars custom utilisé ici) :
+
+    - periodeDebut, periodeFin : string, déjà formatées en français (ex. "1 juillet 2026")
+    - lienDashboard : string, URL vers la page /administration/statistiques
+
+    - chiffresCles.totalVuesPage : number
+    - chiffresCles.repartitionVisiteurAdherent.adherent : number
+    - chiffresCles.repartitionVisiteurAdherent.visiteur : number
+
+    - evolutionMensuelle : [{ mois: string, vues: number }, ...]
+    - adherentsVisiteursParMois : [{ mois: string, adherents: number, visiteurs: number }, ...]
+
+    - topPages : [{ page: string, vues: number }, ...]      → déjà limité à 5 côté back
+    - topArticles : [{ page: string, vues: number }, ...]   → déjà limité à 5 côté back
+    - topNewsletters : [{ page: string, vues: number }, ...] → déjà limité à 5 côté back
+
+    Sujet suggéré :
+    "📊 Récap statistiques du site — {{periodeDebut}} au {{periodeFin}}"
+-->
+
+<h1 style="margin:0 0 16px; font-family:'Montserrat', Arial, sans-serif; font-size:22px; font-weight:600; color:#040F33;">
+    Récapitulatif des statistiques
+</h1>
+
+<p style="margin:0 0 24px; font-size:15px; line-height:1.6; color:#0B2270;">
+    Voici le récapitulatif du site pour la période du <strong>{{periodeDebut}}</strong> au <strong>{{periodeFin}}</strong>.
+</p>
+
+<!-- Chiffres clés -->
+<h2 style="margin:0 0 12px; font-family:'Montserrat', Arial, sans-serif; font-size:16px; font-weight:600; color:#040F33;">
+    Chiffres clés
+</h2>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px; border-collapse:collapse;">
+    <tr>
+        <td width="50%" style="padding:14px 16px; background-color:#EAF0FB; border-radius:8px 0 0 8px; font-family:'Work Sans', Arial, sans-serif;">
+            <p style="margin:0; font-size:13px; color:#0B2270;">Vues de pages</p>
+            <p style="margin:4px 0 0; font-size:22px; font-weight:600; color:#040F33;">{{chiffresCles.totalVuesPage}}</p>
+        </td>
+        <td width="4"></td>
+        <td width="50%" style="padding:14px 16px; background-color:#EAF0FB; border-radius:0 8px 8px 0; font-family:'Work Sans', Arial, sans-serif;">
+            <p style="margin:0; font-size:13px; color:#0B2270;">Adhérents / Visiteurs</p>
+            <p style="margin:4px 0 0; font-size:22px; font-weight:600; color:#040F33;">{{chiffresCles.repartitionVisiteurAdherent.adherent}} / {{chiffresCles.repartitionVisiteurAdherent.visiteur}}</p>
+        </td>
+    </tr>
+</table>
+
+<!-- Évolution mensuelle -->
+<h2 style="margin:0 0 12px; font-family:'Montserrat', Arial, sans-serif; font-size:16px; font-weight:600; color:#040F33;">
+    Évolution mensuelle des vues
+</h2>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px; border-collapse:collapse; font-family:'Work Sans', Arial, sans-serif; font-size:14px;">
+    <tr>
+        <td style="padding:8px 12px; border-bottom:2px solid #9DB8EB; color:#0B2270; font-weight:600;">Mois</td>
+        <td align="right" style="padding:8px 12px; border-bottom:2px solid #9DB8EB; color:#0B2270; font-weight:600;">Vues</td>
+    </tr>
+    {{#each evolutionMensuelle}}
+    <tr>
+        <td style="padding:8px 12px; border-bottom:1px solid #EAF0FB; color:#040F33;">{{this.mois}}</td>
+        <td align="right" style="padding:8px 12px; border-bottom:1px solid #EAF0FB; color:#040F33; font-weight:600;">{{this.vues}}</td>
+    </tr>
+    {{/each}}
+</table>
+
+<!-- Adhérents vs visiteurs par mois -->
+<h2 style="margin:0 0 12px; font-family:'Montserrat', Arial, sans-serif; font-size:16px; font-weight:600; color:#040F33;">
+    Adhérents vs visiteurs par mois
+</h2>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px; border-collapse:collapse; font-family:'Work Sans', Arial, sans-serif; font-size:14px;">
+    <tr>
+        <td style="padding:8px 12px; border-bottom:2px solid #9DB8EB; color:#0B2270; font-weight:600;">Mois</td>
+        <td align="right" style="padding:8px 12px; border-bottom:2px solid #9DB8EB; color:#4574D2; font-weight:600;">Adhérents</td>
+        <td align="right" style="padding:8px 12px; border-bottom:2px solid #9DB8EB; color:#EE8659; font-weight:600;">Visiteurs</td>
+    </tr>
+    {{#each adherentsVisiteursParMois}}
+    <tr>
+        <td style="padding:8px 12px; border-bottom:1px solid #EAF0FB; color:#040F33;">{{this.mois}}</td>
+        <td align="right" style="padding:8px 12px; border-bottom:1px solid #EAF0FB; color:#040F33;">{{this.adherents}}</td>
+        <td align="right" style="padding:8px 12px; border-bottom:1px solid #EAF0FB; color:#040F33;">{{this.visiteurs}}</td>
+    </tr>
+    {{/each}}
+</table>
+
+<!-- Top pages -->
+<h2 style="margin:0 0 12px; font-family:'Montserrat', Arial, sans-serif; font-size:16px; font-weight:600; color:#040F33;">
+    Top 5 des pages les plus vues
+</h2>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px; border-collapse:collapse; font-family:'Work Sans', Arial, sans-serif; font-size:14px;">
+    {{#each topPages}}
+    <tr>
+        <td width="28" style="padding:8px 8px 8px 12px; border-bottom:1px solid #EAF0FB; color:#0F2C8F; font-weight:600;">{{inc @index}}</td>
+        <td style="padding:8px 12px; border-bottom:1px solid #EAF0FB; color:#040F33;">{{this.page}}</td>
+        <td align="right" style="padding:8px 12px; border-bottom:1px solid #EAF0FB; color:#040F33; font-weight:600; white-space:nowrap;">{{this.vues}} vues</td>
+    </tr>
+    {{/each}}
+</table>
+
+<!-- Top articles -->
+<h2 style="margin:0 0 12px; font-family:'Montserrat', Arial, sans-serif; font-size:16px; font-weight:600; color:#040F33;">
+    Top 5 des articles les plus lus
+</h2>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px; border-collapse:collapse; font-family:'Work Sans', Arial, sans-serif; font-size:14px;">
+    {{#each topArticles}}
+    <tr>
+        <td width="28" style="padding:8px 8px 8px 12px; border-bottom:1px solid #FAD1BE; color:#E8622C; font-weight:600;">{{inc @index}}</td>
+        <td style="padding:8px 12px; border-bottom:1px solid #FAD1BE; color:#040F33;">{{this.page}}</td>
+        <td align="right" style="padding:8px 12px; border-bottom:1px solid #FAD1BE; color:#040F33; font-weight:600; white-space:nowrap;">{{this.vues}} vues</td>
+    </tr>
+    {{/each}}
+</table>
+
+<!-- Dernières newsletters -->
+<h2 style="margin:0 0 12px; font-family:'Montserrat', Arial, sans-serif; font-size:16px; font-weight:600; color:#040F33;">
+    Top 5 des newsletters les plus lues
+</h2>
+<table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="margin:0 0 28px; border-collapse:collapse; font-family:'Work Sans', Arial, sans-serif; font-size:14px;">
+    {{#each topNewsletters}}
+    <tr>
+        <td width="28" style="padding:8px 8px 8px 12px; border-bottom:1px solid #EAF0FB; color:#0F2C8F; font-weight:600;">{{inc @index}}</td>
+        <td style="padding:8px 12px; border-bottom:1px solid #EAF0FB; color:#040F33;">{{this.page}}</td>
+        <td align="right" style="padding:8px 12px; border-bottom:1px solid #EAF0FB; color:#040F33; font-weight:600; white-space:nowrap;">{{this.vues}} vues</td>
+    </tr>
+    {{/each}}
+</table>
+
+<!-- Bouton CTA -->
+<table role="presentation" cellpadding="0" cellspacing="0" style="margin:8px auto 8px;">
+    <tr>
+        <td align="center" style="border-radius:8px; background-color:#E8622C;">
+            <a href="{{lienDashboard}}" style="display:inline-block; padding:14px 32px; font-size:15px; font-weight:600; color:#ffffff; text-decoration:none; font-family:'Work Sans', Arial, sans-serif;">
+                Voir le tableau de bord complet
+            </a>
+        </td>
+    </tr>
+</table>
+
+<p style="margin:0 0 8px; font-size:13px; line-height:1.6; color:#4574D2; text-align:center;">
+    Ou copiez-collez ce lien dans votre navigateur :
+</p>
+<p style="margin:0; font-size:13px; line-height:1.6; text-align:center; word-break:break-all;">
+    <a href="{{lienDashboard}}" style="color:#0F2C8F;">{{lienDashboard}}</a>
+</p>

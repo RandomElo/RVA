@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+Disallow: /administration
+Disallow: /connexion
+Disallow: /rediger-article
+Disallow: /ressources/specialistes-sante
+Disallow: /ressources/trombinoscope
+Disallow: /t/
+
+Sitemap: https://www.running-vincennes.fr/sitemap.xml
