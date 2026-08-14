@@ -141,6 +141,7 @@ services:
     logging: *default-logging
   cron:
     build: ./cron
+    init: true # Aide à gérer les sous-processus et les signaux proprement
     restart: unless-stopped
     environment:
       BACKEND_URL: "http://backend:8100"
@@ -157,8 +158,6 @@ services:
         limits:
           cpus: "0.5"
           memory: 256M
-    security_opt:
-      - no-new-privileges:true
     logging: *default-logging
 networks:
   front:
