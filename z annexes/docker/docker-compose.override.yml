@@ -1,0 +1,28 @@
+services:
+  db:
+    ports:
+      - "5432:5432"
+  # --- 1. BACKEND (Express + Nodemon) ---
+  backend:
+    environment:
+      NODE_ENV: development
+    command: npx nodemon -L serveur.js
+    volumes:
+      # Synchronise le code du backend en temps réel
+      - ./backend:/app
+      # Évite d'écraser les node_modules installés dans le conteneur
+      - /app/node_modules
+
+  # --- 2. FRONTEND (React Dev Server au lieu de Nginx) ---
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    # On surcharge le build pour viser la cible de dev (ou on lance le serveur Vite directement)
+    command: npm run dev
+    ports:
+      - "5252:5252" # Port par défaut de Vite (ou 3000 selon ta config)
+    volumes:
+      # Synchronise le code source React en temps réel
+      - ./frontend:/app
+      - /app/node_modules

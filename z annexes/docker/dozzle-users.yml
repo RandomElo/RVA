@@ -1,0 +1,5 @@
+users:
+  adresse@gmail.com:
+    email: "adresse@gmail.com"
+    name: "nom"
+    password: "MotDePasse Hash avec Bcrypt"

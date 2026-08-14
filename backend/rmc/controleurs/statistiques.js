@@ -177,6 +177,32 @@ async function obtenirStatistiquesDashboard({ req, debut, fin } = {}) {
     };
 }
 
+async function envoyerMailReporting(req, debut, fin) {
+    const donnees = await obtenirStatistiquesDashboard({ req, debut, fin });
+    const debutSplit = debut.split("-");
+    const finSplit = fin.split("-");
+
+    const dateDebut = debutSplit[2] + "/" + debutSplit[1];
+    const dateFin = finSplit[2] + "/" + finSplit[1];
+
+    await envoiMail(
+        process.env.EMAIL_ADMINISTRATEUR,
+        `Récapitulatif statistiques (du ${dateDebut} au ${dateFin}) – Running Vincennes Association`,
+        "recapStatistiques",
+        {
+            periodeDebut: formaterDate(debut),
+            periodeFin: formaterDate(fin),
+            lienDashboard: process.env.IP_FRONTEND + "/administration/statistiques",
+            chiffresCles: donnees.chiffresCles,
+            evolutionMensuelle: donnees.evolutionMensuelle,
+            adherentsVisiteursParMois: donnees.adherentsVisiteursParMois,
+            topPages: donnees.topPages.slice(0, 5),
+            topArticles: donnees.topArticles.slice(0, 5),
+            topNewsletters: donnees.topNewsletters.slice(0, 5),
+        }
+    );
+}
+
 export const enregistrementVue = gestionErreur(async (req, res) => {
     const { page } = req.body;
     if (!page || typeof page !== "string") {
@@ -211,35 +237,55 @@ export const recuperationStatistiques = gestionErreur(async (req, res) => {
 }, "controleurRecuperationStatistiques", "Erreur lors de la récupération des statistiques");
 
 export const envoiMailContreRendu = gestionErreur(async (req, res) => {
-    const { debut, fin } = req.body;
+    let { debut, fin } = req.body;
+    console.log(req.body)
     if (!debut || !fin) {
         return res.status(400).json({ etat: false, detail: "Requête incorrecte" });
     }
 
-    const donnees = await obtenirStatistiquesDashboard({ req, debut, fin });
-    const debutSplit = debut.split("-");
-    const finSplit = fin.split("-");
-
-    const dateDebut = debutSplit[2] + "/" + debutSplit[1];
-    const dateFin = finSplit[2] + "/" + finSplit[1];
-
-    await envoiMail(
-        process.env.EMAIL_ADMINISTRATEUR,
-        `Récapitulatif statistiques (du ${dateDebut} au ${dateFin}) – Running Vincennes Association`,
-        "recapStatistiques",
-        {
-            periodeDebut: formaterDate(debut),
-            periodeFin: formaterDate(fin),
-            lienDashboard: process.env.IP_FRONTEND + "/administration/statistiques",
-            chiffresCles: donnees.chiffresCles,
-            evolutionMensuelle: donnees.evolutionMensuelle,
-            adherentsVisiteursParMois: donnees.adherentsVisiteursParMois,
-            topPages: donnees.topPages.slice(0, 5),
-            topArticles: donnees.topArticles.slice(0, 5),
-            topNewsletters: donnees.topNewsletters.slice(0, 5),
-        }
-    );
+    await envoyerMailReporting(req, debut, fin)
 
     return res.json({ etat: true, detail: "Mail envoyé avec succès" });
 
 }, "controleurEnvoiMailContreRendu", "Erreur lors de l'envoi du mail");
+
+export const mailRapport = gestionErreur(
+  async (req, res) => {
+    // 1. Vérification du secret interne
+    const internalSecret = req.headers['x-internal-secret'];
+    const expectedSecret = process.env.INTERNAL_SECRET;
+
+    // On refuse l'accès si le secret est absent, vide ou incorrect
+    if (!expectedSecret || internalSecret !== expectedSecret) {
+      return res.status(403).json({ 
+        success: false, 
+        message: "Accès refusé : secret interne invalide ou absent" 
+      });
+    }
+
+    // 2. Gestion sécurisée des dates
+    const maintenant = new Date();
+    const ilYAUnMois = new Date(maintenant);
+    ilYAUnMois.setMonth(ilYAUnMois.getMonth() - 1);
+
+    // Ajustement si le mois précédent a moins de jours (ex: 31 mars -> fin février)
+    if (ilYAUnMois.getMonth() === maintenant.getMonth()) {
+      ilYAUnMois.setDate(0);
+    }
+
+    const debut = ilYAUnMois.toISOString().split("T")[0];
+    const fin = maintenant.toISOString().split("T")[0];
+
+    // 3. Envoi du mail
+    await envoyerMailReporting(req, debut, fin);
+
+    // 4. Réponse de succès (200 OK)
+    return res.status(200).json({ 
+      success: true, 
+      message: "Rapport mensuel généré et envoyé avec succès",
+      periode: { debut, fin }
+    });
+  },
+  "controleurMailRapportStatistiques",
+  "Erreur lors de la génération du mail rapport"
+);

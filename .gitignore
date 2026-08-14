@@ -41,7 +41,6 @@ extraireLignes.py
 affichageContenuDossier.py
 contenu.txt
 contenu-extraction.txt
-dozzle-users.yml
-docker-comopse/override.yml
-Dockerfile.dev
-docker-compose.override.yml
+/dozzle-users.yml
+/frontend/Dockerfile.dev
+/docker-compose.override.yml

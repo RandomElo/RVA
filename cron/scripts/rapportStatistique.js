@@ -1,8 +1,8 @@
 const BACKEND_URL = process.env.BACKEND_URL || 'http://backend:8100';
 
-async function runMonthlyTask() {
+async function rapportStatistique() {
     try {
-        const res = await fetch(`${BACKEND_URL}/interne/tache-mensuelle`, {
+        const res = await fetch(`${BACKEND_URL}/statistiques/mail-rapport`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -23,4 +23,4 @@ async function runMonthlyTask() {
     }
 }
 
-runMonthlyTask();
+rapportStatistique();

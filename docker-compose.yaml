@@ -144,8 +144,7 @@ services:
     restart: unless-stopped
     environment:
       BACKEND_URL: "http://backend:8100"
-    env_file:
-      - ./cron/.env
+      INTERNAL_SECRET: ${INTERNAL_SECRET}
     volumes:
       - cron_data:/app/data
     networks:

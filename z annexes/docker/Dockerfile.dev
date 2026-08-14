@@ -1,0 +1,18 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# On copie uniquement les manifestes de paquets pour profiter du cache Docker
+COPY package*.json ./
+
+# Installation complète des dépendances (y compris devDependencies)
+RUN npm install
+
+# Copie du reste des sources
+COPY . .
+
+# On expose le port par défaut de Vite
+EXPOSE 5173
+
+# On lance le serveur de dev Vite en écoutant sur 0.0.0.0 (--host) pour qu'il soit accessible hors du conteneur
+CMD ["npm", "run", "dev", "--", "--host"]
