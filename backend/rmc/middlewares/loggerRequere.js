@@ -10,6 +10,10 @@ export const loggerRequete = pinoHttp({
         return id;
     },
 
+    autoLogging: {
+        ignore: (req) => req.url === '/autres/health-check',
+    },
+
     customSuccessMessage: (req, res, responseTime) => {
         if (responseTime > 500) {
             logger.warn({

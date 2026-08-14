@@ -1,0 +1,2 @@
+# Tous les 1er du mois à 3h
+0 3 1 * * node /app/scripts/rapportStatistiques.js >> /proc/1/fd/1 2>&1

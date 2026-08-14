@@ -1,5 +1,4 @@
 services:
-  # 1. Base de données PostgreSQL
   db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -18,9 +17,11 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
     volumes:
       - pgdata:/var/lib/postgresql/data
+    networks:
+      - back
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 5s
+      interval: 30s
       timeout: 5s
       retries: 5
     deploy:
@@ -36,7 +37,6 @@ services:
         max-size: "10m"
         max-file: "3"
 
-  # 2. Back-end Express
   backend:
     build: ./backend
     restart: unless-stopped
@@ -53,6 +53,9 @@ services:
       - ./frontend/public/textes:/app/donnees/textes
       - ./frontend/public/img:/app/donnees/img
       - ./backend/medias:/app/medias
+    networks:
+      - front
+      - back
     depends_on:
       db:
         condition: service_healthy
@@ -74,7 +77,6 @@ services:
       - no-new-privileges:true
     logging: *default-logging
 
-  # 3. Front-end React (Nginx)
   frontend:
     build:
       context: ./frontend
@@ -93,6 +95,8 @@ services:
       - certbot_www:/var/www/certbot
     env_file:
       - ./frontend/.env
+    networks:
+      - front
     depends_on:
       backend:
         condition: service_healthy
@@ -105,7 +109,6 @@ services:
       - no-new-privileges:true
     logging: *default-logging
 
-  # 4. Certbot - Génération & Renouvellement automatique SSL
   certbot:
     image: certbot/certbot:latest
     restart: unless-stopped
@@ -114,8 +117,9 @@ services:
       - certbot_var:/var/lib/letsencrypt
       - certbot_www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    networks:
+      - front
 
-  # 5. Dozzle - Visualiseur de logs Docker
   dozzle:
     image: amir20/dozzle:latest
     restart: unless-stopped
@@ -126,6 +130,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
       - ./dozzle-users.yml:/data/users.yml:ro
+    networks: []
     deploy:
       resources:
         limits:
@@ -134,10 +139,38 @@ services:
     security_opt:
       - no-new-privileges:true
     logging: *default-logging
+  cron:
+    build: ./cron
+    restart: unless-stopped
+    environment:
+      BACKEND_URL: "http://backend:8100"
+    env_file:
+      - ./cron/.env
+    volumes:
+      - cron_data:/app/data
+    networks:
+      - front
+    depends_on:
+      backend:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 256M
+    security_opt:
+      - no-new-privileges:true
+    logging: *default-logging
+networks:
+  front:
+    driver: bridge
+  back:
+    driver: bridge
+    internal: true # aucun accès direct à Internet depuis ce réseau
 
-# DÉCLARATION  DE TOUS LES VOLUMES NOMMÉS ICI
 volumes:
   pgdata:
   certbot_etc:
   certbot_var:
   certbot_www:
+  cron_data:
