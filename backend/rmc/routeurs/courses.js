@@ -1,6 +1,6 @@
 import e from "express";
 import { accesAdmin } from "../middlewares/accesAdmin.js";
-import { cree, modifierCourse, recupererCoursesAccueil, suggestion, supprimerCourse, toutesLesCourses, toutesLesCoursesAdmin } from "../controleurs/courses.js";
+import { cree, modifierCourse, modifierInteressement, recupererCoursesAccueil, suggestion, supprimerCourse, toutesLesCourses, toutesLesCoursesAdmin } from "../controleurs/courses.js";
 import { accesUtilisateur } from "../middlewares/accesUtilisateurs.js";
 import { formulaireOuMailLimiteur } from "../middlewares/limiteurRequetes.js";
 
@@ -13,4 +13,6 @@ routeurCourses.delete("/supprimer", accesAdmin, supprimerCourse)
 routeurCourses.post("/modifier", accesAdmin, modifierCourse)
 routeurCourses.get("/courses-accueil", recupererCoursesAccueil)
 routeurCourses.post("/suggestion", formulaireOuMailLimiteur, accesUtilisateur, suggestion)
+routeurCourses.post("/modifier-interessement", accesUtilisateur, modifierInteressement)
+
 export default routeurCourses

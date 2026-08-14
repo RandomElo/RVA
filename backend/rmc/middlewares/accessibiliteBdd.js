@@ -1,6 +1,6 @@
 export const accessibiliteBdd = (bdd) => {
     return (req, res, next) => {
-        const { sequelize, Utilisateurs, Tokens, Articles, Courses, Statistiques, Specialistes, Images, Pages } = bdd;
+        const { sequelize, Utilisateurs, Tokens, Articles, Courses, Statistiques, Specialistes, Images, Pages, AdherentsCourse } = bdd;
 
         req.Sequelize = sequelize;
         req.Utilisateurs = Utilisateurs;
@@ -11,6 +11,7 @@ export const accessibiliteBdd = (bdd) => {
         req.Specialistes = Specialistes;
         req.Images = Images;
         req.Pages = Pages;
+        req.AdherentsCourse = AdherentsCourse;
 
         next();
     };

@@ -1,4 +1,5 @@
 export interface Course {
+    id: number;
     nom: string;
     date: string; // format ISO (YYYY-MM-DD), DATEONLY côté back
     lieu: string;
@@ -10,6 +11,8 @@ export interface Course {
     inscriptionsOuvertes: boolean;
     dateOuvertureInscription?: string; // ISO
     etat?: "valider" | "suggestion";
+    etatInteressementUtilisateur: EtatInteressementUtilisateur;
+    listePersonnes: ObjetInteressementAdherent[];
 }
 export const TYPE_STYLES: Record<Course["type"], string> = {
     "5km": "bg-club-50 text-club-700",
@@ -19,3 +22,12 @@ export const TYPE_STYLES: Record<Course["type"], string> = {
     Route: "bg-club-50 text-club-700",
     Trail: "bg-club-50 text-club-700",
 };
+
+export type EtatInteressementUtilisateur = null | "participe" | "interesse";
+export interface ObjetInteressementAdherent {
+    id: number;
+    nom: string;
+    prenom: string;
+    cheminTrombinoscope: "string";
+    statut: EtatInteressementUtilisateur;
+}

@@ -9,6 +9,7 @@ import Specialistes from "./modeles/Specialistes.js";
 import Images from "./modeles/Images.js";
 import Pages from "./modeles/Pages.js";
 import { logger } from "../fonctions/utilitaires/logger.js";
+import AdherentsCourse from "./modeles/AdherentsCourse.js";
 
 dotenv.config({ quiet: true });
 
@@ -31,8 +32,31 @@ const bdd = {
     Statistiques: Statistiques(sequelize),
     Specialistes: Specialistes(sequelize),
     Images: Images(sequelize),
-    Pages: Pages(sequelize)
+    Pages: Pages(sequelize),
+    AdherentsCourse:AdherentsCourse(sequelize)
 };
+
+// Associations
+
+// Un utilisateur (adhérent) peut avoir plusieurs enregistrements AdherentsCourse
+bdd.Utilisateurs.hasMany(bdd.AdherentsCourse, {
+    foreignKey: "idAdherent",
+    as: "coursesInscriptions",
+});
+bdd.AdherentsCourse.belongsTo(bdd.Utilisateurs, {
+    foreignKey: "idAdherent",
+    as: "adherent",
+});
+
+// Une course peut avoir plusieurs adhérents inscrits/intéressés
+bdd.Courses.hasMany(bdd.AdherentsCourse, {
+    foreignKey: "idCourse",
+    as: "adherentsCourses",
+});
+bdd.AdherentsCourse.belongsTo(bdd.Courses, {
+    foreignKey: "idCourse",
+    as: "course",
+});
 
 // Connexion et synchronisation
 try {

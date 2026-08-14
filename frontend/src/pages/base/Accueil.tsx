@@ -128,8 +128,8 @@ function Reveal({ children, className = "", delai = 0, direction = "bas", as = "
             ref={ref as never}
             style={style}
             className={`transform transition-all will-change-transform ${visible
-                    ? "opacity-100 translate-y-0 translate-x-0 scale-100 rotate-0 blur-0"
-                    : `opacity-0 ${etatDepart[direction]}`
+                ? "opacity-100 translate-y-0 translate-x-0 scale-100 rotate-0 blur-0"
+                : `opacity-0 ${etatDepart[direction]}`
                 } ${className}`}
         >
             {children}
@@ -147,9 +147,13 @@ export default function Accueil() {
     const requeteJSON = useRequeteJSON();
 
     useEffect(() => {
-        // Déclenche l'entrée orchestrée du hero juste après le montage
-        const t = requestAnimationFrame(() => setHeroCharge(true));
-        return () => cancelAnimationFrame(t);
+        const raf1 = requestAnimationFrame(() => {
+            const raf2 = requestAnimationFrame(() => setHeroCharge(true));
+
+            return () => cancelAnimationFrame(raf2);
+        });
+
+        return () => cancelAnimationFrame(raf1);
     }, []);
 
     useEffect(() => {

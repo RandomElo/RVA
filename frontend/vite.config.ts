@@ -8,8 +8,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), "");
 
     // Cible du backend : vérifie env (loadEnv), process.env puis le fallback Docker
-    const backendUrl = env.VITE_API_INTERNAL_URL || process.env.VITE_API_INTERNAL_URL || "http://backend:8100";
-
+    const backendUrl = env.VITE_API_INTERNAL_URL || "http://backend:8100";
     // Liste des préfixes de routes API à rediriger
     const proxyRoutes = ["/utilisateurs", "/autres", "/articles", "/courses", "/statistiques", "/specialistes", "/fichiers", "/images", "/pages"];
 
@@ -62,13 +61,20 @@ export default defineConfig(({ mode }) => {
             },
         },
         server: {
-            port: parseInt(env.VITE_PORT_APPLICATION || "5173"),
+            port: parseInt(env.VITE_PORT_APPLICATION),
             historyApiFallback: true,
             proxy: proxyConfig,
+            host: true,
+            watch: {
+                usePolling: true,
+            },
+            hmr: {
+                clientPort: parseInt(env.VITE_PORT_APPLICATION),
+            },
         },
         // Nécessaire pour Puppeteer et `vite preview` pendant la phase de prerendering
         preview: {
-            port: parseInt(env.PRERENDER_PORT || process.env.PRERENDER_PORT || "4173"),
+            port: parseInt(env.VITE_PRERENDER_PORT),
             host: true, // Recommandé en Docker pour autoriser les connexions entrantes
             proxy: proxyConfig,
         },

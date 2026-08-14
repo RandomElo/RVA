@@ -35,7 +35,7 @@ const routes = [
     "/credits",
 ];
 
-const PORT = Number(process.env.PRERENDER_PORT || 4173);
+const PORT = Number(env.PRERENDER_PORT);
 const HOST = "127.0.0.1";
 const BASE_URL = `http://${HOST}:${PORT}`;
 

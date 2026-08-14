@@ -112,8 +112,14 @@ async function enregistrerCourses(req, res, mode) {
         inscriptionsOuvertes,
         dateOuvertureInscription: dateOuvertureInscription || null,
     }
-    if (mode == "creation" || mode == "suggestion") {
+
+    if (mode == "creation") {
         await req.Courses.create(donnees);
+    } else if (mode == "suggestion") {
+        const course = await req.Courses.create(donnees);
+        if (req.body.etatInteressementUtilisateur) {
+            await req.AdherentsCourse.create({ idAdherent: req.idUtilisateur, idCourse: course.id, statut: req.body.etatInteressementUtilisateur })
+        }
     } else {
         await req.Courses.update(donnees, { where: { nom } })
     }
@@ -124,12 +130,76 @@ async function enregistrerCourses(req, res, mode) {
 }
 
 async function recupererToutesLesCourses(req, admin = false) {
-    return await req.Courses.findAll({
-        ...(!admin ? { where: { etat: "valider" } } : {}),
-        attributes: ["nom", "date", "lieu", "distance", "type", ...(req.idUtilisateur ? ["lienWhatsapp"] : []), "lienSite", "lienInscription", "inscriptionsOuvertes", "dateOuvertureInscription", ...(admin ? ["etat"] : []),],
-        order: [["date", "ASC"]],
-        raw: true
-    })
+    const estConnecte = Boolean(req.idUtilisateur);
+
+    const includes = [];
+
+    if (estConnecte) {
+        // Jointure avec l'alias 'adherent' exigé par Sequelize
+        includes.push({
+            model: req.AdherentsCourse,
+            as: "adherentsCourses",
+            attributes: ["statut"],
+            include: [{
+                model: req.Utilisateurs,
+                as: "adherent", // 👈 Modifié 'utilisateur' -> 'adherent'
+                attributes: ["id", "nom", "prenom", "cheminTrombinoscope"]
+            }]
+        });
+    }
+
+    const courses = await req.Courses.findAll({
+        where: !admin ? { etat: "valider" } : {},
+        attributes: [
+            "id",
+            "nom",
+            "date",
+            "lieu",
+            "distance",
+            "type",
+            ...(estConnecte ? ["lienWhatsapp"] : []),
+            "lienSite",
+            "lienInscription",
+            "inscriptionsOuvertes",
+            "dateOuvertureInscription",
+            ...(admin ? ["etat"] : [])
+        ],
+        include: includes,
+        order: [["date", "ASC"]]
+    });
+
+    return courses.map(course => {
+        const courseJSON = course.toJSON();
+        const listeAdherents = courseJSON.adherentsCourses || [];
+
+        // Recherche du statut de l'utilisateur connecté
+        let etatInteressementUtilisateur = null;
+        if (estConnecte) {
+            const monInscription = listeAdherents.find(
+                a => a.adherent?.id === req.idUtilisateur // 👈 Modifié 'a.utilisateur' -> 'a.adherent'
+            );
+            etatInteressementUtilisateur = monInscription ? monInscription.statut : null;
+        }
+
+        // Mappe la liste des personnes avec leurs infos
+        const listePersonnes = estConnecte
+            ? listeAdherents.map(item => ({
+                id: item.adherent.id,                   // 👈 Modifié 'item.utilisateur' -> 'item.adherent'
+                nom: item.adherent.nom,
+                prenom: item.adherent.prenom,
+                cheminTrombinoscope: item.adherent.cheminTrombinoscope,
+                statut: item.statut
+            }))
+            : [];
+
+        delete courseJSON.adherentsCourses;
+
+        return {
+            ...courseJSON,
+            etatInteressementUtilisateur,
+            listePersonnes
+        };
+    });
 }
 
 export const cree = gestionErreur(async (req, res) => {
@@ -142,7 +212,6 @@ export const toutesLesCourses = gestionErreur(async (req, res) => {
 }, "controleurToutesLesCourses", "Erreur lors de la récupération des courses")
 
 export const supprimerCourse = gestionErreur(async (req, res) => {
-    console.log(req.body)
     const { nom } = req.body
     if (!nom) {
         return res.status(400).json({
@@ -196,3 +265,35 @@ export const suggestion = gestionErreur(async (req, res) => {
 export const toutesLesCoursesAdmin = gestionErreur(async (req, res) => {
     return res.json({ etat: true, detail: await recupererToutesLesCourses(req, true) })
 }, "controleurToutesLesCoursesAdmin", "Erreur lors de la récupération des courses")
+
+export const modifierInteressement = gestionErreur(async (req, res) => {
+    const { idCourse, nouvelEtat } = req.body
+    console.log(req.body)
+    if (!idCourse || !nouvelEtat || (nouvelEtat !== "null" && nouvelEtat !== "participe" && nouvelEtat !== "interesse")) {
+        return res.status(400).json({
+            etat: false,
+            detail: "Requête incorrecte",
+        });
+    }
+
+    const course = await req.Courses.findByPk(idCourse, { raw: true })
+    if (!course) {
+        return res.status(400).json({
+            etat: false,
+            detail: "Requête incorrecte",
+        });
+    }
+
+    if (course.etat == "suggestion") {
+        return res.status(403).json({
+            etat: false,
+            detail: "Accès interdit",
+        });
+    }
+    await req.AdherentsCourse.upsert({
+        idAdherent: req.idUtilisateur,
+        idCourse: idCourse,
+        statut: nouvelEtat === "null" ? null : nouvelEtat
+    });
+    await res.json({ etat: true, detail: await recupererToutesLesCourses(req) })
+}, "controleurModifierEnregistrement", "Erreur lors de la modification de l'intéressement")

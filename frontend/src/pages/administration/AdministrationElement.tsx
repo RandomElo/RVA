@@ -28,7 +28,7 @@ import { LABEL_CATEGORIE, STYLE_BADGE, ONGLETS, type Categorie } from "../../con
 import { useRequete } from "../../fonctions/requete";
 import type { Course } from "../../constantes/types/calendrier";
 import ModalConfirmationSuppression from "../../composants/modal/administrationElement/ModalConfirmerSuppression";
-import ModalNouvelleCourse from "../../composants/calendrier/ModalNouvelleCourse";
+import ModalNouvelleCourse from "../../composants/modal/calendrier/ModalNouvelleCourse";
 import ModalInviterAdherent from "../../composants/modal/administrationElement/ModalInviterAdherent";
 import ModalPhotoAdherent from "../../composants/modal/trombinoscope/ModalPhotoAdherent";
 import ModalZipPhotos from "../../composants/modal/trombinoscope/ModalZipPhotos";
