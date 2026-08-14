@@ -11,10 +11,12 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import puppeteer from "puppeteer";
+import { loadEnv } from "vite";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const distDir = path.join(root, "dist");
+const env = loadEnv(process.env.NODE_ENV || "production", process.cwd(), "");
 
 // Garde cette liste synchronisée avec les routes de ton app
 const routes = [
