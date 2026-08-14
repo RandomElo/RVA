@@ -16,7 +16,11 @@ import { loadEnv } from "vite";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(__dirname, "..");
 const distDir = path.join(root, "dist");
-const env = loadEnv(process.env.NODE_ENV || "production", process.cwd(), "");
+
+// Charge les variables .env depuis la racine du projet
+const env = loadEnv(process.env.NODE_ENV || "production", root, "");
+
+const PORT = env.VITE_PRERENDER_PORT || process.env.VITE_PRERENDER_PORT;
 
 // Garde cette liste synchronisée avec les routes de ton app
 const routes = [
@@ -37,7 +41,6 @@ const routes = [
     "/credits",
 ];
 
-const PORT = Number(env.PRERENDER_PORT);
 const HOST = "127.0.0.1";
 const BASE_URL = `http://${HOST}:${PORT}`;
 
@@ -81,7 +84,8 @@ async function main() {
     const viteBin = path.join(root, "node_modules", ".bin", process.platform === "win32" ? "vite.cmd" : "vite");
 
     console.log(`→ Node ${process.version} détecté.`);
-    console.log("→ Démarrage de `vite preview`...");
+    console.log(`→ Démarrage de \`vite preview\` sur ${BASE_URL}...`);
+
     const previewProcess = spawn(
         viteBin,
         ["preview", "--host", HOST, "--port", String(PORT), "--strictPort"],
