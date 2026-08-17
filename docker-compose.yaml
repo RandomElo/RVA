@@ -47,6 +47,7 @@ services:
       NODE_ENV: production
       PORT: 8100
       IP_FRONTEND: "https://rva.smce.ovh"
+      INTERNAL_SECRET: ${INTERNAL_SECRET}
     env_file:
       - ./backend/.env
     volumes:
@@ -84,6 +85,8 @@ services:
         - VITE_API_URL_BACKEND=https://rva.smce.ovh
         - VITE_API_INTERNAL_URL=http://backend:8100
     restart: unless-stopped
+    environment:
+      INTERNAL_SECRET: ${INTERNAL_SECRET}
     ports:
       - "80:80"
       - "443:443"

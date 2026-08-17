@@ -21,6 +21,7 @@ const distDir = path.join(root, "dist");
 const env = loadEnv(process.env.NODE_ENV || "production", root, "");
 
 const PORT = env.VITE_PRERENDER_PORT || process.env.VITE_PRERENDER_PORT;
+const INTERNAL_SECRET = env.INTERNAL_API_SECRET || process.env.INTERNAL_API_SECRET;
 
 // Garde cette liste synchronisée avec les routes de ton app
 const routes = [
@@ -135,6 +136,16 @@ async function main() {
             ],
         });
         const page = await browser.newPage();
+
+        // Injecte le header secret pour contourner le rate limiter du backend
+        if (INTERNAL_SECRET) {
+            console.log("→ Injection du header x-internal-secret pour Puppeteer.");
+            await page.setExtraHTTPHeaders({
+                "x-internal-secret": INTERNAL_SECRET,
+            });
+        } else {
+            console.warn("⚠️  INTERNAL_API_SECRET est absent du .env. Les requêtes réseau peuvent être rate-limited.");
+        }
 
         for (const route of routes) {
             const url = `${BASE_URL}${route}`;
