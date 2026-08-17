@@ -5,9 +5,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { Cake, CalendarDays, ChevronLeft, ChevronRight, List, X } from "lucide-react";
-import SEO from "../composants/generale/SEO";
-import { useRequete } from "../fonctions/requete";
-import { useRequeteJSON } from "../fonctions/requeteJSON";
+import SEO from "../../composants/generale/SEO";
+import { useRequete } from "../../fonctions/requete";
+import { useRequeteJSON } from "../../fonctions/requeteJSON";
 
 export interface Anniversaire {
     id: number | string;

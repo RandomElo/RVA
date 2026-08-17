@@ -27,17 +27,17 @@ import { Plus, Search, Pencil, Trash2, FileText, Globe, Loader2, Inbox, MapPin, 
 import { LABEL_CATEGORIE, STYLE_BADGE, ONGLETS, type Categorie } from "../../constantes/types/blog";
 import { useRequete } from "../../fonctions/requete";
 import type { Course } from "../../constantes/types/calendrier";
-import ModalConfirmationSuppression from "../../composants/modal/administrationElement/ModalConfirmerSuppression";
+import ModalConfirmationSuppression from "../../composants/modal/administration/ModalConfirmerSuppression";
 import ModalNouvelleCourse from "../../composants/modal/calendrier/ModalNouvelleCourse";
-import ModalInviterAdherent from "../../composants/modal/administrationElement/ModalInviterAdherent";
+import ModalInviterAdherent from "../../composants/modal/administration/ModalInviterAdherent";
 import ModalPhotoAdherent from "../../composants/modal/trombinoscope/ModalPhotoAdherent";
 import ModalZipPhotos from "../../composants/modal/trombinoscope/ModalZipPhotos";
-import ModalActionsAdherent from "../../composants/modal/administrationElement/ModalActionsAdherent";
+import ModalActionsAdherent from "../../composants/modal/administration/ModalActionsAdherent";
 import type { Adherent } from "../../constantes/types/adherents";
 import { type Specialiste } from "../../constantes/types/specialistesSante";
 import ModalNouveauSpecialiste from "../../composants/specialistesSante/ModalNouveauSpecialiste";
-import ModalConfirmationRelance from "../../composants/modal/administrationElement/ModalConfirmerRelance";
-import ModalModiferAlbum from "../../composants/modal/administrationElement/ModalModifierAlbum";
+import ModalConfirmationRelance from "../../composants/modal/administration/ModalConfirmerRelance";
+import ModalModiferAlbum from "../../composants/modal/administration/ModalModifierAlbum";
 
 type Statut = "brouillon" | "publie" | "suggestion";
 

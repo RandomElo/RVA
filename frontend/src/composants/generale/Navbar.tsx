@@ -4,12 +4,14 @@
 
 import { useEffect, useMemo, useRef, useState, useTransition, useCallback } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Menu, X, ChevronDown, LogOut, User, Loader2 } from "lucide-react";
+import { Menu, X, ChevronDown, LogOut, User, Loader2, Key } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useRequete } from "../../fonctions/requete";
 import Logo from "../../assets/logo.svg?react";
 import { useNotifications } from "../../contexts/NotificationsContext";
 import BandeauAnniversaire from "./BandeauAnniversaire";
+import type { Role } from "../../constantes/types/auth";
+import ModalChangementMdp from "../modal/administration/ModalChangementMdp";
 
 interface Lien {
     href: string;
@@ -113,13 +115,7 @@ function MenuDeroulant({
 }
 
 // Menu utilisateur connecté
-function MenuUtilisateur({
-    gererDeconnexion,
-    deconnexionEnCours,
-}: {
-    gererDeconnexion: () => void;
-    deconnexionEnCours: boolean;
-}) {
+function MenuUtilisateur({ gererDeconnexion, deconnexionEnCours, role, gererChangementMdp }: { gererDeconnexion: () => void; deconnexionEnCours: boolean; role: Role; gererChangementMdp: () => void }) {
     const [ouvert, setOuvert] = useState(false);
     const ref = useRef<HTMLDivElement>(null);
 
@@ -174,7 +170,21 @@ function MenuUtilisateur({
             </button>
 
             {ouvert && (
-                <div className="absolute right-0 top-full mt-2 w-48 overflow-hidden rounded-lg border border-club-100 bg-white py-1 shadow-lg z-50 animate-in fade-in zoom-in-95 duration-100">
+                <div className="absolute right-0 top-full z-50 mt-2 w-56 overflow-hidden rounded-lg border border-club-100 bg-white py-1 shadow-lg animate-in fade-in zoom-in-95 duration-100">
+                    {role === "administrateur" && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setOuvert(false);
+                                gererChangementMdp();
+                            }}
+                            className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-club-700 transition hover:bg-club-50 cursor-pointer"
+                        >
+                            <Key size={15} />
+                            <span>Changer le mot de passe</span>
+                        </button>
+                    )}
+
                     <button
                         type="button"
                         onClick={() => {
@@ -182,14 +192,14 @@ function MenuUtilisateur({
                             gererDeconnexion();
                         }}
                         disabled={deconnexionEnCours}
-                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-club-700 hover:bg-club-50 disabled:opacity-50 transition"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-club-700 transition hover:bg-club-50 disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
                     >
                         {deconnexionEnCours ? (
                             <Loader2 className="animate-spin" size={15} />
                         ) : (
                             <LogOut size={15} />
                         )}
-                        Déconnexion
+                        <span>{deconnexionEnCours ? "Déconnexion…" : "Déconnexion"}</span>
                     </button>
                 </div>
             )}
@@ -203,6 +213,7 @@ export default function Navbar() {
 
     const [estEnTransition, startTransition] = useTransition();
     const [cibleNavigation, setCibleNavigation] = useState<string | null>(null);
+    const [modalChangementMdp, setModalChangementMdp] = useState<boolean>(false)
 
     const navbarRef = useRef<HTMLElement>(null);
 
@@ -339,16 +350,15 @@ export default function Navbar() {
 
     async function gererDeconnexion() {
         setDeconnexionEnCours(true);
-        try {
-            await requete({ url: "/utilisateurs/deconnexion", methode: "DELETE" });
-        } catch (erreur) {
-            console.error("Erreur lors de la déconnexion :", erreur);
-        } finally {
-            deconnexion();
-            setDeconnexionEnCours(false);
-            notifier({ type: "succes", titre: "Succès", description: "Vous êtes correctement déconnecté." });
-            naviguerAvecAttente("/");
-        }
+        await requete({ url: "/utilisateurs/deconnexion", methode: "DELETE" });
+        deconnexion();
+        setDeconnexionEnCours(false);
+        notifier({ type: "succes", titre: "Succès", description: "Vous êtes correctement déconnecté." });
+        naviguerAvecAttente("/");
+    }
+
+    function gererChangementMdp() {
+        setModalChangementMdp(true)
     }
 
     const menuRole =
@@ -448,7 +458,7 @@ export default function Navbar() {
                         )}
 
                         {estAuth ? (
-                            <MenuUtilisateur gererDeconnexion={gererDeconnexion} deconnexionEnCours={deconnexionEnCours} />
+                            <MenuUtilisateur gererDeconnexion={gererDeconnexion} deconnexionEnCours={deconnexionEnCours} role={role} gererChangementMdp={gererChangementMdp} />
                         ) : (
                             <NavLink
                                 to="/connexion"
@@ -657,19 +667,33 @@ export default function Navbar() {
 
                         {/* Déconnexion / Connexion Mobile */}
                         {estAuth ? (
-                            <button
-                                type="button"
-                                onClick={gererDeconnexion}
-                                disabled={deconnexionEnCours}
-                                className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-white/40 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 disabled:opacity-50 transition"
-                            >
-                                {deconnexionEnCours ? (
-                                    <Loader2 className="animate-spin" size={15} />
-                                ) : (
-                                    <LogOut size={15} />
-                                )}
-                                Déconnexion
-                            </button>
+                            <>
+                                {role == "administrateur" &&
+                                    <button
+                                        type="button"
+                                        onClick={gererChangementMdp}
+                                        disabled={deconnexionEnCours}
+                                        className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-white/40 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 disabled:opacity-50 transition"
+                                    >
+                                        <Key size={15} />
+                                        Changement mot de passe
+                                    </button>
+                                }
+
+                                <button
+                                    type="button"
+                                    onClick={gererDeconnexion}
+                                    disabled={deconnexionEnCours}
+                                    className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-white/40 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 disabled:opacity-50 transition"
+                                >
+                                    {deconnexionEnCours ? (
+                                        <Loader2 className="animate-spin" size={15} />
+                                    ) : (
+                                        <LogOut size={15} />
+                                    )}
+                                    Déconnexion
+                                </button>
+                            </>
                         ) : (
                             <NavLink
                                 to="/connexion"
@@ -690,6 +714,7 @@ export default function Navbar() {
                     </nav>
                 )}
             </header>
+            <ModalChangementMdp ouvert={modalChangementMdp} onFermer={() => setModalChangementMdp(false)} />
         </>
     );
 }

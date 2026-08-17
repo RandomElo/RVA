@@ -4,9 +4,9 @@ import { useRequete } from "../../fonctions/requete";
 import type { ImageSite } from "../../constantes/types/blog";
 import { useNotifications } from "../../contexts/NotificationsContext";
 import ModalAjouterImage from "../../composants/modal/blog/ModalAjouterImage";
-import ModalSupprimerImage from "../../composants/modal/administrationElement/ModalSupprimerImage";
-import ModalModiferAlbum from "../../composants/modal/administrationElement/ModalModifierAlbum";
-import ModalModifierAlt from "../../composants/modal/administrationElement/ModalModifierAlt";
+import ModalSupprimerImage from "../../composants/modal/administration/ModalSupprimerImage";
+import ModalModiferAlbum from "../../composants/modal/administration/ModalModifierAlbum";
+import ModalModifierAlt from "../../composants/modal/administration/ModalModifierAlt";
 
 const CHEMIN_GALERIE = "/images/i";
 const CHEMIN_IMAGES = "/img";

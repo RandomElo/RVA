@@ -1,5 +1,5 @@
 import e from "express"
-import { ajouterPhotosZip, anniversaireDuJour, anniversaires, connexionGoogle, connexionParMail, deconnexion, enregistrerPhotoControleur, exporterDonnees, inviterAdherent, inviterAdherentCsv, modifierInformationsUtilisateur, photo, recupererUtilisateurs, relancerInitialisationCompte, supprimer, supprimerPhoto, trombinoscope, verification, verificationCode, verifierMotDePasse } from "../controleurs/utilisateurs.js"
+import { ajouterPhotosZip, anniversaireDuJour, anniversaires, changementMdp, connexionGoogle, connexionParMail, deconnexion, enregistrerPhotoControleur, exporterDonnees, inviterAdherent, inviterAdherentCsv, modifierInformationsUtilisateur, photo, recupererUtilisateurs, relancerInitialisationCompte, supprimer, supprimerPhoto, trombinoscope, verification, verificationCode, verifierMotDePasse } from "../controleurs/utilisateurs.js"
 import { accesAdmin } from "../middlewares/accesAdmin.js";
 import { enregistrerTrombinoscope } from "../../fonctions/utilitaires/enregistrementPhoto.js";
 import multer from "multer";
@@ -33,10 +33,13 @@ routeurUtilisateurs.post("/modifier", accesAdmin, modifierInformationsUtilisateu
 
 // Autres
 routeurUtilisateurs.get("/verification", verification);
+routeurUtilisateurs.delete("/deconnexion", accesUtilisateur, deconnexion)
+
+// Actions administrateurs
 routeurUtilisateurs.get("/recuperer-utilisateurs", accesAdmin, recupererUtilisateurs)
 routeurUtilisateurs.get("/exporter/:id", accesAdmin, exporterDonnees)
-routeurUtilisateurs.delete("/deconnexion", accesUtilisateur, deconnexion)
 routeurUtilisateurs.post("/relancer-mail-initialisation", accesAdmin, relancerInitialisationCompte)
+routeurUtilisateurs.post("/changement-mdp", accesAdmin, changementMdp)
 
 // Anniversaire
 routeurUtilisateurs.get("/anniversaires-du-jour", accesUtilisateur, anniversaireDuJour);

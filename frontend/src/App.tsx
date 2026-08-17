@@ -23,8 +23,6 @@ import Blog from "./pages/blog/Blog";
 import NosPartenaires from "./pages/NosPartenaires";
 import NosRessources from "./pages/ressources/RessourcesEntrainement";
 import Connexion from "./pages/base/Connexion";
-import Anniversaires from "./pages/Anniversaires";
-import CategoriesFFA from "./pages/ressources/CategoriesFFA";
 
 // 💤 2. PAGES EN LAZY LOADING (Chargées à la demande)
 
@@ -40,6 +38,8 @@ const GestionPages = lazy(() => import("./pages/administration/GestionPages"));
 const Trombinoscope = lazy(() => import("./pages/ressources/Trombinoscope"));
 const SpecialistesSante = lazy(() => import("./pages/ressources/SpecialistesSante"));
 const RedactionArticle = lazy(() => import("./pages/blog/RedactionArticle"));
+const Anniversaires = lazy(() => import("./pages/ressources/Anniversaires"));
+const CategoriesFFA = lazy(() => import("./pages/ressources/CategoriesFFA"));
 
 // C. Outils spécifiques & Calculateurs (Contiennent du JS plus lourd)
 const ArticleDetailPage = lazy(() => import("./pages/blog/ArticleDetail"));

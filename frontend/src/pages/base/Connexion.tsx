@@ -41,6 +41,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext";
 import Captcha from "../../composants/Captcha";
 import Logo from "../../assets/logo.svg?react"
+import ChampMdp from "../../composants/ChampMdp";
 
 const DELAI_AFFICHAGE_CODE_MS = 10_000;
 
@@ -48,8 +49,6 @@ export default function Connexion() {
     const [email, setEmail] = useState("");
 
     const [mdp, setMdp] = useState<string>("");
-    const [voirMdp, setVoirMdp] = useState(false);
-
     const [enCours, setEnCours] = useState(false);
     const [lienEnvoye, setLienEnvoye] = useState(false);
     const [erreur, setErreur] = useState<{ bloquante: boolean; detail: string } | null>();
@@ -83,7 +82,7 @@ export default function Connexion() {
         initialisation()
         const delai = setTimeout(() => setAfficherChampCode(true), DELAI_AFFICHAGE_CODE_MS);
         return () => clearTimeout(delai);
-    }, [lienEnvoye]);
+    }, [lienEnvoye, role]);
 
     // --- Connexion Google (composant GoogleLogin) ---
     async function gererConnexionGoogle(accessToken: string) {
@@ -222,164 +221,139 @@ export default function Connexion() {
                             <button
                                 type="button"
                                 onClick={() => connexionGoogle()}
-                            disabled={enCours}
-                            className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-club-200 px-4 py-2.5 text-sm font-medium text-[#040F33] transition hover:border-club-400 hover:bg-club-50 disabled:opacity-60 cursor-pointer"
+                                disabled={enCours}
+                                className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-club-200 px-4 py-2.5 text-sm font-medium text-[#040F33] transition hover:border-club-400 hover:bg-club-50 disabled:opacity-60 cursor-pointer"
                             >
-                            {enCours ? <Loader2 className="animate-spin" size={15} /> :
+                                {enCours ? <Loader2 className="animate-spin" size={15} /> :
+                                    <>
+                                        <Google className="h-6 w-6 text-white" />
+                                        Continuer avec Google
+                                    </>}
+                            </button>
+
+                            {/* Séparateur */}
+                            <div className="my-5 flex items-center gap-3">
+                                <span className="h-px flex-1 bg-club-100" />
+                                <span className="text-xs text-[#0B2270]/40">ou</span>
+                                <span className="h-px flex-1 bg-club-100" />
+                            </div>
+
+                            {/* Option 2 — E-mail */}
+                            {authentificationSupplementaire ? (
                                 <>
-                                    <Google className="h-6 w-6 text-white" />
-                                    Continuer avec Google
-                                </>}
-                        </button>
+                                    <div className="flex flex-col items-center gap-2 rounded-lg bg-club-50 px-4 py-6 text-center mb-3">
+                                        <Lock size={28} className="text-club-600" />
+                                        <p className="text-sm font-medium text-[#040F33]">Mot de passe nécessaire</p>
+                                        <p className="text-xs text-[#0B2270]/70">
+                                            <span className="font-medium">{email}</span> nécessite de saisir le mot de passe pour se connecter</p>
+                                    </div>
+                                    <form onSubmit={gererEnvoiMdp} className="flex flex-col gap-2.5">
+                                        <ChampMdp mdp={mdp} setMdp={setMdp} id="mdp" srOnly={true} />
 
-                        {/* Séparateur */}
-                        <div className="my-5 flex items-center gap-3">
-                            <span className="h-px flex-1 bg-club-100" />
-                            <span className="text-xs text-[#0B2270]/40">ou</span>
-                            <span className="h-px flex-1 bg-club-100" />
-                        </div>
+                                        <button type="submit" disabled={enCours} className="flex items-center justify-center gap-2 rounded-lg bg-club-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#0B2270] disabled:opacity-60 cursor-pointer">
+                                            {enCours ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                                            Recevoir un code de connexion
+                                        </button>
+                                    </form>
+                                </>
 
-                        {/* Option 2 — E-mail */}
-                        {authentificationSupplementaire ? (
-                            <>
-                                <div className="flex flex-col items-center gap-2 rounded-lg bg-club-50 px-4 py-6 text-center mb-3">
-                                    <Lock size={28} className="text-club-600" />
-                                    <p className="text-sm font-medium text-[#040F33]">Mot de passe nécessaire</p>
-                                    <p className="text-xs text-[#0B2270]/70">
-                                        <span className="font-medium">{email}</span> nécessite de saisir le mot de passe pour se connecter</p>
-                                </div>
-                                <form onSubmit={gererEnvoiMdp} className="flex flex-col gap-2.5">
-                                    <label htmlFor="mdp" className="sr-only">
-                                        Mot de passe
+                            ) : !lienEnvoye ? (
+                                <form onSubmit={gererEnvoiLien} className="flex flex-col gap-2.5">
+                                    <label htmlFor="email" className="sr-only">
+                                        Adresse e-mail
                                     </label>
                                     <div className="relative">
-                                        <Lock size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#0B2270]/40" />
+                                        <Mail size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#0B2270]/40" />
                                         <input
-                                            id="mdp"
-                                            autoFocus
-                                            type={voirMdp ? "text" : "password"}
+                                            id="email"
+                                            type="email"
                                             autoComplete="off"
                                             required
-                                            value={mdp}
-                                            onChange={(e) => setMdp(e.target.value)}
-                                            placeholder="Mot de passe"
-                                            className="w-full rounded-lg border border-club-200 py-2.5 pl-9 pr-10 text-sm text-[#040F33] outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => setVoirMdp((v) => !v)}
-                                            tabIndex={-1}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#0B2270]/40 transition hover:text-[#0B2270] cursor-pointer"
-                                            aria-label={voirMdp ? "Masquer le mot de passe" : "Afficher le mot de passe"}
-                                        >
-                                            {voirMdp ? <EyeOff size={16} /> : <Eye size={16} />}
-                                        </button>
-                                    </div>
+                                            value={email}
+                                            onChange={(e) => {
+                                                const valeur = e.target.value.trim();
+                                                const regexMail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
-                                    <button type="submit" disabled={enCours} className="flex items-center justify-center gap-2 rounded-lg bg-club-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#0B2270] disabled:opacity-60 cursor-pointer">
+                                                if (valeur && !regexMail.test(valeur)) {
+                                                    setErreur({ bloquante: true, detail: "Adresse mail invalide." });
+                                                } else {
+                                                    setErreur(null);
+                                                }
+                                                setEmail(e.target.value);
+                                            }}
+                                            placeholder="votre@email.fr"
+                                            className="w-full rounded-lg border border-club-200 py-2.5 pl-9 pr-3 text-sm text-[#040F33] outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200"
+                                        />
+                                    </div>
+                                    {erreur && (
+                                        <p className={`flex items-start gap-1.5 rounded-lg px-3 py-2 text-xs font-medium ${erreur.bloquante ? "bg-red-50 text-red-700" : "bg-[#FAD1BE] text-[#A23A14]"}`}>
+                                            <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                                            {erreur.detail}
+                                        </p>
+                                    )}
+                                    <button type="submit" disabled={enCours || erreur?.bloquante} className="flex items-center justify-center gap-2 rounded-lg bg-club-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#0B2270] disabled:opacity-60 cursor-pointer">
                                         {enCours ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
                                         Recevoir un code de connexion
                                     </button>
                                 </form>
-                            </>
-
-                        ) : !lienEnvoye ? (
-                            <form onSubmit={gererEnvoiLien} className="flex flex-col gap-2.5">
-                                <label htmlFor="email" className="sr-only">
-                                    Adresse e-mail
-                                </label>
-                                <div className="relative">
-                                    <Mail size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#0B2270]/40" />
-                                    <input
-                                        id="email"
-                                        type="email"
-                                        autoComplete="off"
-                                        required
-                                        value={email}
-                                        onChange={(e) => {
-                                            const valeur = e.target.value.trim();
-                                            const regexMail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-
-                                            if (valeur && !regexMail.test(valeur)) {
-                                                setErreur({ bloquante: true, detail: "Adresse mail invalide." });
-                                            } else {
-                                                setErreur(null);
-                                            }
-                                            setEmail(e.target.value);
-                                        }}
-                                        placeholder="votre@email.fr"
-                                        className="w-full rounded-lg border border-club-200 py-2.5 pl-9 pr-3 text-sm text-[#040F33] outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200"
-                                    />
-                                </div>
-                                {erreur && (
-                                    <p className={`flex items-start gap-1.5 rounded-lg px-3 py-2 text-xs font-medium ${erreur.bloquante ? "bg-red-50 text-red-700" : "bg-[#FAD1BE] text-[#A23A14]"}`}>
-                                        <AlertCircle size={14} className="mt-0.5 shrink-0" />
-                                        {erreur.detail}
-                                    </p>
-                                )}
-                                <button type="submit" disabled={enCours || erreur?.bloquante} className="flex items-center justify-center gap-2 rounded-lg bg-club-600 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-[#0B2270] disabled:opacity-60 cursor-pointer">
-                                    {enCours ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-                                    Recevoir un code de connexion
-                                </button>
-                            </form>
-                        ) : (
-                            <div className="flex flex-col gap-3">
-                                <div className="flex flex-col items-center gap-2 rounded-lg bg-club-50 px-4 py-6 text-center">
-                                    <CheckCircle2 size={28} className="text-club-600" />
-                                    <p className="text-sm font-medium text-[#040F33]">E-mail envoyé</p>
-                                    <p className="text-xs text-[#0B2270]/70">
-                                        Si <span className="font-medium">{email}</span> est autorisé, un code de connexion vient de vous être envoyé. Pensez à vérifier vos spams.
-                                    </p>
-                                    <button type="button" onClick={() => setLienEnvoye(false)} className="mt-1 text-xs font-medium text-club-600 hover:underline">
-                                        Utiliser une autre adresse
-                                    </button>
-                                </div>
-
-                                {afficherChampCode && (
-                                    <form onSubmit={gererEnvoiCode} className="flex animate-[entreeNotif_0.25s_ease-out] flex-col gap-2.5 border-t border-club-100 pt-4">
-                                        <p className="text-center text-xs text-[#0B2270]/60">Vous pouvez aussi saisir directement le code reçu par e-mail :</p>
-                                        <label htmlFor="code" className="sr-only">
-                                            Code de connexion
-                                        </label>
-                                        <div className="relative">
-                                            <KeyRound size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#0B2270]/40" />
-                                            <input
-                                                id="code"
-                                                type="text"
-                                                inputMode="numeric"
-                                                autoComplete="off"
-                                                required
-                                                value={code}
-                                                onChange={(e) => {
-                                                    setCode(e.target.value);
-                                                    setErreurCode(null);
-                                                }}
-                                                placeholder="Code reçu par e-mail"
-                                                className="w-full rounded-lg border border-club-200 py-2.5 pl-9 pr-3 text-center text-sm tracking-[0.2em] text-[#040F33] outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200"
-                                            />
-                                        </div>
-
-                                        {erreurCode && (
-                                            <p className="flex items-start gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
-                                                <AlertCircle size={14} className="mt-0.5 shrink-0" />
-                                                {erreurCode}
-                                            </p>
-                                        )}
-
-                                        <button
-                                            type="submit"
-                                            disabled={envoiCodeEnCours || !code.trim()}
-                                            className="flex items-center justify-center gap-2 rounded-lg border border-club-600 px-4 py-2.5 text-sm font-medium text-club-600 transition hover:bg-club-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-                                        >
-                                            {envoiCodeEnCours ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
-                                            Valider le code
+                            ) : (
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex flex-col items-center gap-2 rounded-lg bg-club-50 px-4 py-6 text-center">
+                                        <CheckCircle2 size={28} className="text-club-600" />
+                                        <p className="text-sm font-medium text-[#040F33]">E-mail envoyé</p>
+                                        <p className="text-xs text-[#0B2270]/70">
+                                            Si <span className="font-medium">{email}</span> est autorisé, un code de connexion vient de vous être envoyé. Pensez à vérifier vos spams.
+                                        </p>
+                                        <button type="button" onClick={() => setLienEnvoye(false)} className="mt-1 text-xs font-medium text-club-600 hover:underline">
+                                            Utiliser une autre adresse
                                         </button>
-                                    </form>
-                                )}
-                            </div>
-                        )}
+                                    </div>
+
+                                    {afficherChampCode && (
+                                        <form onSubmit={gererEnvoiCode} className="flex animate-[entreeNotif_0.25s_ease-out] flex-col gap-2.5 border-t border-club-100 pt-4">
+                                            <p className="text-center text-xs text-[#0B2270]/60">Vous pouvez aussi saisir directement le code reçu par e-mail :</p>
+                                            <label htmlFor="code" className="sr-only">
+                                                Code de connexion
+                                            </label>
+                                            <div className="relative">
+                                                <KeyRound size={16} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#0B2270]/40" />
+                                                <input
+                                                    id="code"
+                                                    type="text"
+                                                    inputMode="numeric"
+                                                    autoComplete="off"
+                                                    required
+                                                    value={code}
+                                                    onChange={(e) => {
+                                                        setCode(e.target.value);
+                                                        setErreurCode(null);
+                                                    }}
+                                                    placeholder="Code reçu par e-mail"
+                                                    className="w-full rounded-lg border border-club-200 py-2.5 pl-9 pr-3 text-center text-sm tracking-[0.2em] text-[#040F33] outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200"
+                                                />
+                                            </div>
+
+                                            {erreurCode && (
+                                                <p className="flex items-start gap-1.5 rounded-lg bg-red-50 px-3 py-2 text-xs font-medium text-red-700">
+                                                    <AlertCircle size={14} className="mt-0.5 shrink-0" />
+                                                    {erreurCode}
+                                                </p>
+                                            )}
+
+                                            <button
+                                                type="submit"
+                                                disabled={envoiCodeEnCours || !code.trim()}
+                                                className="flex items-center justify-center gap-2 rounded-lg border border-club-600 px-4 py-2.5 text-sm font-medium text-club-600 transition hover:bg-club-50 disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
+                                            >
+                                                {envoiCodeEnCours ? <Loader2 size={16} className="animate-spin" /> : <ArrowRight size={16} />}
+                                                Valider le code
+                                            </button>
+                                        </form>
+                                    )}
+                                </div>
+                            )}
+                        </div>
                     </div>
-                </div>
                 </div >
 
             }

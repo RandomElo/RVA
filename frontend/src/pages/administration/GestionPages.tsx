@@ -16,7 +16,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Link as RouterLink, useNavigate, type NavigateFunction } from "react-router-dom";
 import { Plus, Search, ChevronRight, ChevronDown, Folder, Pencil, Trash2, FileEdit, ExternalLink, File, Code } from "lucide-react";
 
-import ModalConfirmationSuppression from "../../composants/modal/administrationElement/ModalConfirmerSuppression";
+import ModalConfirmationSuppression from "../../composants/modal/administration/ModalConfirmerSuppression";
 import { useRequete } from "../../fonctions/requete";
 
 // --- Types ---

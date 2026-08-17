@@ -38,6 +38,7 @@ export async function ajouterDonneesInitiales() {
             await bdd.Utilisateurs.create({
                 prenom: "Eloi",
                 nom: "Bontron",
+                dateNaissance: "16/10",
                 mail: process.env.EMAIL_ADHERENT,
                 role: "adherent"
             });
