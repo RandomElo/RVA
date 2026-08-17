@@ -30,12 +30,13 @@ if [ "$TEMPORARY_SSL" = true ]; then
   sleep 2
 
   echo "--> Demande du vrai certificat Let's Encrypt via Certbot..."
-  certbot certonly --webroot -w /var/www/certbot \
-    -d rva.smce.ovh -d www.rva.smce.ovh \
+  
+  # Suppression de -d www.rva.smce.ovh + capture de la réussite
+  if certbot certonly --webroot -w /var/www/certbot \
+    -d rva.smce.ovh \
     --email eloi.random@gmail.com \
-    --agree-tos --no-eff-email --non-interactive
-
-  if [ -f "$FULLCHAIN" ]; then
+    --agree-tos --no-eff-email --non-interactive; then
+    
     echo "--> Certificat obtenu avec succès ! Rechargement de Nginx..."
     nginx -s reload
   else
