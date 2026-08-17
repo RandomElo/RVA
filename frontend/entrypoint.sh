@@ -4,7 +4,7 @@ CERT_DIR="/etc/letsencrypt/live/rva.smce.ovh"
 FULLCHAIN="$CERT_DIR/fullchain.pem"
 TEMPORARY_SSL=false
 
-# 1. Génération d'un certificat temporaire si le SSL Let's Encrypt est absent
+# 1. Génération d'un certificat temporaire si aucun certificat n'existe
 if [ ! -f "$FULLCHAIN" ]; then
   echo "--> Aucun certificat SSL trouvé. Création d'un certificat temporaire auto-signé..."
   mkdir -p "$CERT_DIR"
@@ -19,23 +19,24 @@ fi
 echo "--> Lancement du prerender..."
 node scripts/prerender.mjs && cp -r /app/dist/* /usr/share/nginx/html/
 
-# 3. Démarrage de Nginx en tâche de fond (processus principal)
+# 3. Démarrage de Nginx en tâche de fond
 echo "--> Démarrage de Nginx..."
 nginx -g 'daemon off;' &
 NGINX_PID=$!
 
-# 4. Si le certificat était temporaire, demande du vrai certificat via Webroot
+# 4. Obtention du vrai certificat
 if [ "$TEMPORARY_SSL" = true ]; then
   echo "--> Attente de l'initialisation de Nginx..."
   sleep 2
 
   echo "--> Demande du vrai certificat Let's Encrypt via Certbot..."
   
-  # Suppression de -d www.rva.smce.ovh + capture de la réussite
+  # Utilisation de --force-renewal pour écraser le certificat auto-signé
   if certbot certonly --webroot -w /var/www/certbot \
     -d rva.smce.ovh \
     --email eloi.random@gmail.com \
-    --agree-tos --no-eff-email --non-interactive; then
+    --agree-tos --no-eff-email --non-interactive \
+    --force-renewal; then
     
     echo "--> Certificat obtenu avec succès ! Rechargement de Nginx..."
     nginx -s reload
@@ -44,5 +45,5 @@ if [ "$TEMPORARY_SSL" = true ]; then
   fi
 fi
 
-# 5. Maintien du conteneur en attente du processus Nginx
+# 5. Maintien du conteneur
 wait $NGINX_PID
