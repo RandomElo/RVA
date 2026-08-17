@@ -31,10 +31,11 @@ import { Bold, Italic, Link as LinkIcon, List, ListOrdered, ImagePlus, Undo2, Re
 import { useLoaderData, useNavigate } from "react-router-dom";
 import { useRequete } from "../../fonctions/requete";
 import { useNotifications } from "../../contexts/NotificationsContext";
-import { type ImageSite, type ArticleFormValue, type Categorie } from "../../constantes/types/blog";
+import { type ImageSite, type ArticleFormValue, type Categorie, type PhotoAlbum } from "../../constantes/types/blog";
 import VisualisationCanva from "../../composants/blog/VisualisationCanva";
 import { useAuth } from "../../contexts/AuthContext";
 import ModalAjouterImage from "../../composants/modal/blog/ModalAjouterImage";
+import Album from "../../composants/blog/Album";
 
 type ModeEdition = "visuel" | "html";
 type StatutArticle = "brouillon" | "publie";
@@ -47,8 +48,9 @@ const CATEGORIES: { value: Categorie; label: string; description: string }[] = [
     { value: "actu_publique", label: "Actu club", description: "Visible sur le site public (journée des assos, résultats de courses…)" },
     { value: "recommandation", label: "Recommandation", description: "Podcast, livre ou article conseillé - visible sur le site public" },
     { value: "actu_interne", label: "Actu interne", description: "Réservée aux membres connectés (CR de réunion, logistique…)" },
-    { value: "newsletter", label: "Newsletter", description: "Résumé périodique envoyé par e-mail aux membres" },
     { value: "solde", label: "Soldes", description: "Bon plan ou offre partenaire (matériel, inscription course…) by Kirsi Shop" },
+    { value: "newsletter", label: "Newsletter", description: "Résumé périodique envoyé par e-mail aux membres" },
+    { value: "album_photo", label: "Album photo", description: "Photos des événements et activités du clubpublic" },
 ];
 
 const VALEUR_INITIALE: ArticleFormValue = {
@@ -78,10 +80,14 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
         pos: null,
         largeur: "100%",
     });
+    const [photosAlbum, setPhotosAlbum] = useState<PhotoAlbum[] | null>(null)
+
+
     const navigation = useNavigate();
     const requete = useRequete();
     const { notifier } = useNotifications();
     const { role } = useAuth()
+
     const editor = useEditor({
         extensions: [
             StarterKit,
@@ -218,7 +224,7 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
             mode === "html"
                 ? !htmlTexte.trim()
                 : !editor || editor.isEmpty;
-        if (contenuVide && valeur.categorie !== "newsletter") {
+        if (contenuVide && valeur.categorie !== "newsletter" && valeur.categorie !== "album_photo") {
             nouvellesErreurs.contenuHtml = "L'article ne peut pas être vide."
         };
 
@@ -251,15 +257,19 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
     }
 
     async function onEnregistrerArticle(article: ArticleFormValue, statut: StatutArticle) {
-        let url = article.categorie == "newsletter" ? "/articles/cree-newsletter" : "/articles/cree";
-        const corps: { article: ArticleFormValue; statut: StatutArticle; id?: number } = { article, statut };
+        let url = article.categorie == "newsletter" ? "/articles/cree-newsletter" : article.categorie == "album_photo" ? "/articles/cree-album" : "/articles/cree";
+        let corps: { article: ArticleFormValue; statut: StatutArticle; id?: number; photosAlbum?: PhotoAlbum[] | null } = { article, statut };
         if (donneesLoader) {
-            url = article.categorie == "newsletter" ? "/articles/modifier-newsletter" : "/articles/modifier";
+            url = article.categorie == "newsletter" ? "/articles/modifier-newsletter" : article.categorie == "album_photo" ? "/articles/modifier-album" : "/articles/modifier";
             corps.id = donneesLoader.id;
         }
 
         if (role == "adherent") {
             url = "/articles/suggestion"
+        }
+
+        if (article.categorie == "album_photo") {
+            corps = { ...corps, photosAlbum }
         }
 
         const reponse = await requete({ url, methode: "POST", corps });
@@ -555,23 +565,38 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
                         </div>}
 
                     {/* Éditeur de texte riche */}
-                    <div>
-                        <span className="mb-1.5 block text-sm font-medium text-[#040F33]">Contenu de{type == "nouvelArticle" ? " l'article" : " la page"}</span>
-                        <div className={`overflow-hidden rounded-lg border bg-white ${erreurs.contenuHtml ? "border-red-400" : "border-club-200"}`}>
-                            <Toolbar editor={editor} mode={mode} onChangerMode={changerMode} ajouterImage={ajouterImage} />
+                    {valeur.categorie == "album_photo" ?
+                        <>
+                            <p className="mb-1.5 block text-sm font-medium text-[#040F33]">
+                                Album photo
+                            </p>
+                            <Album
+                                images={photosAlbum}
+                                onPhotosChange={(images: PhotoAlbum[]) => setPhotosAlbum(images)}
+                                modeEdition={true}
+                                imagesGalerie={images}
+                            />
+                        </>
+                        :
+                        <div>
+                            <span className="mb-1.5 block text-sm font-medium text-[#040F33]">Contenu de{type == "nouvelArticle" ? " l'article" : " la page"}</span>
+                            <div className={`overflow-hidden rounded-lg border bg-white ${erreurs.contenuHtml ? "border-red-400" : "border-club-200"}`}>
+                                <Toolbar editor={editor} mode={mode} onChangerMode={changerMode} ajouterImage={ajouterImage} />
 
-                            {mode === "visuel" && <EditorContent editor={editor} />}
+                                {mode === "visuel" && <EditorContent editor={editor} />}
 
 
-                            {mode === "html" && <textarea value={htmlTexte}
-                                onChange={(e) => gererChangementHtml(e.target.value)}
-                                placeholder="<p>Mon paragraphe…</p>"
-                                spellCheck={false}
-                                className="min-h-[260px] w-full resize-y p-4 font-mono text-sm text-[#040F33] outline-none" />}
-                        </div>
-                        {erreurs.contenuHtml && <p className="mt-1 text-xs text-red-600">{erreurs.contenuHtml}</p>}
-                        <p className="mt-1.5 text-xs text-[#0B2270]/50">Le mode HTML est destiné aux utilisateurs à l'aise avec ces formats, le mode Visuel (par défaut) reste le plus simple.</p>
-                    </div>
+                                {mode === "html" && <textarea value={htmlTexte}
+                                    onChange={(e) => gererChangementHtml(e.target.value)}
+                                    placeholder="<p>Mon paragraphe…</p>"
+                                    spellCheck={false}
+                                    className="min-h-[260px] w-full resize-y p-4 font-mono text-sm text-[#040F33] outline-none" />}
+                            </div>
+                            {erreurs.contenuHtml && <p className="mt-1 text-xs text-red-600">{erreurs.contenuHtml}</p>}
+                            <p className="mt-1.5 text-xs text-[#0B2270]/50">Le mode HTML est destiné aux utilisateurs à l'aise avec ces formats, le mode Visuel (par défaut) reste le plus simple.</p>
+                        </div>}
+
+
                 </>}
 
                 {/* Date de publication */}
@@ -730,7 +755,11 @@ function Toolbar({
                     actif: editor.isActive("link"),
                     action: ajouterLien,
                 },
-                { label: "Image", icone: ImagePlus, action: ajouterImage },
+                {
+                    label: "Image",
+                    icone: ImagePlus,
+                    action: ajouterImage
+                },
             ]
             : [];
 

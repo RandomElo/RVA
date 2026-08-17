@@ -9,6 +9,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useRequete } from "../../fonctions/requete";
 import Logo from "../../assets/logo.svg?react";
 import { useNotifications } from "../../contexts/NotificationsContext";
+import BandeauAnniversaire from "./BandeauAnniversaire";
 
 interface Lien {
     href: string;
@@ -331,6 +332,7 @@ export default function Navbar() {
             { href: "/ressources/tests-vma", label: "Tests VMA" },
             { href: "/ressources/lexique", label: "Lexique du coureur" },
             ...(estAuth ? [{ href: "/ressources/specialistes-sante", label: "Spécialistes santé" }] : []),
+            ...(estAuth ? [{ href: "/ressources/anniversaires", label: "Anniversaires" }] : []),
             { href: "/ressources", label: "Toutes nos ressources", end: true },
         ];
     }, [estAuth]);
@@ -355,336 +357,339 @@ export default function Navbar() {
             : null;
 
     return (
-        <header ref={navbarRef} className="sticky top-0 z-50">
-            {/* BARRE DE CHARGEMENT SUPERIEURE */}
-            <div className="h-1 w-full overflow-hidden relative bg-club-600">
-                <div
-                    style={{ transitionDuration: estEnTransition ? '3500ms' : '0ms' }}
-                    className={`h-full bg-emerald-700 transition-all ease-out ${estEnTransition ? "w-full opacity-100" : "w-0 opacity-0"
-                        }`}
-                />
-            </div>
+        <>
+            <BandeauAnniversaire />
+            <header ref={navbarRef} className="sticky top-0 z-50">
+                {/* BARRE DE CHARGEMENT SUPERIEURE */}
+                <div className="h-1 w-full overflow-hidden relative bg-club-600">
+                    <div
+                        style={{ transitionDuration: estEnTransition ? '3500ms' : '0ms' }}
+                        className={`h-full bg-emerald-700 transition-all ease-out ${estEnTransition ? "w-full opacity-100" : "w-0 opacity-0"
+                            }`}
+                    />
+                </div>
 
-            <div className="mx-auto flex items-center justify-between gap-4 px-6 py-3.5 bg-club-600">
-                {/* Logo + nom du club */}
-                <Link
-                    to="/"
-                    onMouseEnter={() => prechargerRoute("/")}
-                    onClick={(e) => {
-                        e.preventDefault();
-                        naviguerAvecAttente("/");
-                    }}
-                    className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-white/30 rounded-lg p-1"
-                >
-                    <Logo className="h-20 w-auto transition-transform duration-200 group-hover:scale-105" />
-                    <span className="font-display text-base font-bold leading-tight text-white sm:text-lg">
-                        RUNNING VINCENNES ASSOCIATION
-                    </span>
-                </Link>
+                <div className="mx-auto flex items-center justify-between gap-4 px-6 py-3.5 bg-club-600">
+                    {/* Logo + nom du club */}
+                    <Link
+                        to="/"
+                        onMouseEnter={() => prechargerRoute("/")}
+                        onClick={(e) => {
+                            e.preventDefault();
+                            naviguerAvecAttente("/");
+                        }}
+                        className="flex items-center gap-3 group focus:outline-none focus:ring-2 focus:ring-white/30 rounded-lg p-1"
+                    >
+                        <Logo className="h-20 w-auto transition-transform duration-200 group-hover:scale-105" />
+                        <span className="font-display text-base font-bold leading-tight text-white sm:text-lg">
+                            RUNNING VINCENNES ASSOCIATION
+                        </span>
+                    </Link>
 
-                {/* Navigation desktop */}
-                <nav className="hidden items-center gap-6 min-[1324px]:flex">
-                    {LIENS_PUBLICS.map((lien) => (
-                        <NavLink
-                            key={lien.href}
-                            to={lien.href}
-                            onMouseEnter={() => prechargerRoute(lien.href)}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                naviguerAvecAttente(lien.href);
-                            }}
-                            className={({ isActive }) =>
-                                `relative text-sm font-medium transition flex items-center gap-1.5 px-2 py-1 rounded-md ${isActive
-                                    ? "text-white underline decoration-2 underline-offset-4 font-semibold"
-                                    : "text-club-100 hover:text-white hover:bg-white/5"
-                                }`
-                            }
-                        >
-                            <span>{lien.label}</span>
-                            {estEnTransition && cibleNavigation === lien.href && (
-                                <span className="absolute -right-4 top-1/2 -translate-y-1/2">
-                                    <Loader2 className="animate-spin text-white" size={12} />
-                                </span>
-                            )}
-                        </NavLink>
-                    ))}
+                    {/* Navigation desktop */}
+                    <nav className="hidden items-center gap-6 min-[1324px]:flex">
+                        {LIENS_PUBLICS.map((lien) => (
+                            <NavLink
+                                key={lien.href}
+                                to={lien.href}
+                                onMouseEnter={() => prechargerRoute(lien.href)}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    naviguerAvecAttente(lien.href);
+                                }}
+                                className={({ isActive }) =>
+                                    `relative text-sm font-medium transition flex items-center gap-1.5 px-2 py-1 rounded-md ${isActive
+                                        ? "text-white underline decoration-2 underline-offset-4 font-semibold"
+                                        : "text-club-100 hover:text-white hover:bg-white/5"
+                                    }`
+                                }
+                            >
+                                <span>{lien.label}</span>
+                                {estEnTransition && cibleNavigation === lien.href && (
+                                    <span className="absolute -right-4 top-1/2 -translate-y-1/2">
+                                        <Loader2 className="animate-spin text-white" size={12} />
+                                    </span>
+                                )}
+                            </NavLink>
+                        ))}
 
-                    <MenuDeroulant label="Ressources" liens={RESSOURCES} onNavigate={naviguerAvecAttente} />
+                        <MenuDeroulant label="Ressources" liens={RESSOURCES} onNavigate={naviguerAvecAttente} />
 
-                    {!estAuth && (
-                        <NavLink
-                            to="/notre-histoire"
-                            onMouseEnter={() => prechargerRoute("/notre-histoire")}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                naviguerAvecAttente("/notre-histoire");
-                            }}
-                            className={({ isActive }) =>
-                                `relative text-sm font-medium transition flex items-center gap-1.5 px-2 py-1 rounded-md ${isActive
-                                    ? "text-white underline decoration-2 underline-offset-4"
-                                    : "text-club-100 hover:text-white hover:bg-white/5"
-                                }`
-                            }
-                        >
-                            <span>Notre histoire</span>
-                            {estEnTransition && cibleNavigation === "/notre-histoire" && (
-                                <span className="absolute -right-4 top-1/2 -translate-y-1/2">
-                                    <Loader2 className="animate-spin text-white" size={12} />
-                                </span>
-                            )}
-                        </NavLink>
-                    )}
+                        {!estAuth && (
+                            <NavLink
+                                to="/notre-histoire"
+                                onMouseEnter={() => prechargerRoute("/notre-histoire")}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    naviguerAvecAttente("/notre-histoire");
+                                }}
+                                className={({ isActive }) =>
+                                    `relative text-sm font-medium transition flex items-center gap-1.5 px-2 py-1 rounded-md ${isActive
+                                        ? "text-white underline decoration-2 underline-offset-4"
+                                        : "text-club-100 hover:text-white hover:bg-white/5"
+                                    }`
+                                }
+                            >
+                                <span>Notre histoire</span>
+                                {estEnTransition && cibleNavigation === "/notre-histoire" && (
+                                    <span className="absolute -right-4 top-1/2 -translate-y-1/2">
+                                        <Loader2 className="animate-spin text-white" size={12} />
+                                    </span>
+                                )}
+                            </NavLink>
+                        )}
 
-                    {pagesModifiable.length > 0 && (
-                        <MenuDeroulant label="Autres pages" liens={pagesModifiable} onNavigate={naviguerAvecAttente} />
-                    )}
+                        {pagesModifiable.length > 0 && (
+                            <MenuDeroulant label="Autres pages" liens={pagesModifiable} onNavigate={naviguerAvecAttente} />
+                        )}
 
-                    {menuRole && (
-                        <MenuDeroulant label={menuRole.label} liens={menuRole.liens} onNavigate={naviguerAvecAttente} />
-                    )}
+                        {menuRole && (
+                            <MenuDeroulant label={menuRole.label} liens={menuRole.liens} onNavigate={naviguerAvecAttente} />
+                        )}
 
-                    {estAuth ? (
-                        <MenuUtilisateur gererDeconnexion={gererDeconnexion} deconnexionEnCours={deconnexionEnCours} />
-                    ) : (
-                        <NavLink
-                            to="/connexion"
-                            onMouseEnter={() => prechargerRoute("/connexion")}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                naviguerAvecAttente("/connexion");
-                            }}
-                            className={({ isActive }) =>
-                                `rounded-lg border px-4 py-2 text-sm font-medium transition shadow-sm ${isActive
-                                    ? "border-white bg-white text-club-600 font-semibold"
-                                    : "border-white/40 text-white hover:bg-white hover:text-club-600"
-                                }`
-                            }
-                        >
-                            Connexion
-                        </NavLink>
-                    )}
-                </nav>
+                        {estAuth ? (
+                            <MenuUtilisateur gererDeconnexion={gererDeconnexion} deconnexionEnCours={deconnexionEnCours} />
+                        ) : (
+                            <NavLink
+                                to="/connexion"
+                                onMouseEnter={() => prechargerRoute("/connexion")}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    naviguerAvecAttente("/connexion");
+                                }}
+                                className={({ isActive }) =>
+                                    `rounded-lg border px-4 py-2 text-sm font-medium transition shadow-sm ${isActive
+                                        ? "border-white bg-white text-club-600 font-semibold"
+                                        : "border-white/40 text-white hover:bg-white hover:text-club-600"
+                                    }`
+                                }
+                            >
+                                Connexion
+                            </NavLink>
+                        )}
+                    </nav>
 
-                {/* Bouton menu mobile / tablette */}
-                <button
-                    type="button"
-                    onClick={() => setMenuOuvert((v) => !v)}
-                    aria-label={menuOuvert ? "Fermer le menu" : "Ouvrir le menu"}
-                    aria-expanded={menuOuvert}
-                    className="text-white min-[1324px]:hidden focus:outline-none flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/10"
-                >
-                    {estEnTransition && <Loader2 className="animate-spin" size={20} />}
-                    {menuOuvert ? <X size={26} /> : <Menu size={26} />}
-                </button>
-            </div>
-
-            {/* Navigation mobile / burger */}
-            {menuOuvert && (
-                <nav className="absolute right-0 ml-auto flex flex-col gap-1 border-b border-l border-club-400/30 bg-club-600 px-6 pb-5 shadow-xl min-[500px]:w-[500px] min-[500px]:rounded-bl-xl min-[1324px]:hidden z-50 animate-in slide-in-from-top-2 duration-150">
-                    {LIENS_PUBLICS.map((lien) => (
-                        <NavLink
-                            key={lien.href}
-                            to={lien.href}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                naviguerAvecAttente(lien.href);
-                            }}
-                            className={({ isActive }) =>
-                                `rounded-lg px-3 py-2.5 text-sm font-medium transition flex items-center justify-between ${isActive
-                                    ? "bg-club-400/30 text-white font-semibold"
-                                    : "text-club-100 hover:bg-club-400/20 hover:text-white"
-                                }`
-                            }
-                        >
-                            <span>{lien.label}</span>
-                            {estEnTransition && cibleNavigation === lien.href && (
-                                <Loader2 className="animate-spin" size={16} />
-                            )}
-                        </NavLink>
-                    ))}
-
-                    {!estAuth && (
-                        <NavLink
-                            to="/notre-histoire"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                naviguerAvecAttente("/notre-histoire");
-                            }}
-                            className={({ isActive }) =>
-                                `rounded-lg px-3 py-2.5 text-sm font-medium transition flex items-center justify-between ${isActive
-                                    ? "bg-club-400/30 text-white font-semibold"
-                                    : "text-club-100 hover:bg-club-400/20 hover:text-white"
-                                }`
-                            }
-                        >
-                            <span>Notre histoire</span>
-                            {estEnTransition && cibleNavigation === "/notre-histoire" && (
-                                <Loader2 className="animate-spin" size={16} />
-                            )}
-                        </NavLink>
-                    )}
-
-                    {/* Section Ressources mobile */}
+                    {/* Bouton menu mobile / tablette */}
                     <button
                         type="button"
-                        onClick={() => setSectionMobileOuverte((v) => (v === "ressources" ? null : "ressources"))}
-                        className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-club-100 hover:bg-club-400/20 hover:text-white transition"
+                        onClick={() => setMenuOuvert((v) => !v)}
+                        aria-label={menuOuvert ? "Fermer le menu" : "Ouvrir le menu"}
+                        aria-expanded={menuOuvert}
+                        className="text-white min-[1324px]:hidden focus:outline-none flex items-center gap-2 p-1.5 rounded-lg hover:bg-white/10"
                     >
-                        Ressources
-                        <ChevronDown
-                            size={16}
-                            className={`transition-transform duration-200 ${sectionMobileOuverte === "ressources" ? "rotate-180" : ""
-                                }`}
-                        />
+                        {estEnTransition && <Loader2 className="animate-spin" size={20} />}
+                        {menuOuvert ? <X size={26} /> : <Menu size={26} />}
                     </button>
-                    {sectionMobileOuverte === "ressources" && (
-                        <div className="ml-3 flex flex-col gap-1 border-l border-club-400/30 pl-3">
-                            {RESSOURCES.map((lien) => (
-                                <NavLink
-                                    key={lien.href}
-                                    to={lien.href}
-                                    end={lien.end}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                        naviguerAvecAttente(lien.href);
-                                    }}
-                                    className={({ isActive }) =>
-                                        `rounded-lg px-3 py-2 text-sm transition flex items-center justify-between ${isActive
-                                            ? "bg-club-400/30 text-white font-medium"
-                                            : "text-club-200 hover:bg-club-400/20 hover:text-white"
-                                        }`
-                                    }
-                                >
-                                    <span>{lien.label}</span>
-                                    {estEnTransition && cibleNavigation === lien.href && (
-                                        <Loader2 className="animate-spin" size={14} />
-                                    )}
-                                </NavLink>
-                            ))}
-                        </div>
-                    )}
+                </div>
 
-                    {/* Section Autres pages mobile */}
-                    {pagesModifiable.length > 0 && (
-                        <>
-                            <button
-                                type="button"
-                                onClick={() => setSectionMobileOuverte((v) => (v === "autres" ? null : "autres"))}
-                                className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-club-100 hover:bg-club-400/20 hover:text-white transition"
+                {/* Navigation mobile / burger */}
+                {menuOuvert && (
+                    <nav className="absolute right-0 ml-auto flex flex-col gap-1 border-b border-l border-club-400/30 bg-club-600 px-6 pb-5 shadow-xl min-[500px]:w-[500px] min-[500px]:rounded-bl-xl min-[1324px]:hidden z-50 animate-in slide-in-from-top-2 duration-150">
+                        {LIENS_PUBLICS.map((lien) => (
+                            <NavLink
+                                key={lien.href}
+                                to={lien.href}
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    naviguerAvecAttente(lien.href);
+                                }}
+                                className={({ isActive }) =>
+                                    `rounded-lg px-3 py-2.5 text-sm font-medium transition flex items-center justify-between ${isActive
+                                        ? "bg-club-400/30 text-white font-semibold"
+                                        : "text-club-100 hover:bg-club-400/20 hover:text-white"
+                                    }`
+                                }
                             >
-                                Autres pages
-                                <ChevronDown
-                                    size={16}
-                                    className={`transition-transform duration-200 ${sectionMobileOuverte === "autres" ? "rotate-180" : ""
-                                        }`}
-                                />
-                            </button>
-                            {sectionMobileOuverte === "autres" && (
-                                <div className="ml-3 flex flex-col gap-1 border-l border-club-400/30 pl-3">
-                                    {pagesModifiable.map((lien) => (
-                                        <NavLink
-                                            key={lien.href}
-                                            to={lien.href}
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                naviguerAvecAttente(lien.href);
-                                            }}
-                                            className={({ isActive }) =>
-                                                `rounded-lg px-3 py-2 text-sm transition flex items-center justify-between ${isActive
-                                                    ? "bg-club-400/30 text-white font-medium"
-                                                    : "text-club-200 hover:bg-club-400/20 hover:text-white"
-                                                }`
-                                            }
-                                        >
-                                            <span>{lien.label}</span>
-                                            {estEnTransition && cibleNavigation === lien.href && (
-                                                <Loader2 className="animate-spin" size={14} />
-                                            )}
-                                        </NavLink>
-                                    ))}
-                                </div>
-                            )}
-                        </>
-                    )}
+                                <span>{lien.label}</span>
+                                {estEnTransition && cibleNavigation === lien.href && (
+                                    <Loader2 className="animate-spin" size={16} />
+                                )}
+                            </NavLink>
+                        ))}
 
-                    {/* Section Administration mobile */}
-                    {menuRole && (
-                        <>
-                            <button
-                                type="button"
-                                onClick={() => setSectionMobileOuverte((v) => (v === "role" ? null : "role"))}
-                                className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-club-100 hover:bg-club-400/20 hover:text-white transition"
+                        {!estAuth && (
+                            <NavLink
+                                to="/notre-histoire"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    naviguerAvecAttente("/notre-histoire");
+                                }}
+                                className={({ isActive }) =>
+                                    `rounded-lg px-3 py-2.5 text-sm font-medium transition flex items-center justify-between ${isActive
+                                        ? "bg-club-400/30 text-white font-semibold"
+                                        : "text-club-100 hover:bg-club-400/20 hover:text-white"
+                                    }`
+                                }
                             >
-                                {menuRole.label}
-                                <ChevronDown
-                                    size={16}
-                                    className={`transition-transform duration-200 ${sectionMobileOuverte === "role" ? "rotate-180" : ""
-                                        }`}
-                                />
-                            </button>
-                            {sectionMobileOuverte === "role" && (
-                                <div className="ml-3 flex flex-col gap-1 border-l border-club-400/30 pl-3">
-                                    {menuRole.liens.map((lien: Lien) => (
-                                        <NavLink
-                                            key={lien.href}
-                                            to={lien.href}
-                                            end={lien.end}
-                                            onClick={(e) => {
-                                                e.preventDefault();
-                                                naviguerAvecAttente(lien.href);
-                                            }}
-                                            className={({ isActive }) =>
-                                                `rounded-lg px-3 py-2 text-sm transition flex items-center justify-between ${isActive
-                                                    ? "bg-club-400/30 text-white font-medium"
-                                                    : "text-club-200 hover:bg-club-400/20 hover:text-white"
-                                                }`
-                                            }
-                                        >
-                                            <span>{lien.label}</span>
-                                            {estEnTransition && cibleNavigation === lien.href && (
-                                                <Loader2 className="animate-spin" size={14} />
-                                            )}
-                                        </NavLink>
-                                    ))}
-                                </div>
-                            )}
-                        </>
-                    )}
+                                <span>Notre histoire</span>
+                                {estEnTransition && cibleNavigation === "/notre-histoire" && (
+                                    <Loader2 className="animate-spin" size={16} />
+                                )}
+                            </NavLink>
+                        )}
 
-                    {/* Déconnexion / Connexion Mobile */}
-                    {estAuth ? (
+                        {/* Section Ressources mobile */}
                         <button
                             type="button"
-                            onClick={gererDeconnexion}
-                            disabled={deconnexionEnCours}
-                            className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-white/40 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 disabled:opacity-50 transition"
+                            onClick={() => setSectionMobileOuverte((v) => (v === "ressources" ? null : "ressources"))}
+                            className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-club-100 hover:bg-club-400/20 hover:text-white transition"
                         >
-                            {deconnexionEnCours ? (
-                                <Loader2 className="animate-spin" size={15} />
-                            ) : (
-                                <LogOut size={15} />
-                            )}
-                            Déconnexion
+                            Ressources
+                            <ChevronDown
+                                size={16}
+                                className={`transition-transform duration-200 ${sectionMobileOuverte === "ressources" ? "rotate-180" : ""
+                                    }`}
+                            />
                         </button>
-                    ) : (
-                        <NavLink
-                            to="/connexion"
-                            onClick={(e) => {
-                                e.preventDefault();
-                                naviguerAvecAttente("/connexion");
-                            }}
-                            className={({ isActive }) =>
-                                `mt-2 rounded-lg border px-3 py-2.5 text-center text-sm font-medium transition ${isActive
-                                    ? "border-white bg-white text-club-600 font-semibold"
-                                    : "border-white/40 text-white hover:bg-white/10"
-                                }`
-                            }
-                        >
-                            Connexion
-                        </NavLink>
-                    )}
-                </nav>
-            )}
-        </header>
+                        {sectionMobileOuverte === "ressources" && (
+                            <div className="ml-3 flex flex-col gap-1 border-l border-club-400/30 pl-3">
+                                {RESSOURCES.map((lien) => (
+                                    <NavLink
+                                        key={lien.href}
+                                        to={lien.href}
+                                        end={lien.end}
+                                        onClick={(e) => {
+                                            e.preventDefault();
+                                            naviguerAvecAttente(lien.href);
+                                        }}
+                                        className={({ isActive }) =>
+                                            `rounded-lg px-3 py-2 text-sm transition flex items-center justify-between ${isActive
+                                                ? "bg-club-400/30 text-white font-medium"
+                                                : "text-club-200 hover:bg-club-400/20 hover:text-white"
+                                            }`
+                                        }
+                                    >
+                                        <span>{lien.label}</span>
+                                        {estEnTransition && cibleNavigation === lien.href && (
+                                            <Loader2 className="animate-spin" size={14} />
+                                        )}
+                                    </NavLink>
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Section Autres pages mobile */}
+                        {pagesModifiable.length > 0 && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setSectionMobileOuverte((v) => (v === "autres" ? null : "autres"))}
+                                    className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-club-100 hover:bg-club-400/20 hover:text-white transition"
+                                >
+                                    Autres pages
+                                    <ChevronDown
+                                        size={16}
+                                        className={`transition-transform duration-200 ${sectionMobileOuverte === "autres" ? "rotate-180" : ""
+                                            }`}
+                                    />
+                                </button>
+                                {sectionMobileOuverte === "autres" && (
+                                    <div className="ml-3 flex flex-col gap-1 border-l border-club-400/30 pl-3">
+                                        {pagesModifiable.map((lien) => (
+                                            <NavLink
+                                                key={lien.href}
+                                                to={lien.href}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    naviguerAvecAttente(lien.href);
+                                                }}
+                                                className={({ isActive }) =>
+                                                    `rounded-lg px-3 py-2 text-sm transition flex items-center justify-between ${isActive
+                                                        ? "bg-club-400/30 text-white font-medium"
+                                                        : "text-club-200 hover:bg-club-400/20 hover:text-white"
+                                                    }`
+                                                }
+                                            >
+                                                <span>{lien.label}</span>
+                                                {estEnTransition && cibleNavigation === lien.href && (
+                                                    <Loader2 className="animate-spin" size={14} />
+                                                )}
+                                            </NavLink>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* Section Administration mobile */}
+                        {menuRole && (
+                            <>
+                                <button
+                                    type="button"
+                                    onClick={() => setSectionMobileOuverte((v) => (v === "role" ? null : "role"))}
+                                    className="flex items-center justify-between rounded-lg px-3 py-2.5 text-sm font-medium text-club-100 hover:bg-club-400/20 hover:text-white transition"
+                                >
+                                    {menuRole.label}
+                                    <ChevronDown
+                                        size={16}
+                                        className={`transition-transform duration-200 ${sectionMobileOuverte === "role" ? "rotate-180" : ""
+                                            }`}
+                                    />
+                                </button>
+                                {sectionMobileOuverte === "role" && (
+                                    <div className="ml-3 flex flex-col gap-1 border-l border-club-400/30 pl-3">
+                                        {menuRole.liens.map((lien: Lien) => (
+                                            <NavLink
+                                                key={lien.href}
+                                                to={lien.href}
+                                                end={lien.end}
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    naviguerAvecAttente(lien.href);
+                                                }}
+                                                className={({ isActive }) =>
+                                                    `rounded-lg px-3 py-2 text-sm transition flex items-center justify-between ${isActive
+                                                        ? "bg-club-400/30 text-white font-medium"
+                                                        : "text-club-200 hover:bg-club-400/20 hover:text-white"
+                                                    }`
+                                                }
+                                            >
+                                                <span>{lien.label}</span>
+                                                {estEnTransition && cibleNavigation === lien.href && (
+                                                    <Loader2 className="animate-spin" size={14} />
+                                                )}
+                                            </NavLink>
+                                        ))}
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {/* Déconnexion / Connexion Mobile */}
+                        {estAuth ? (
+                            <button
+                                type="button"
+                                onClick={gererDeconnexion}
+                                disabled={deconnexionEnCours}
+                                className="mt-2 flex items-center justify-center gap-2 rounded-lg border border-white/40 px-3 py-2.5 text-sm font-medium text-white hover:bg-white/10 disabled:opacity-50 transition"
+                            >
+                                {deconnexionEnCours ? (
+                                    <Loader2 className="animate-spin" size={15} />
+                                ) : (
+                                    <LogOut size={15} />
+                                )}
+                                Déconnexion
+                            </button>
+                        ) : (
+                            <NavLink
+                                to="/connexion"
+                                onClick={(e) => {
+                                    e.preventDefault();
+                                    naviguerAvecAttente("/connexion");
+                                }}
+                                className={({ isActive }) =>
+                                    `mt-2 rounded-lg border px-3 py-2.5 text-center text-sm font-medium transition ${isActive
+                                        ? "border-white bg-white text-club-600 font-semibold"
+                                        : "border-white/40 text-white hover:bg-white/10"
+                                    }`
+                                }
+                            >
+                                Connexion
+                            </NavLink>
+                        )}
+                    </nav>
+                )}
+            </header>
+        </>
     );
 }

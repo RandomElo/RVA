@@ -1,23 +1,34 @@
 /**
  * Page : ressources en ligne.
- * Pour l'instant, un simple menu vers les futures sous-pages (chaque carte sera développée
- * séparément : plan de renfo, prépa marathon, tableau VMA, calculateur de performance…).
+ * Organisée en catégories pour plus de lisibilité.
  *
  * Prérequis :
  * 1. lucide-react + react-router-dom.
- * 2. Adapter `href` de chaque ressource à la vraie route une fois la sous-page créée
- *    (pour l'instant certaines pointent vers des routes qui n'existent pas encore).
+ * 2. Adapter `href` de chaque ressource à la vraie route une fois la sous-page créée.
  * 3. Route suggérée : /ressources
  */
 
 import { Link } from "react-router-dom";
-import { Dumbbell, Route as RouteIcon, Gauge, BookOpen, Salad, ArrowRight, Clock, SportShoe, Loader2, UserRound, Stethoscope } from "lucide-react";
+import {
+    Dumbbell,
+    Route as RouteIcon,
+    Gauge,
+    BookOpen,
+    Salad,
+    ArrowRight,
+    Clock,
+    Footprints,
+    Loader2,
+    UserRound,
+    Stethoscope,
+    Cake,
+    Trophy,
+} from "lucide-react";
 
 import { useEffect, useMemo, useState } from "react";
 import { useRequeteJSON } from "../../fonctions/requeteJSON";
 import SEO from "../../composants/generale/SEO";
 import { useAuth } from "../../contexts/AuthContext";
-
 
 type Ressource = {
     id: string;
@@ -28,9 +39,15 @@ type Ressource = {
     disponible: boolean; // false = "bientôt disponible", carte visible mais non cliquable
 };
 
+type Categorie = {
+    id: string;
+    titre: string;
+    ressources: Ressource[];
+};
+
 const DONNEES_PAR_DEFAULT = {
     titre: "Ressources en ligne",
-    description: "Des outils et des plans d'entraînement pour progresser à votre rythme, seul ou en complément des séances du club.",
+    description: "Des outils et des ressources pour progresser à votre rythme, compléter les séances du club et faciliter la vie de l'association.",
 
     ressource1Titre: "Guide du débutant",
     ressource1Description: "Tout savoir pour bien démarrer la course à pied : matériel, échauffement, prévention des blessures.",
@@ -54,111 +71,152 @@ const DONNEES_PAR_DEFAULT = {
     ressource7Description: "Découvrez les membres du club à travers une photo de chacun.",
 
     ressource8Titre: "Spécialistes de santé",
-    ressource8Description: "Retrouvez les spécialistes de santé recommandés par les adhérents pour accompagner votre pratique de la course à pied."
-}
+    ressource8Description: "Retrouvez les spécialistes de santé recommandés par les adhérents pour accompagner votre pratique de la course à pied.",
 
+    ressource9Titre: "Anniversaires",
+    ressource9Description: "Retrouvez les anniversaires des membres du club.",
+
+    ressource10Titre: "Catégories FFA",
+    ressource10Description: "Retrouvez votre catégorie FFA."
+};
 
 export default function NosRessources() {
-    const [ressourcesJSON, setRessourcesJSON] = useState<any>(DONNEES_PAR_DEFAULT)
-    const [chargement, setChargement] = useState<string | null>(null)
+    const [ressourcesJSON, setRessourcesJSON] = useState<any>(DONNEES_PAR_DEFAULT);
+    const [chargement, setChargement] = useState<string | null>(null);
 
-    const requeteJSON = useRequeteJSON()
-    const { estAuth } = useAuth()
+    const requeteJSON = useRequeteJSON();
+    const { estAuth } = useAuth();
 
     useEffect(() => {
         async function recuperation() {
             const donnees = await requeteJSON("ressources", (nouvellesDonnees) => {
-                if (nouvellesDonnees) setRessourcesJSON(nouvellesDonnees)
-            })
-            if (donnees) setRessourcesJSON(donnees)
-
+                if (nouvellesDonnees) setRessourcesJSON(nouvellesDonnees);
+            });
+            if (donnees) setRessourcesJSON(donnees);
         }
-        recuperation()
+        recuperation();
     }, []);
 
-    const RESSOURCES: Ressource[] = useMemo(() => {
-        return [
-            // --- 1. ACCUEIL & DÉBUTANTS ---
-            ...(estAuth
-                ? [
+    const CATEGORIES: Categorie[] = useMemo(() => {
+        const categories: Categorie[] = [
+            {
+                id: "demarrer",
+                titre: "Bien démarrer",
+                ressources: [
                     {
-                        id: "trombinoscope",
-                        titre: ressourcesJSON.ressource7Titre,
-                        description: ressourcesJSON.ressource7Description,
-                        icone: UserRound,
-                        href: "/ressources/trombinoscope",
+                        id: "lexique-coureur",
+                        titre: ressourcesJSON.ressource2Titre,
+                        description: ressourcesJSON.ressource2Description,
+                        icone: BookOpen,
+                        href: "/ressources/lexique",
                         disponible: true,
                     },
-                ]
-                : []),
-            {
-                id: "lexique-coureur",
-                titre: ressourcesJSON.ressource2Titre,
-                description: ressourcesJSON.ressource2Description,
-                icone: BookOpen,
-                href: "/ressources/lexique",
-                disponible: true,
-            },
-            {
-                id: "guide-debutant",
-                titre: ressourcesJSON.ressource1Titre,
-                description: ressourcesJSON.ressource1Description,
-                icone: BookOpen,
-                href: "/ressources/guide-debutant",
-                disponible: false,
-            },
-
-            // --- 2. ENTRAÎNEMENT & ATHLÉTISME ---
-            {
-                id: "plan-entrainement",
-                titre: ressourcesJSON.ressource3Titre,
-                description: ressourcesJSON.ressource3Description,
-                icone: RouteIcon,
-                href: "/ressources/plan-entrainement",
-                disponible: true,
-            },
-            {
-                id: "vma",
-                titre: ressourcesJSON.ressource4Titre,
-                description: ressourcesJSON.ressource4Description,
-                icone: Gauge,
-                href: "/ressources/vma",
-                disponible: true,
-            },
-            {
-                id: "tests-vma",
-                titre: ressourcesJSON.ressource5Titre,
-                description: ressourcesJSON.ressource5Description,
-                icone: SportShoe,
-                href: "/ressources/tests-vma",
-                disponible: true,
-            },
-
-            // --- 3. SANTÉ & HYGIÈNE DE VIE ---
-            ...(estAuth
-                ? [
                     {
-                        id: "specialistes-sante",
-                        titre: ressourcesJSON.ressource8Titre,
-                        description: ressourcesJSON.ressource8Description,
-                        icone: Stethoscope,
-                        href: "/ressources/specialistes-sante",
+                        id: "guide-debutant",
+                        titre: ressourcesJSON.ressource1Titre,
+                        description: ressourcesJSON.ressource1Description,
+                        icone: BookOpen,
+                        href: "/ressources/guide-debutant",
+                        disponible: false,
+                    },
+                ],
+            },
+            {
+                id: "entrainement",
+                titre: "Entraînement & performance",
+                ressources: [
+                    {
+                        id: "plan-entrainement",
+                        titre: ressourcesJSON.ressource3Titre,
+                        description: ressourcesJSON.ressource3Description,
+                        icone: RouteIcon,
+                        href: "/ressources/plan-entrainement",
                         disponible: true,
                     },
-                ]
-                : []),
+                    {
+                        id: "vma",
+                        titre: ressourcesJSON.ressource4Titre,
+                        description: ressourcesJSON.ressource4Description,
+                        icone: Gauge,
+                        href: "/ressources/vma",
+                        disponible: true,
+                    },
+                    {
+                        id: "tests-vma",
+                        titre: ressourcesJSON.ressource5Titre,
+                        description: ressourcesJSON.ressource5Description,
+                        icone: Footprints,
+                        href: "/ressources/tests-vma",
+                        disponible: true,
+                    },
+                    {
+                        id: "categories-ffa",
+                        titre: ressourcesJSON.ressource10Titre,
+                        description: ressourcesJSON.ressource10Description,
+                        icone: Trophy,
+                        href: "/ressources/categories-ffa",
+                        disponible: true,
+                    },
+                ],
+            },
             {
-                id: "nutrition",
-                titre: ressourcesJSON.ressource6Titre,
-                description: ressourcesJSON.ressource6Description,
-                icone: Salad,
-                href: "/ressources/nutrition",
-                disponible: false,
+                id: "sante",
+                titre: "Santé & nutrition",
+                ressources: [
+                    {
+                        id: "nutrition",
+                        titre: ressourcesJSON.ressource6Titre,
+                        description: ressourcesJSON.ressource6Description,
+                        icone: Salad,
+                        href: "/ressources/nutrition",
+                        disponible: false,
+                    },
+                    ...(estAuth
+                        ? [
+                            {
+                                id: "specialistes-sante",
+                                titre: ressourcesJSON.ressource8Titre,
+                                description: ressourcesJSON.ressource8Description,
+                                icone: Stethoscope,
+                                href: "/ressources/specialistes-sante",
+                                disponible: true,
+                            },
+                        ]
+                        : []),
+                ],
+            },
+            {
+                id: "vie-asso",
+                titre: "Vie de l'association",
+                ressources: [
+                    ...(estAuth
+                        ? [
+                            {
+                                id: "trombinoscope",
+                                titre: ressourcesJSON.ressource7Titre,
+                                description: ressourcesJSON.ressource7Description,
+                                icone: UserRound,
+                                href: "/ressources/trombinoscope",
+                                disponible: true,
+                            },
+                            {
+                                id: "anniversaires",
+                                titre: ressourcesJSON.ressource9Titre,
+                                description: ressourcesJSON.ressource9Description,
+                                icone: Cake,
+                                href: "/ressources/anniversaires",
+                                disponible: true,
+                            },
+                        ]
+                        : []),
+                ],
             },
         ];
-    }, [ressourcesJSON]);
 
-
+        // On ne garde que les catégories qui ont au moins une ressource
+        // (évite d'afficher "Vie de l'association" vide pour un visiteur non connecté)
+        return categories.filter((cat) => cat.ressources.length > 0);
+    }, [ressourcesJSON, estAuth]);
 
     return (
         <>
@@ -175,52 +233,63 @@ export default function NosRessources() {
                     <p className="mt-2 text-[#0B2270]/70">{ressourcesJSON.description}</p>
                 </header>
 
-                {/* Menu de ressources */}
-                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {RESSOURCES.map((r) => {
-                        const Icone = r.icone;
-                        const contenuCarte = (
-                            <>
-                                <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-club-100 text-club-600 transition group-hover:bg-club-600 group-hover:text-white">
-                                    <Icone size={20} />
-                                </div>
-                                <h2 className="mt-4 font-display text-base font-semibold text-[#040F33]">{r.titre}</h2>
-                                <p className="mt-1.5 text-sm text-[#0B2270]/70">{r.description}</p>
-                                {r.disponible ? (
-                                    <span className="mt-4 flex items-center gap-1 text-sm font-medium text-club-600 transition group-hover:gap-2">
-                                        Découvrir
-                                        <ArrowRight size={14} />
-                                    </span>
-                                ) : (
-                                    <span className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#0B2270]/40">
-                                        <Clock size={12} />
-                                        Bientôt disponible
-                                    </span>
-                                )}
-                            </>
-                        );
+                {/* Catégories de ressources */}
+                <div className="space-y-12">
+                    {CATEGORIES.map((categorie) => (
+                        <section key={categorie.id}>
+                            <h2 className="mb-4 font-display text-lg font-semibold text-[#040F33] border-b border-club-100 pb-2">
+                                {categorie.titre}
+                            </h2>
 
-                        return r.disponible ? (
+                            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                {categorie.ressources.map((r) => {
+                                    const Icone = r.icone;
+                                    const contenuCarte = (
+                                        <>
+                                            <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-club-100 text-club-600 transition group-hover:bg-club-600 group-hover:text-white">
+                                                <Icone size={20} />
+                                            </div>
+                                            <h3 className="mt-4 font-display text-base font-semibold text-[#040F33]">{r.titre}</h3>
+                                            <p className="mt-1.5 text-sm text-[#0B2270]/70">{r.description}</p>
+                                            {r.disponible ? (
+                                                <span className="mt-4 flex items-center gap-1 text-sm font-medium text-club-600 transition group-hover:gap-2">
+                                                    Découvrir
+                                                    <ArrowRight size={14} />
+                                                </span>
+                                            ) : (
+                                                <span className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#0B2270]/40">
+                                                    <Clock size={12} />
+                                                    Bientôt disponible
+                                                </span>
+                                            )}
+                                        </>
+                                    );
 
-                            <Link
-                                onClick={() => setChargement(r.id)}
-                                key={r.id}
-                                to={r.href}
-                                className="group flex flex-col rounded-xl border border-club-100 bg-white p-5 transition hover:-translate-y-0.5 hover:border-club-300 hover:shadow-md"
-                            >
-                                {chargement == r.id ?
-                                    <Loader2 size={16} className="animate-spin mx-auto my-auto" />
-                                    : contenuCarte
-                                }
-
-                            </Link>
-
-                        ) : (
-                            <div key={r.id} className="group flex flex-col rounded-xl border border-dashed border-club-200 bg-club-50/40 p-5 opacity-70">
-                                {contenuCarte}
+                                    return r.disponible ? (
+                                        <Link
+                                            onClick={() => setChargement(r.id)}
+                                            key={r.id}
+                                            to={r.href}
+                                            className="group flex flex-col rounded-xl border border-club-100 bg-white p-5 transition hover:-translate-y-0.5 hover:border-club-300 hover:shadow-md"
+                                        >
+                                            {chargement === r.id ? (
+                                                <Loader2 size={16} className="animate-spin mx-auto my-auto" />
+                                            ) : (
+                                                contenuCarte
+                                            )}
+                                        </Link>
+                                    ) : (
+                                        <div
+                                            key={r.id}
+                                            className="group flex cursor-not-allowed flex-col rounded-xl border border-dashed border-club-200 bg-club-50/40 p-5 opacity-70"
+                                        >
+                                            {contenuCarte}
+                                        </div>
+                                    );
+                                })}
                             </div>
-                        );
-                    })}
+                        </section>
+                    ))}
                 </div>
             </div>
         </>

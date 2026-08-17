@@ -179,3 +179,53 @@ export const supprimerPhotoGalerie = gestionErreur(async (req, res) => {
     return res.json({ etat: true, detail: { donnees: await recupererImages(req), notification: "Image supprimer avec succès." } })
 
 }, "controleurSupprimerPhotoGalerie", "Erreur lors de la suppression de la photo")
+
+export const modifierAlt = gestionErreur(async (req, res) => {
+    const { nomFichier, alt } = req.body;
+
+    if (typeof nomFichier !== "string" || typeof alt !== "string") {
+        return res.status(400).json({ erreur: "Requête incorrecte." });
+    }
+
+    const image = await req.Images.findOne({ where: { nomFichier } })
+    if (!image) {
+        return res.status(404).json({ erreur: "Image introuvable." });
+    }
+
+    await image.update({ alt })
+
+    // Je doit mettre à jour les albums
+
+    const articles = await req.Articles.findAll({
+        where: { categorie: "album_photo" },
+        attributes: ['id', 'titre', 'url', 'contenuHtml'],
+    });
+
+    for (const article of articles) {
+        if (!article.contenuHtml) continue;
+
+        if (article.contenuHtml.includes(nomFichier)) {
+            // 1. Transformer le JSON string en tableau JavaScript
+            let images = JSON.parse(article.contenuHtml);
+
+            // 2. Modifier la légende de l'image correspondante
+            let aEteModifie = false;
+            images = images.map((img) => {
+                if (img.chemin === nomFichier) {
+                    aEteModifie = true;
+                    return { ...img, legende: alt };
+                }
+                return img;
+            });
+
+            // 3. Si une modification a eu lieu, mettre à jour la BDD
+            if (aEteModifie) {
+                article.contenuHtml = JSON.stringify(images);
+                await article.save(); // Met à jour l'enregistrement en BDD
+            }
+
+        }
+    }
+
+    return res.json({ etat: true, detail: await recupererImages(req) })
+}, "controleurModifierAlt", "Erreur lors de la modification du texte alternatif")

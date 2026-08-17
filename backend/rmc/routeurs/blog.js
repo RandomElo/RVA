@@ -1,5 +1,5 @@
 import e from "express";
-import { canvaVisualisation, cree, enregistrerNewsletter, modifier, recupererArticle, recupererArticleAdmin, recupererNewsletter, recupererQlqArticles, recupererTousArticles, recupererTousArticlesAdmin, suggestion, supprimer } from "../controleurs/blog.js";
+import { canvaVisualisation, cree, creeAlbum, enregistrerNewsletter, modifier, modifierAlbum, recupererAlbum, recupererArticle, recupererArticleAdmin, recupererNewsletter, recupererQlqArticles, recupererTousArticles, recupererTousArticlesAdmin, suggestion, supprimer } from "../controleurs/blog.js";
 import { accesAdmin } from "../middlewares/accesAdmin.js";
 import { accesUtilisateur } from "../middlewares/accesUtilisateurs.js";
 import { formulaireOuMailLimiteur } from "../middlewares/limiteurRequetes.js";
@@ -22,4 +22,8 @@ routeurArticles.post("/cree-newsletter", accesAdmin, enregistrerNewsletter)
 routeurArticles.get("/recuperer-newsletter/:chemin", accesUtilisateur, recupererNewsletter)
 routeurArticles.post("/suggestion", formulaireOuMailLimiteur, accesUtilisateur, suggestion)
 
+// Album
+routeurArticles.post("/cree-album", accesAdmin, creeAlbum)
+routeurArticles.get("/recuperer-album", accesAdmin, recupererAlbum)
+routeurArticles.post("/modifier-album", accesAdmin, modifierAlbum)
 export default routeurArticles

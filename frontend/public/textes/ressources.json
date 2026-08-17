@@ -1,6 +1,6 @@
 {
     "titre": "Ressources en ligne",
-    "description": "Des outils et des plans d'entraînement pour progresser à votre rythme, seul ou en complément des séances du club.",
+    "description": "Des outils et des ressources pour progresser à votre rythme, compléter les séances du club et faciliter la vie de l'association.",
 
     "ressource1Titre": "Guide du débutant",
     "ressource1Description": "Tout savoir pour bien démarrer la course à pied : matériel, échauffement, prévention des blessures.",
@@ -24,5 +24,11 @@
     "ressource7Description": "Découvrez les membres du club à travers une photo de chacun.",
 
     "ressource8Titre": "Spécialistes de santé",
-    "ressource8Description": "Retrouvez les spécialistes de santé recommandés par les adhérents pour accompagner votre pratique de la course à pied."
+    "ressource8Description": "Retrouvez les spécialistes de santé recommandés par les adhérents pour accompagner votre pratique de la course à pied.",
+
+    "ressource9Titre": "Anniversaires",
+    "ressource9Description": "Retrouvez la liste des anniversaires des membres du club.",
+
+    "ressource10Titre": "Catégories FFA",
+    "ressource10Description": "Retrouvez votre catégorie FFA."
 }

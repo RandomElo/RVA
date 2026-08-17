@@ -24,7 +24,7 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 async function fonctionRecupererUtilisateurs(req, res = null) {
     const utilisateurs = await req.Utilisateurs.findAll({
         where: { role: "adherent" },
-        attributes: ["id", "prenom", "nom", "mail", "cheminTrombinoscope", "derniereConnexion"],
+        attributes: ["id", "prenom", "nom", "mail", "cheminTrombinoscope", "derniereConnexion", "dateNaissance"],
         order: [["derniereConnexion", "ASC"]],
         raw: true
     })
@@ -33,9 +33,9 @@ async function fonctionRecupererUtilisateurs(req, res = null) {
 }
 
 async function verificationInformationsAdherent(req, res) {
-    const { prenom, nom, mail } = req.body
+    const { prenom, nom, mail, dateNaissance } = req.body
 
-    if (!prenom || !nom || !mail) {
+    if (!prenom || !nom || !mail || !dateNaissance) {
         return res.status(400).json({
             etat: false,
             detail: "Requête incorrecte",
@@ -52,8 +52,13 @@ async function verificationInformationsAdherent(req, res) {
         return res.json({ etat: true, detail: { inviter: "erreur", detail: "Les informations de compte ne respectent pas les règles définies." } });
     }
 
+    const regexDateNaissance = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])$/
+    if (!regexDateNaissance.test(dateNaissance)) {
+        return res.json({ etat: true, detail: { inviter: "erreur", detail: "Les informations de compte ne respectent pas les règles définies." } });
+    }
 
-    return { prenom, nom, mail }
+
+    return { prenom, nom, mail, dateNaissance }
 }
 
 async function envoyerMailCreationCompte(req, mail, prenom, idUtilisateur) {
@@ -71,11 +76,12 @@ async function envoyerMailCreationCompte(req, mail, prenom, idUtilisateur) {
     });
 }
 
-async function creationCompte(req, prenom, nom, mail) {
+async function creationCompte(req, prenom, nom, mail, dateNaissance) {
     const utilisateur = await req.Utilisateurs.create({
         prenom: prenom,
         nom: nom,
         mail: mail,
+        dateNaissance,
         role: "adherent"
     });
     envoyerMailCreationCompte(req, mail, prenom, utilisateur.id)
@@ -489,7 +495,7 @@ export const photo = gestionErreur(async (req, res) => {
 }, "controleurPhotoAdherent", "Erreur lors de la récupération de la photo de l'adhérent")
 
 export const inviterAdherent = gestionErreur(async (req, res) => {
-    const { prenom, nom, mail } = await verificationInformationsAdherent(req, res)
+    const { prenom, nom, mail, dateNaissance } = await verificationInformationsAdherent(req, res)
     if (prenom) {
         const utilisateur = await req.Utilisateurs.findOne({ where: { mail } })
         if (utilisateur) {
@@ -500,7 +506,7 @@ export const inviterAdherent = gestionErreur(async (req, res) => {
             prenom,
             nom,
             mail,
-            motDePasse: "0000000",
+            dateNaissance,
             role: "adherent"
         })
 
@@ -625,15 +631,26 @@ export const inviterAdherentCsv = gestionErreur(async (req, res) => {
             continue;
         }
 
-        const [prenom, nom, email] = ligne;
+        let [prenom, nom, dateNaissance, email] = ligne;
 
-        if (!prenom || !nom || !email) {
+        if (!prenom || !nom || !email || !dateNaissance) {
             erreurs.push(`Ligne ${i + 1} : une ou plusieurs colonnes sont vides.`);
             continue;
         }
 
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
             erreurs.push(`Ligne ${i + 1} : l'adresse email "${email}" est invalide.`);
+            continue;
+        }
+
+        // Si l'année est présente (-AAAA ou /AAAA), on la supprime
+        dateNaissance = dateNaissance.replace(/[-/]\d{4}$/, '');
+
+        // Validation finale : exactement JJ/MM ou JJ-MM (du 01-01 au 31-12)
+        const regexDate = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])$/;
+
+        if (!regexDate.test(dateNaissance)) {
+            erreurs.push(`Ligne ${i + 1} : la date de naissance "${dateNaissance}" est invalide.`);
             continue;
         }
 
@@ -648,11 +665,11 @@ export const inviterAdherentCsv = gestionErreur(async (req, res) => {
             continue;
         }
 
-        aCreer.push({ prenom, nom, email });
+        aCreer.push({ prenom, nom, email, dateNaissance });
     }
     if (aCreer.length > 0) {
         await Promise.allSettled(
-            aCreer.map(async (u) => await creationCompte(req, u.prenom, u.nom, u.email))
+            aCreer.map(async (u) => await creationCompte(req, u.prenom, u.nom, u.email, u.dateNaissance))
         );
     }
 
@@ -660,9 +677,9 @@ export const inviterAdherentCsv = gestionErreur(async (req, res) => {
 }, "controleurInviterAdherentCsv", "Erreur lors des invitations");
 
 export const modifierInformationsUtilisateur = gestionErreur(async (req, res) => {
-    const { prenom, nom, mail } = await verificationInformationsAdherent(req, res)
+    const { prenom, nom, mail, dateNaissance } = await verificationInformationsAdherent(req, res)
     if (prenom) {
-        await req.Utilisateurs.update({ prenom, nom, mail }, { where: { mail } })
+        await req.Utilisateurs.update({ prenom, nom, mail, dateNaissance }, { where: { mail } })
         await fonctionRecupererUtilisateurs(req, res)
     }
 }, "controleurModifierInfosUtilisateur", "Erreur lors de la modification des données de l'utilisateur")
@@ -709,7 +726,7 @@ export const exporterDonnees = gestionErreur(async (req, res) => {
         });
     }
     const utilisateur = await req.Utilisateurs.findByPk(id, {
-        attributes: ["prenom", "nom", "mail", "role", "cheminTrombinoscope", "derniereConnexion", "recevoirNewsletter", "dateCreation"],
+        attributes: ["prenom", "nom", "mail", "dateNaissance", "role", "cheminTrombinoscope", "derniereConnexion", "recevoirNewsletter", "dateCreation"],
         raw: true
     })
     if (!utilisateur) {
@@ -772,3 +789,29 @@ export const relancerInitialisationCompte = gestionErreur(async (req, res) => {
     }
 
 }, "controleruRelancerInitialisationCompte", "Erreur lors de l'envoi du mail de relance")
+
+export const anniversaireDuJour = gestionErreur(async (req, res) => {
+    const date = new Date();
+
+    const dateFormatee = date.toLocaleDateString("fr-FR", {
+        day: "2-digit",
+        month: "2-digit"
+    });
+
+    const listeAnniversaires = await req.Utilisateurs.findAll({
+        where: { dateNaissance: dateFormatee, role: "adherent" },
+        attributes: ["id", "nom", "prenom"],
+        raw: true
+    })
+
+    return res.json({ etat: true, detail: listeAnniversaires })
+}, "controleurRecuperationAnniversairesJour", "Erreur lors de la récupération des anniversaires du jour")
+
+export const anniversaires = gestionErreur(async (req, res) => {
+    const donnees = await req.Utilisateurs.findAll({
+        where: { role: "adherent" },
+        attributes: ["id", "prenom", "nom", "dateNaissance", 'cheminTrombinoscope'],
+        raw: true
+    })
+    return res.json({ etat: true, detail: donnees })
+}, "controleurRecuperationAnniversaires", "Erreur lors de la récupération des anniversaires")

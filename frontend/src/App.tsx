@@ -23,6 +23,8 @@ import Blog from "./pages/blog/Blog";
 import NosPartenaires from "./pages/NosPartenaires";
 import NosRessources from "./pages/ressources/RessourcesEntrainement";
 import Connexion from "./pages/base/Connexion";
+import Anniversaires from "./pages/Anniversaires";
+import CategoriesFFA from "./pages/ressources/CategoriesFFA";
 
 // 💤 2. PAGES EN LAZY LOADING (Chargées à la demande)
 
@@ -132,6 +134,7 @@ const router = createBrowserRouter([
             { path: "/ressources/tests-vma", element: <TestsVMA /> },
             { path: "/ressources/vma", element: <CalculateurVMA /> },
             { path: "/ressources/lexique", element: <Lexique /> },
+            { path: "/ressources/categories-ffa", element: <CategoriesFFA /> },
 
             // --- ROUTES ADHÉRENTS (Protégées) ---
             {
@@ -139,6 +142,7 @@ const router = createBrowserRouter([
                 children: [
                     { path: "/ressources/specialistes-sante", element: <SpecialistesSante /> },
                     { path: "/ressources/trombinoscope", element: <Trombinoscope /> },
+                    { path: "/ressources/anniversaires", element: <Anniversaires /> },
                     { path: "/rediger-article", element: <RedactionArticle /> },
                 ],
             },

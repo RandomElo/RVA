@@ -11,6 +11,7 @@ import { useRequete } from "../../fonctions/requete";
 import { contenuPropre } from "../../fonctions/sanitizeur";
 import { ICONE_CATEGORIE, LABEL_CATEGORIE, STYLE_BADGE, type ArticleFormValue } from "../../constantes/types/blog";
 import RecupererNewsletter from "../../composants/blog/RecupererNewsletter";
+import Album from "../../composants/blog/Album";
 
 export default function ArticleDetailPage() {
     const { url } = useParams<{ url: string }>();
@@ -23,7 +24,7 @@ export default function ArticleDetailPage() {
 
         async function recupererArticle() {
             if (!url) return;
-            
+
             // On ne réinitialise à `undefined` que si on change d'URL pour éviter le flash
             setArticle(undefined);
 
@@ -32,7 +33,7 @@ export default function ArticleDetailPage() {
                 if (!annule) {
                     setArticle(articleDonnees ?? null);
                 }
-            } catch (erreur) {
+            } catch {
                 if (!annule) {
                     setArticle(null);
                 }
@@ -44,8 +45,8 @@ export default function ArticleDetailPage() {
         return () => {
             annule = true; // Empêche de mettre à jour le state si le composant s'est démonté
         };
-    // ⚠️ Ne pas inclure `requete` si useRequete() n'est pas mémoïsé avec useCallback dans son hook
-    // eslint-disable-next-next-line react-hooks/exhaustive-deps
+        // ⚠️ Ne pas inclure `requete` si useRequete() n'est pas mémoïsé avec useCallback dans son hook
+        // eslint-disable-next-next-line react-hooks/exhaustive-deps
     }, [url]);
 
     // 1. État de chargement
@@ -147,6 +148,8 @@ export default function ArticleDetailPage() {
                 {/* Contenu */}
                 {article.categorie === "newsletter" ? (
                     <RecupererNewsletter chemin={article.contenuHtml} />
+                ) : article.categorie == "album_photo" ? (
+                    <Album images={JSON.parse(article.contenuHtml)} />
                 ) : (
                     <div
                         className="prose prose-sm sm:prose-base max-w-none prose-headings:font-display prose-a:text-club-600"

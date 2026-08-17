@@ -18,6 +18,7 @@ export async function ajouterDonneesInitiales() {
                     nom: "Administrateur",
                     mail: process.env.EMAIL_ADMINISTRATEUR,
                     motDePasse: process.env.MDP_ADMINISTRATEUR,
+                    dateNaissance: "16/10",
                     role: "administrateur"
                 },
                 {
@@ -25,6 +26,7 @@ export async function ajouterDonneesInitiales() {
                     nom: "Dépannage",
                     mail: process.env.EMAIL_ADMINISTRATEUR2,
                     motDePasse: process.env.MDP_ADMINISTRATEUR,
+                    dateNaissance: "16/10",
                     role: "administrateur"
                 },
             ]);

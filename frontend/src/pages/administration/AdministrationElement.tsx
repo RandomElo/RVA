@@ -37,6 +37,7 @@ import type { Adherent } from "../../constantes/types/adherents";
 import { type Specialiste } from "../../constantes/types/specialistesSante";
 import ModalNouveauSpecialiste from "../../composants/specialistesSante/ModalNouveauSpecialiste";
 import ModalConfirmationRelance from "../../composants/modal/administrationElement/ModalConfirmerRelance";
+import ModalModiferAlbum from "../../composants/modal/administrationElement/ModalModifierAlbum";
 
 type Statut = "brouillon" | "publie" | "suggestion";
 
@@ -105,7 +106,7 @@ export default function AdministrationElement({ mode }: Props) {
     const [modalImportPhotosZip, setModalImportPhotosZip] = useState<boolean>(false)
     const [modalActionsAdherents, setModalActionsAdherents] = useState<null | Adherent>(null)
     const [modalConfirmerRelance, setModalConfirmerRelance] = useState<Adherent | null>(null)
-
+    const [modalModifierAlbum, setModalModifierAlbum] = useState<string | null>(null)
     // Modales spécialiste
     const [modalModifierSpecialiste, setModalModifierSpecialiste] = useState<Specialiste | null>(null)
 
@@ -343,6 +344,14 @@ export default function AdministrationElement({ mode }: Props) {
                                 </div>
                                 <div className="flex shrink-0 items-center gap-1">
                                     {a.categorie !== "newsletter" &&
+                                        a.categorie == "album_photo" ?
+                                        <button className="flex h-9 w-9 items-center justify-center rounded-lg text-[#0B2270] transition hover:bg-club-50" onClick={() => {
+                                            console.log(a.url)
+                                            setModalModifierAlbum(a.url)
+                                        }}>
+                                            <Pencil size={16} />
+                                        </button>
+                                        :
                                         <Link to={`/administration/modifier-article/${a.url}`} aria-label="Modifier" title="Modifier" className="flex h-9 w-9 items-center justify-center rounded-lg text-[#0B2270] transition hover:bg-club-50">
                                             <Pencil size={16} />
                                         </Link>
@@ -549,7 +558,11 @@ export default function AdministrationElement({ mode }: Props) {
                     <ModalActionsAdherent ouvert={modalActionsAdherents !== null} onFermer={() => setModalActionsAdherents(null)} adherent={modalActionsAdherents} setAdherents={setAdherents} setModalInviterMembre={setModalInviterMembre} />
 
                     <ModalConfirmationRelance ouvert={!!modalConfirmerRelance} onFermer={() => setModalConfirmerRelance(null)} mail={modalConfirmerRelance?.mail} />
+
                 </>
+            }
+            {mode == "blog" &&
+                <ModalModiferAlbum ouvert={!!modalModifierAlbum} url={modalModifierAlbum} onFermer={() => setModalModifierAlbum(null)} />
             }
 
             {mode == "specialistesSante" &&

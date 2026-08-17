@@ -4,5 +4,6 @@ export interface Adherent {
     nom: string;
     mail: string;
     cheminTrombinoscope: string;
-    derniereConnexion: string
+    derniereConnexion: string;
+    dateNaissance: string;
 }

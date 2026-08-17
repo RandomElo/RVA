@@ -14,6 +14,13 @@ export default function (bdd) {
                 type: DataTypes.STRING(100),
                 allowNull: false,
             },
+            dateNaissance: {
+                type: DataTypes.STRING(5),
+                allowNull: false,
+                validate: {
+                    is: /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])$/
+                }
+            },
             nom: {
                 type: DataTypes.STRING(100),
                 allowNull: false,

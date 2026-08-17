@@ -158,28 +158,25 @@ export default function Accueil() {
 
     useEffect(() => {
         async function chargerPageAccueil() {
-            try {
-                const texteCacheInitial = await requeteJSON("accueil", (nouvellesDonnees) => {
-                    if (nouvellesDonnees) {
-                        setAccueilJSON((prev) => ({ ...prev, ...nouvellesDonnees }));
-                    }
-                });
-
-                if (texteCacheInitial) {
-                    setAccueilJSON((prev) => ({ ...prev, ...texteCacheInitial }));
+            const texteCacheInitial = await requeteJSON("accueil", (nouvellesDonnees) => {
+                if (nouvellesDonnees) {
+                    setAccueilJSON((prev) => ({ ...prev, ...nouvellesDonnees }));
                 }
+            });
 
-                const [articlesDonnees, coursesDonnees] = await Promise.all([
-                    requete({ url: "/articles/recuperer-qlq-articles?nbrArticles=3" }),
-                    requete({ url: "/courses/courses-accueil" })
-                ]);
-
-                setArticles(articlesDonnees);
-                setCourses(coursesDonnees);
-
-            } catch (error) {
-                console.error("Erreur lors du chargement :", error);
+            if (texteCacheInitial) {
+                setAccueilJSON((prev) => ({ ...prev, ...texteCacheInitial }));
             }
+
+            const [articlesDonnees, coursesDonnees] = await Promise.all([
+                requete({ url: "/articles/recuperer-qlq-articles?nbrArticles=3" }),
+                requete({ url: "/courses/courses-accueil" })
+            ]);
+
+            setArticles(articlesDonnees);
+            setCourses(coursesDonnees);
+
+
         }
 
         chargerPageAccueil();

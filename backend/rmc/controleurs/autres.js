@@ -154,3 +154,4 @@ export const healthCheck = gestionErreur(async (req, res) => {
     });
 
 }, "controleurHealthCheck", "Erreur lors du health check")
+

@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
-import { Image as ImageIcon, FolderLock, Plus, Search, Trash2, Copy, Check, HardDrive, Loader2, SquarePen } from "lucide-react";
+import { Image as ImageIcon, FolderLock, Plus, Search, Trash2, Copy, Check, HardDrive, Loader2, SquarePen, Pencil } from "lucide-react";
 import { useRequete } from "../../fonctions/requete";
 import type { ImageSite } from "../../constantes/types/blog";
 import { useNotifications } from "../../contexts/NotificationsContext";
 import ModalAjouterImage from "../../composants/modal/blog/ModalAjouterImage";
 import ModalSupprimerImage from "../../composants/modal/administrationElement/ModalSupprimerImage";
+import ModalModiferAlbum from "../../composants/modal/administrationElement/ModalModifierAlbum";
+import ModalModifierAlt from "../../composants/modal/administrationElement/ModalModifierAlt";
 
 const CHEMIN_GALERIE = "/images/i";
 const CHEMIN_IMAGES = "/img";
@@ -26,6 +28,7 @@ export default function GestionImages() {
     const [imageASupprimer, setImageASupprimer] = useState<ImageSite | null>(null);
     const [ancienneDonnees, setAnciennesDonnees] = useState<ImageSite | undefined>(undefined);
     const [detailsUtilisationImages, setDetailsUtilisationImages] = useState<DetailsUtilisationImage[]>([]);
+    const [imageModfierAlt, setImageModifierAlt] = useState<ImageSite | null>(null)
 
     const requete = useRequete();
     const { notifier } = useNotifications();
@@ -214,23 +217,36 @@ export default function GestionImages() {
                                             </div>
 
                                             <div className="mt-3 flex items-center justify-between border-t border-club-50 pt-2">
-                                                <button
-                                                    type="button"
-                                                    onClick={() => copierDansPressePapier(url, image.nomFichier)}
-                                                    className="inline-flex items-center gap-1 text-xs font-medium text-club-600 hover:text-club-900 cursor-pointer"
-                                                >
-                                                    {copieId === image.nomFichier ? (
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => copierDansPressePapier(url, image.nomFichier)}
+                                                        className="inline-flex items-center gap-1 text-xs font-medium text-club-600 hover:text-club-900 cursor-pointer"
+                                                    >
+                                                        {copieId === image.nomFichier ? (
+                                                            <>
+                                                                <Check size={14} className="text-green-600" />
+                                                                <span className="text-green-600">Copié</span>
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Copy size={14} />
+                                                                Copier URL
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setImageModifierAlt(image)}
+                                                        className="inline-flex items-center gap-1 text-xs font-medium text-club-600 hover:text-club-900 cursor-pointer"
+                                                    >
                                                         <>
-                                                            <Check size={14} className="text-green-600" />
-                                                            <span className="text-green-600">Copié</span>
+                                                            <Pencil size={14} />
+                                                            Modifier le texte alt.
                                                         </>
-                                                    ) : (
-                                                        <>
-                                                            <Copy size={14} />
-                                                            Copier URL
-                                                        </>
-                                                    )}
-                                                </button>
+
+                                                    </button>
+                                                </div>
 
                                                 <button
                                                     type="button"
@@ -370,6 +386,8 @@ export default function GestionImages() {
                 detailsUtilisationImages={detailsUtilisationImages}
                 setImages={setImages}
             />
+
+            <ModalModifierAlt image={imageModfierAlt} onFermer={() => setImageModifierAlt(null)} setImages={setImages} />
         </div>
     );
 }

@@ -1,21 +1,5 @@
 /**
  * Modale d'invitation des adhérents.
- * Deux modes, au choix via un bascule en haut de la modale :
- *   1. "Formulaire" : invitation unique (comportement existant, inchangé).
- *   2. "Fichier CSV" : import en masse, une invitation par ligne, au format
- *      "Prénom;Nom;Adresse mail" (sans en-tête).
- *
- * Endpoint pour le CSV : POST /utilisateurs/creations-csv
- * (multipart/form-data, champ "csv") → renvoie :
- *   { etat: boolean; detail: { donnees: Adherent[]; erreurs: string[] } }
- * - donnees : la liste complète des adhérents à jour (nouvelles invitations incluses)
- * - erreurs : une entrée par ligne non traitée, ex.
- *   "Camille;Dupont;camille@invalide : adresse e-mail invalide"
- *
- * NB : l'URL contient un accent ("créations-csv" dans la demande d'origine) ;
- * je l'ai laissée telle quelle ci-dessous mais un accent dans un chemin d'API
- * est inhabituel (encodage, sensibilité selon l'environnement). Si ce n'est
- * pas volontaire, remplace ROUTE_CSV par "/utilisateurs/creations-csv".
  */
 
 import { useEffect, useRef, useState } from "react";
@@ -45,6 +29,7 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
     const [prenom, setPrenom] = useState("");
     const [nom, setNom] = useState("");
     const [mail, setMail] = useState("");
+    const [dateNaissance, setDateNaissance] = useState("");
     const [erreur, setErreur] = useState<string | null>(null);
     const [envoiEnCours, setEnvoiEnCours] = useState(false);
 
@@ -61,21 +46,25 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
     useEffect(() => {
         function attributionsDonnees() {
             if (adherent) {
-                setMode('formulaire')
-                setPrenom(adherent.prenom)
-                setNom(adherent.nom)
-                setMail(adherent.mail)
+                setMode('formulaire');
+                setPrenom(adherent.prenom);
+                setNom(adherent.nom);
+                setMail(adherent.mail);
+                // Pré-remplissage optionnel si la donnée existe sur l'adhérent
+                if ('dateNaissance' in adherent && typeof adherent.dateNaissance === 'string') {
+                    setDateNaissance(adherent.dateNaissance);
+                }
             }
         }
-        attributionsDonnees()
-    }, [adherent])
-
+        attributionsDonnees();
+    }, [adherent]);
 
     function reinitialiser() {
         setMode("csv");
         setPrenom("");
         setNom("");
         setMail("");
+        setDateNaissance("");
         setErreur(null);
         setEnvoiEnCours(false);
         setFichierCsv(null);
@@ -98,21 +87,38 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
     }
 
     async function envoyerInvitation() {
-        if (!prenom.trim() || !nom.trim() || !mail.trim()) {
-            setErreur("Merci de renseigner le prénom, le nom et l'adresse e-mail.");
+        if (!prenom.trim() || !nom.trim() || !mail.trim() || !dateNaissance.trim()) {
+            setErreur("Merci de renseigner le prénom, le nom, la date de naissance et l'adresse e-mail.");
             return;
         }
+
         if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(mail.trim())) {
             setErreur("Cette adresse e-mail n'a pas l'air valide.");
+            return;
+        }
+
+        if (!/^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])$/.test(dateNaissance.trim())) {
+
+            console.log(dateNaissance)
+            setErreur("Cette date n'a pas l'air valide.");
             return;
         }
 
         setErreur(null);
         setEnvoiEnCours(true);
         try {
-            const  chemin = adherent ? "modifier" : "inviter"
-            const reponse = await requete({ url: "/utilisateurs/" + chemin, methode: "POST", corps: { prenom: prenom.trim(), nom: nom.trim(), mail: mail.trim() } });
-            if (reponse.inviter == "erreur") {
+            const chemin = adherent ? "modifier" : "inviter";
+            const reponse = await requete({
+                url: "/utilisateurs/" + chemin,
+                methode: "POST",
+                corps: {
+                    prenom: prenom.trim(),
+                    nom: nom.trim(),
+                    mail: mail.trim(),
+                    dateNaissance: dateNaissance.trim()
+                }
+            });
+            if (reponse.inviter === "erreur") {
                 setErreur(reponse.detail);
                 setEnvoiEnCours(false);
             } else {
@@ -177,9 +183,31 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
         }
     }
 
+    // Gestion correcte du formatage et de la mise à jour de l'état
+    const gererChangementDate = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let value = e.target.value.replace(/\D/g, '');
+
+        if (value.length === 1 && parseInt(value, 10) > 3) {
+            value = `0${value}`;
+        }
+
+        if (value.length >= 2) {
+            const day = value.slice(0, 2);
+            let month = value.slice(2, 4);
+
+            if (month.length === 1 && parseInt(month, 10) > 1) {
+                month = `0${month}`;
+            }
+
+            value = month ? `${day}/${month}` : `${day}/`;
+        }
+
+        setDateNaissance(value);
+    };
+
     return (
-        <Modal ouvert={ouvert} titre="Inviter des adhérents" onFermer={fermer} largeurMax="sm">
-            {!adherent &&
+        <Modal ouvert={ouvert} titre="Inviter des adhérents" onFermer={fermer} largeurMax="md">
+            {!adherent && (
                 <div className="mb-4 flex gap-1 rounded-lg bg-club-50 p-1">
                     <button
                         type="button"
@@ -197,7 +225,8 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
                         <FileText size={14} />
                         Invitations multiple
                     </button>
-                </div>}
+                </div>
+            )}
 
             {mode === "formulaire" ? (
                 <div className="flex flex-col gap-4">
@@ -213,6 +242,23 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
                             Nom
                         </label>
                         <input id="nom" type="text" value={nom} autoComplete="off" onChange={(e) => setNom(e.target.value)} placeholder="Dupont" className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm text-club-900 outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200" />
+                    </div>
+
+                    <div className="flex flex-col gap-1">
+                        <label htmlFor="dateNaissance" className="text-sm font-medium text-club-700">
+                            Date de naissance
+                        </label>
+                        <input
+                            id="dateNaissance"
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={5}
+                            value={dateNaissance}
+                            autoComplete="off"
+                            onChange={gererChangementDate}
+                            placeholder="JJ/MM"
+                            className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm text-club-900 outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200"
+                        />
                     </div>
 
                     <div className="flex flex-col gap-1">
@@ -241,7 +287,7 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
                 </div>
             ) : (
                 <div className="flex flex-col gap-4">
-                    <p className="text-sm text-club-900/70 text-justify">Déposez un fichier .csv contenant une ligne par adhérent, au format "Prénom;Nom;Adresse mail" (sans ligne d'en-tête).</p>
+                    <p className="text-sm text-club-900/70">Déposez un fichier .csv contenant une ligne par adhérent, au format "Prénom;Nom;Date de naissance;Adresse mail" (sans ligne d'en-tête).</p>
 
                     <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={(e) => choisirFichierCsv(e.target.files?.[0] ?? null)} />
 

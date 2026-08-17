@@ -1,0 +1,10 @@
+{
+    "titre": "Catégorie d'âge FFA",
+    "descriptionPartie1": "Renseigne ton année de naissance pour connaître ta catégorie d'âge FFA. Valable jusqu'au 31 août ",
+    "descriptionPartie2": "— les catégories changeront le 1er septembre ",
+
+    "titreTableauGeneral": "Les catégories d'âge ",
+    "descriptionTableauGeneralePartie1": "Valable jusqu'au 31 août ",
+    "descriptionTableauGeneralePartie2": ", ces catégories changeront le 1er septembre ",
+    "titreTableauMaster": "Détail des catégories Masters"
+}

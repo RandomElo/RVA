@@ -1,5 +1,5 @@
 import e from "express"
-import { ajouterPhotosZip, connexionGoogle, connexionParMail, deconnexion, enregistrerPhotoControleur, exporterDonnees, inviterAdherent, inviterAdherentCsv, modifierInformationsUtilisateur, photo, recupererUtilisateurs, relancerInitialisationCompte, supprimer, supprimerPhoto, trombinoscope, verification, verificationCode, verifierMotDePasse } from "../controleurs/utilisateurs.js"
+import { ajouterPhotosZip, anniversaireDuJour, anniversaires, connexionGoogle, connexionParMail, deconnexion, enregistrerPhotoControleur, exporterDonnees, inviterAdherent, inviterAdherentCsv, modifierInformationsUtilisateur, photo, recupererUtilisateurs, relancerInitialisationCompte, supprimer, supprimerPhoto, trombinoscope, verification, verificationCode, verifierMotDePasse } from "../controleurs/utilisateurs.js"
 import { accesAdmin } from "../middlewares/accesAdmin.js";
 import { enregistrerTrombinoscope } from "../../fonctions/utilitaires/enregistrementPhoto.js";
 import multer from "multer";
@@ -20,12 +20,12 @@ routeurUtilisateurs.post("/verification-code", authLimiteur, verificationCode)
 routeurUtilisateurs.get("/trombinoscope", trombinoscope)
 routeurUtilisateurs.get("/photo/:nomFichier", photo)
 routeurUtilisateurs.post("/ajouter-photo/:id", accesAdmin, enregistrerTrombinoscope.single("photo"), enregistrerPhotoControleur)
-routeurUtilisateurs.post("/ajouter-photos-zip",uploadLimiteur, accesAdmin, upload.single("zip"), ajouterPhotosZip)
+routeurUtilisateurs.post("/ajouter-photos-zip", uploadLimiteur, accesAdmin, upload.single("zip"), ajouterPhotosZip)
 routeurUtilisateurs.delete("/supprimer-photo", accesAdmin, supprimerPhoto)
 
 // Invitations
 routeurUtilisateurs.post("/inviter", accesAdmin, inviterAdherent)
-routeurUtilisateurs.post("/inviter-csv",uploadLimiteur,  accesAdmin, upload.single("csv"), inviterAdherentCsv)
+routeurUtilisateurs.post("/inviter-csv", uploadLimiteur, accesAdmin, upload.single("csv"), inviterAdherentCsv)
 
 // Édition
 routeurUtilisateurs.delete("/supprimer", accesAdmin, supprimer)
@@ -37,5 +37,9 @@ routeurUtilisateurs.get("/recuperer-utilisateurs", accesAdmin, recupererUtilisat
 routeurUtilisateurs.get("/exporter/:id", accesAdmin, exporterDonnees)
 routeurUtilisateurs.delete("/deconnexion", accesUtilisateur, deconnexion)
 routeurUtilisateurs.post("/relancer-mail-initialisation", accesAdmin, relancerInitialisationCompte)
+
+// Anniversaire
+routeurUtilisateurs.get("/anniversaires-du-jour", accesUtilisateur, anniversaireDuJour);
+routeurUtilisateurs.get("/anniversaires", accesUtilisateur, anniversaires)
 
 export default routeurUtilisateurs

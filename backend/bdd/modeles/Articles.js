@@ -30,7 +30,8 @@ export default function (bdd) {
                     "actu_interne",
                     "newsletter",
                     "recommandation",
-                    "solde"
+                    "solde",
+                    "album_photo"
                 ),
                 allowNull: false,
             },
