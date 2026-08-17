@@ -21,7 +21,7 @@ const distDir = path.join(root, "dist");
 const env = loadEnv(process.env.NODE_ENV || "production", root, "");
 
 const PORT = env.VITE_PRERENDER_PORT || process.env.VITE_PRERENDER_PORT;
-const INTERNAL_SECRET = env.INTERNAL_API_SECRET || process.env.INTERNAL_API_SECRET;
+const INTERNAL_SECRET = env.INTERNAL_SECRET || process.env.INTERNAL_SECRET;
 
 // Garde cette liste synchronisée avec les routes de ton app
 const routes = [
