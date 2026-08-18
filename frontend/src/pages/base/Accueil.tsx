@@ -158,25 +158,25 @@ export default function Accueil() {
 
     useEffect(() => {
         async function chargerPageAccueil() {
-            const texteCacheInitial = await requeteJSON("accueil", (nouvellesDonnees) => {
-                if (nouvellesDonnees) {
-                    setAccueilJSON((prev) => ({ ...prev, ...nouvellesDonnees }));
+                const texteCacheInitial = await requeteJSON("accueil", (nouvellesDonnees) => {
+                    if (nouvellesDonnees) {
+                        setAccueilJSON((prev) => ({ ...prev, ...nouvellesDonnees }));
+                    }
+                });
+
+                if (texteCacheInitial) {
+                    setAccueilJSON((prev) => ({ ...prev, ...texteCacheInitial }));
                 }
-            });
 
-            if (texteCacheInitial) {
-                setAccueilJSON((prev) => ({ ...prev, ...texteCacheInitial }));
-            }
+                const [articlesDonnees, coursesDonnees] = await Promise.all([
+                    requete({ url: "/articles/recuperer-qlq-articles?nbrArticles=3" }),
+                    requete({ url: "/courses/courses-accueil" })
+                ]);
 
-            const [articlesDonnees, coursesDonnees] = await Promise.all([
-                requete({ url: "/articles/recuperer-qlq-articles?nbrArticles=3" }),
-                requete({ url: "/courses/courses-accueil" })
-            ]);
+                setArticles(articlesDonnees);
+                setCourses(coursesDonnees);
 
-            setArticles(articlesDonnees);
-            setCourses(coursesDonnees);
-
-
+         
         }
 
         chargerPageAccueil();
@@ -269,7 +269,7 @@ export default function Accueil() {
                                 <img
                                     src="/img/banniere.webp"
                                     alt="Photo du groupe Running Vincennes Association"
-                                    className="h-full w-full object-cover rounded-2xl transition-transform duration-700 ease-out hover:scale-110"
+                                    className="h-full w-full object-cover rounded-2xl transition-transform duration-700 ease-out hover:scale-120"
                                     loading="eager"
                                     fetchPriority="high"
                                     decoding="sync"

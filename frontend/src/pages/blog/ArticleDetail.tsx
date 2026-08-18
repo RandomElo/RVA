@@ -109,40 +109,69 @@ export default function ArticleDetailPage() {
                     Retour au blog
                 </Link>
 
-                {/* En-tête */}
-                <header className="mb-6">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${STYLE_BADGE[article.categorie]}`}>
-                        <Icone size={12} />
-                        {LABEL_CATEGORIE[article.categorie]}
-                    </span>
-                    <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-[#040F33] sm:text-4xl">
-                        {article.titre}
-                    </h1>
-                    <div className="mt-3 flex items-center gap-3 text-sm text-[#0B2270]/60">
-                        <span className="flex items-center gap-1.5">
-                            <Calendar size={14} />
-                            {new Date(article.datePublication).toLocaleDateString("fr-FR", {
-                                day: "numeric",
-                                month: "long",
-                                year: "numeric",
-                            })}
-                        </span>
-                        {article.categorie === "solde" && (
-                            <span className="flex items-center gap-1.5">
-                                <User size={14} />
-                                par Kirsi Shop
-                            </span>
-                        )}
-                    </div>
-                </header>
+                {/* En-tête + image de couverture fusionnées en "hero" */}
+                {article.imageUrl ? (
+                    <header className="relative -mx-6 mb-8 aspect-[4/3] overflow-hidden sm:mx-0 sm:aspect-[16/9] sm:rounded-2xl md:-mx-24 lg:-mx-40">
+                        <img
+                            src={article.imageUrl}
+                            alt={article.titre}
+                            className="h-full w-full object-cover object-center"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
 
-                {/* Image de couverture */}
-                {article.imageUrl && (
-                    <img
-                        src={article.imageUrl}
-                        alt={article.titre}
-                        className="mb-8 h-64 w-full rounded-xl object-cover sm:h-80"
-                    />
+                        <div className="absolute inset-x-0 bottom-0 p-6 sm:p-8 md:px-24 lg:px-40">
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${STYLE_BADGE[article.categorie]}`}>
+                                <Icone size={12} />
+                                {LABEL_CATEGORIE[article.categorie]}
+                            </span>
+                            <h1 className="mt-3 max-w-2xl font-display text-2xl font-bold leading-tight text-white sm:text-4xl">
+                                {article.titre}
+                            </h1>
+                            <div className="mt-3 flex items-center gap-3 text-sm text-white/80">
+                                <span className="flex items-center gap-1.5">
+                                    <Calendar size={14} />
+                                    {new Date(article.datePublication).toLocaleDateString("fr-FR", {
+                                        day: "numeric",
+                                        month: "long",
+                                        year: "numeric",
+                                    })}
+                                </span>
+                                {article.categorie === "solde" && (
+                                    <span className="flex items-center gap-1.5">
+                                        <User size={14} />
+                                        par Kirsi Shop
+                                    </span>
+                                )}
+                            </div>
+                        </div>
+                    </header>
+                ) : (
+                    // Fallback : pas d'image de couverture → en-tête classique inchangé
+                    <header className="mb-6">
+                        <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium ${STYLE_BADGE[article.categorie]}`}>
+                            <Icone size={12} />
+                            {LABEL_CATEGORIE[article.categorie]}
+                        </span>
+                        <h1 className="mt-3 font-display text-3xl font-bold leading-tight text-[#040F33] sm:text-4xl">
+                            {article.titre}
+                        </h1>
+                        <div className="mt-3 flex items-center gap-3 text-sm text-[#0B2270]/60">
+                            <span className="flex items-center gap-1.5">
+                                <Calendar size={14} />
+                                {new Date(article.datePublication).toLocaleDateString("fr-FR", {
+                                    day: "numeric",
+                                    month: "long",
+                                    year: "numeric",
+                                })}
+                            </span>
+                            {article.categorie === "solde" && (
+                                <span className="flex items-center gap-1.5">
+                                    <User size={14} />
+                                    par Kirsi Shop
+                                </span>
+                            )}
+                        </div>
+                    </header>
                 )}
 
                 {/* Contenu */}

@@ -20,7 +20,7 @@
  * ni reformater le texte de l'utilisateur pendant qu'il tape).
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useEditor, EditorContent, type Editor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
@@ -50,7 +50,8 @@ const CATEGORIES: { value: Categorie; label: string; description: string }[] = [
     { value: "actu_interne", label: "Actu interne", description: "Réservée aux membres connectés (CR de réunion, logistique…)" },
     { value: "solde", label: "Soldes", description: "Bon plan ou offre partenaire (matériel, inscription course…) by Kirsi Shop" },
     { value: "newsletter", label: "Newsletter", description: "Résumé périodique envoyé par e-mail aux membres" },
-    { value: "album_photo", label: "Album photo", description: "Photos des événements et activités du clubpublic" },
+    { value: "album_photo", label: "Album photo", description: "Photos des événements et activités du club" },
+    { value: "tuto", label: "Tutoriel", description: "Guides pratiques, démarches et conseils techniques" },
 ];
 
 const VALEUR_INITIALE: ArticleFormValue = {
@@ -74,6 +75,8 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
     const [mode, setMode] = useState<ModeEdition>("visuel");
     const [htmlTexte, setHtmlTexte] = useState("");
     const [ouvrirModalAjouterImage, setOuvrirModalAjouterImage] = useState<boolean>(false)
+    const [ouvrirModalAjouterImageCouverture, setOuvrirModalAjouterImageCouverture] = useState<boolean | string>(false)
+
     const [images, setImages] = useState<ImageSite[]>([])
     const [modalImageRedim, setModalImageRedim] = useState<PropsModalRedimensionnement>({
         ouvert: false,
@@ -125,6 +128,8 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
         onUpdate: ({ editor }) => setValeur((v) => ({ ...v, contenuHtml: editor.getHTML() })),
     });
 
+    const categoriePrecedenteRef = useRef<Categorie | undefined>(valeur?.categorie);
+
     const champ = useCallback(
         <K extends keyof ArticleFormValue>(cle: K) =>
             (val: ArticleFormValue[K]) => {
@@ -145,7 +150,20 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
 
     useEffect(() => {
         function gestionInitialisationNewsLetter() {
-            if (valeur?.categorie !== "newsletter" || !valeur?.datePublication) return;
+            const categoriePrecedente = categoriePrecedenteRef.current;
+            categoriePrecedenteRef.current = valeur?.categorie;
+
+            if (valeur?.categorie === "newsletter") {
+                // On entre dans "newsletter" : on génère titre/url (cas normal, pas un reset).
+            } else {
+                // On ne reset titre/url QUE si on vient de quitter "newsletter".
+                if (categoriePrecedente !== "newsletter") return;
+                champ("titre")("");
+                setValeur((v) => ({ ...v, url: "" }));
+                return;
+            }
+
+            if (!valeur?.datePublication) return;
 
             const date = new Intl.DateTimeFormat("fr-FR", { month: "long", year: "numeric" })
                 .format(new Date(valeur.datePublication));
@@ -522,18 +540,47 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
                             </label>
                             {valeur.imageUrl ? (
                                 <div className="relative overflow-hidden rounded-lg border border-club-200">
-                                    <img src={valeur.imageUrl} alt="Aperçu de l'image de couverture" className="h-44 w-full object-cover" />
+                                    <img
+                                        src={valeur.imageUrl}
+                                        alt="Aperçu de l'image de couverture"
+                                        className="h-44 w-full object-cover"
+                                        onError={() => setErreurs((e) => ({ ...e, imageUrl: "Ce lien ne pointe pas vers une image valide." }))}
+                                        onLoad={() => setErreurs((e) => ({ ...e, imageUrl: undefined }))}
+                                    />
                                     <button type="button" onClick={() => champ("imageUrl")("")} aria-label="Retirer l'image" className="absolute right-2 top-2 flex h-8 w-8 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80">
                                         <X size={16} />
                                     </button>
                                 </div>
                             ) : (
-                                <label htmlFor="image" className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-club-200 text-[#0B2270]/60 transition hover:border-club-400 hover:text-club-600">
+                                <label htmlFor="image" className="flex h-32 cursor-pointer flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed border-club-200 text-[#0B2270]/60 transition hover:border-club-400 hover:text-club-600" onClick={() => setOuvrirModalAjouterImageCouverture(true)}>
                                     <UploadCloud size={22} />
-                                    <span className="text-xs">Coller une URL d'image ou en importer une</span>
+                                    <span className="text-xs">Coller une URL d'image ou en séléctionner une</span>
+                                    <span className="text-xs">⚠️ Format paysage recommandé (16:9)</span>
                                 </label>
                             )}
-                            <input id="image" type="url" value={valeur.imageUrl} onChange={(e) => champ("imageUrl")(e.target.value)} placeholder="https://…" className="mt-2 w-full rounded-lg border border-club-200 px-3 py-2 text-sm text-[#040F33] outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200" />
+                            <input
+                                id="image"
+                                type="text"
+                                value={valeur.imageUrl}
+                                onChange={(e) => {
+                                    const nouvelleValeur = e.target.value;
+                                    setValeur((v) => ({ ...v, imageUrl: nouvelleValeur }));
+
+                                    if (!nouvelleValeur) {
+                                        setErreurs((err) => ({ ...err, imageUrl: undefined }));
+                                        return;
+                                    }
+
+                                    const formatValide = /^(https?:\/\/|\/)\S+$/i.test(nouvelleValeur.trim());
+                                    setErreurs((err) => ({
+                                        ...err,
+                                        imageUrl: formatValide ? undefined : "Saisissez un lien absolu (https://…) ou un chemin du site (/…).",
+                                    }));
+                                }}
+                                placeholder="https://… ou /images/i/…"
+                                className={`mt-2 w-full rounded-lg border px-3 py-2 text-sm text-[#040F33] outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200 ${erreurs.imageUrl ? "border-red-400" : "border-club-200"}`}
+                            />
+                            {erreurs.imageUrl && <p className="mt-1 text-xs text-red-600">{erreurs.imageUrl}</p>}
                         </div>}
 
                     {/* Description */}
@@ -663,6 +710,15 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
                 images={images}
                 setImages={setImages}
                 type="galerieEtNouvelleImage"
+            />
+
+            <ModalAjouterImage
+                ouvert={typeof ouvrirModalAjouterImageCouverture == "boolean" && ouvrirModalAjouterImageCouverture}
+                onFermer={() => setOuvrirModalAjouterImageCouverture(false)}
+                type="galerieEtNouvelleImage"
+                images={images}
+                setImages={setImages}
+                onImageSelectionnee={(url) => champ("imageUrl")(url)}
             />
 
             {/* Nouvelle modale de redimensionnement d'image */}

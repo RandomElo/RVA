@@ -31,7 +31,8 @@ export default function (bdd) {
                     "newsletter",
                     "recommandation",
                     "solde",
-                    "album_photo"
+                    "album_photo",
+                    "tuto"
                 ),
                 allowNull: false,
             },

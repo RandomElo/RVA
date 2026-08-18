@@ -73,24 +73,15 @@ interface Props {
     setImages?: React.Dispatch<React.SetStateAction<ImageSite[]>>;
     type: "galerieEtNouvelleImage" | "nouvelleImage" | "remplacerImage" | "nouvellePhotoAlbum";
     ancienneDonnees?: ImageSite;
-    /** Identifiant de l'album ciblé, utilisé uniquement pour type="nouvellePhotoAlbum". */
-    idAlbum?: number | string;
     /** Appelé UNE FOIS avec toutes les photos ajoutées, uniquement pour type="nouvellePhotoAlbum". */
     onPhotosAjoutees?: (photos: { chemin: string; legende: string }[]) => void;
+    onImageSelectionnee?: (url: string, alt: string) => void;
 }
 
 type Mode = "galerie" | "ajouter";
 
 type ReponseAjoutImage = {
     donnees: ImageSite[];
-    notification: {
-        titre: string;
-        description: string;
-    }
-};
-
-type ReponseAjoutPhotoAlbum = {
-    photo: { chemin: string; legende: string };
     notification: {
         titre: string;
         description: string;
@@ -114,7 +105,7 @@ function extensionValide(nomFichier: string): boolean {
     return EXTENSIONS_ACCEPTEES.some((ext) => nomFichier.toLowerCase().endsWith(ext));
 }
 
-export default function ModalAjouterImage({ ouvert, onFermer, editor, images = [], setImages, type, ancienneDonnees, idAlbum, onPhotosAjoutees }: Props) {
+export default function ModalAjouterImage({ ouvert, onFermer, editor, images = [], setImages, type, ancienneDonnees, onPhotosAjoutees, onImageSelectionnee }: Props) {
     const [mode, setMode] = useState<Mode>();
 
     const estAlbum = type === "nouvellePhotoAlbum";
@@ -179,9 +170,13 @@ export default function ModalAjouterImage({ ouvert, onFermer, editor, images = [
         setMode(m);
         setErreur(null);
     }
-
+    
     function inserer(src: string, texteAlt: string) {
-        editor?.chain().focus().setImage({ src, alt: texteAlt }).run();
+        if (onImageSelectionnee) {
+            onImageSelectionnee(src, texteAlt);
+        } else {
+            editor?.chain().focus().setImage({ src, alt: texteAlt }).run();
+        }
         fermer();
     }
 

@@ -52,7 +52,9 @@ interface Week {
 const DONNNEES_PAR_DEFAULT = {
     titre: "Générateur de plans d'entraînement",
     description: "Choisissez la distance, la VMA et le nombre de séances par semaine : les allures et volumes de chaque séance se calculent automatiquement, avec des semaines d'assimilation à volume réduit et un affûtage avant la course.",
-    repereAllures: "<b>Repères d'allure :</b> EF = endurance fondamentale (65–75% VMA) · Seuil = tempo continu (85–90% VMA) · Fractionné long = 400–1000m (90–95% VMA) · Fractionné court = 200–400m (100–110% VMA) · Allure spécifique = allure visée le jour de la course. <b>Jamais plus de 2 séances d'intensité par semaine</b> (le reste est EF, récup active ou PPG). Une semaine sur quatre est allégée, et les 1 à 2 dernières semaines sont affûtées avant la course."
+    repereAllures: "<b>Repères d'allure :</b> EF = endurance fondamentale (65–75% VMA) · Seuil = tempo continu (85–90% VMA) · Fractionné long = 400–1000m (90–95% VMA) · Fractionné court = 200–400m (100–110% VMA) · Allure spécifique = allure visée le jour de la course. <b>Jamais plus de 2 séances d'intensité par semaine</b> (le reste est EF, récup active ou PPG). Une semaine sur quatre est allégée, et les 1 à 2 dernières semaines sont affûtées avant la course.",
+    avertissement: "<b>⚠️ Ceci n'est pas un plan encadré par un coach.</b> Cet outil génère automatiquement des idées de séances à partir de formules génériques (VMA, distance, nombre de séances). Il ne remplace pas l'avis d'un entraîneur qui connaît votre historique, vos sensations et vos éventuelles blessures. Utilisez-le comme point de départ pour vous inspirer, pas comme une prescription à suivre à la lettre. En cas de douleur, de fatigue inhabituelle ou de doute, adaptez la séance ou consultez un professionnel (coach du club, médecin du sport).",
+    philosophie: "<b>Notre philosophie d'entraînement :</b> progresser sans se blesser. Le plan suit la logique 80/20 : la grande majorité des séances se courent en endurance fondamentale, à allure confortable, et seules 1 à 2 séances par semaine sont réellement intenses (seuil ou fractionné). La charge monte progressivement, avec une semaine allégée tous les 4 semaines pour laisser le corps assimiler le travail, puis un affûtage en fin de préparation pour arriver reposé le jour de la course. La régularité et la récupération comptent souvent plus que l'intensité d'une séance isolée."
 }
 const CATEGORY_VMA: Record<string, number> = {
     "38": 18.5,
@@ -593,6 +595,23 @@ export default function PlanEntrainement() {
 
                         <p className="mt-6 rounded-lg bg-club-50 p-4 text-xs leading-relaxed text-club-700" dangerouslySetInnerHTML={{ __html: contenuPropre(planEntrainementJSON.repereAllures) }}>
                         </p>
+
+
+                        {/* AVERTISSEMENT — pas un coach */}
+                        {planEntrainementJSON.avertissement && (
+                            <p
+                                className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-900"
+                                dangerouslySetInnerHTML={{ __html: contenuPropre(planEntrainementJSON.avertissement) }}
+                            />
+                        )}
+
+                        {/* PHILOSOPHIE D'ENTRAÎNEMENT */}
+                        {planEntrainementJSON.philosophie && (
+                            <p
+                                className="mt-4 rounded-lg bg-club-50 p-4 text-xs leading-relaxed text-club-700"
+                                dangerouslySetInnerHTML={{ __html: contenuPropre(planEntrainementJSON.philosophie) }}
+                            />
+                        )}
 
                         <div className="mt-6 flex flex-wrap gap-3">
                             <button type="button" onClick={handleGenerate} className="rounded-lg bg-accent-500 px-6 py-3 font-medium text-white transition hover:bg-accent-700">

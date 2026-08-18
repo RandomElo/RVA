@@ -230,6 +230,8 @@ export default function CalculateurVMA() {
                         soit une allure de <span className="font-semibold text-club-700">{vitesseVersAllure(vmaNum)}/km</span> au 100% de ta VMA
                     </span>
                 </div>
+                
+                <p className="mt-6 text-xs text-club-400">{vmaJSON.paragrapheAvertissement}</p>
 
                 {/* Sélection des distances */}
                 <div className="mt-6 h-auto rounded-2xl border border-club-100 bg-white p-5 sm:h-[151.5px]">
@@ -290,7 +292,6 @@ export default function CalculateurVMA() {
                     </div>
                 )}
 
-                <p className="mt-6 text-xs text-club-400">{vmaJSON.paragrapheAvertissement}</p>
             </div>
         </>
 
