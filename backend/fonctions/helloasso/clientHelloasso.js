@@ -1,6 +1,7 @@
 import { ClientCredentials, AuthorizationCode } from 'simple-oauth2';
 import fs from 'fs';
 import path from 'path';
+import crypto from "crypto"
 
 // -------------------------------------------------------------
 // 1. CLIENT CREDENTIALS (Pour la lecture et les paiements)
@@ -90,7 +91,11 @@ export function setTokensUtilisateur(tokens) {
 export function estConnecteHelloAsso() {
     return Boolean(tokensUtilisateur);
 }
-
+export function genererPKCE() {
+    const verifier = crypto.randomBytes(64).toString("base64url").slice(0, 128);
+    const challenge = crypto.createHash("sha256").update(verifier).digest("base64url");
+    return { verifier, challenge };
+}
 export async function getTokenUtilisateur() {
     if (!tokensUtilisateur) {
         throw new Error("Aucun administrateur HelloAsso n'est connecté. Veuillez vous connecter via /helloasso/login");

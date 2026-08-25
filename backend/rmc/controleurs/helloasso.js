@@ -44,35 +44,38 @@ function nettoyerChampsFormulaire(champs) {
 // A. Redirection de l'admin vers HelloAsso
 export const initerConnexionHelloAsso = (req, res) => {
     const state = crypto.randomBytes(24).toString("hex");
+    const { verifier, challenge } = genererPKCE();
 
-    res.cookie(NOM_COOKIE_STATE, state, {
+    const options = {
         httpOnly: true,
         secure: process.env.MODE === "production",
         sameSite: "lax",
         signed: true,
         maxAge: 5 * 60 * 1000,
-    });
+    };
+    res.cookie(NOM_COOKIE_STATE, state, options);
+    res.cookie(NOM_COOKIE_VERIFIER, verifier, options);
 
-    const authorizationUri = clientOAuth.authorizeURL({
-        redirect_uri: process.env.HELLOASSO_REDIRECT_URI,
-        scope: "organization",
+    const params = new URLSearchParams({
+        client_id: process.env.HELLOASSO_CLIENT_ID,
+        redirect_uri: process.env.HELLOASSO_REDIRECT_URI, // pas encodé ici, URLSearchParams s'en charge
+        code_challenge: challenge,
+        code_challenge_method: "S256",
         state,
     });
 
-    res.redirect(authorizationUri);
+    res.redirect(`${HELLOASSO_AUTH_URL}/authorize?${params.toString()}`);
 };
 
 // B. Callback d'autorisation (réception du code) — ouvert dans une popup,
 // on répond en HTML pour prévenir la fenêtre parente puis se fermer.
 export const callbackHelloAsso = gestionErreur(async (req, res) => {
-    const { code, state } = req.query;
-    console.log("=========")
-    console.log("QUERYYYYY")
-    console.log(code)
-    console.log("=========")
+    const { code, state, error, error_description } = req.query;
 
     const stateAttendu = req.signedCookies?.[NOM_COOKIE_STATE];
+    const codeVerifier = req.signedCookies?.[NOM_COOKIE_VERIFIER];
     res.clearCookie(NOM_COOKIE_STATE);
+    res.clearCookie(NOM_COOKIE_VERIFIER);
 
     const envoyerPage = (succes, message) => {
         const origineFrontend = process.env.FRONTEND_URL;
@@ -95,10 +98,12 @@ export const callbackHelloAsso = gestionErreur(async (req, res) => {
         `);
     };
 
+    if (error) {
+        return envoyerPage(false, `Erreur HelloAsso : ${error_description || error}`);
+    }
     if (!code) {
         return envoyerPage(false, "Code d'autorisation manquant.");
     }
-
     if (!state || !stateAttendu || state !== stateAttendu) {
         return envoyerPage(false, "Requête OAuth invalide ou expirée.");
     }
@@ -107,8 +112,8 @@ export const callbackHelloAsso = gestionErreur(async (req, res) => {
         const accessToken = await clientOAuth.getToken({
             code,
             redirect_uri: process.env.HELLOASSO_REDIRECT_URI,
+            code_verifier: codeVerifier,
         });
-
         setTokensUtilisateur(accessToken.token);
         envoyerPage(true, "Connexion HelloAsso réussie ! Vous pouvez fermer cette fenêtre.");
     } catch (erreur) {
