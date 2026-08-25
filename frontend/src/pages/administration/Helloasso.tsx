@@ -4,6 +4,7 @@ import { ExternalLink, Calendar, Users, Ticket, Heart, Eye, X, Loader2, UserChec
 import type { HelloAssoForm, HelloAssoFormsResponse, HelloAssoItem } from "../../constantes/types/helloasso";
 import { normaliserVille, supprimerAccents } from "../../fonctions/normaliserVille";
 import ModalNouveauFormHelloasso from "../../composants/modal/administration/ModalNouveauFormHelloasso";
+import ConnexionHelloAsso from "../../composants/modal/ConnexionHelloAsso";
 
 export default function Helloasso() {
     const requete = useRequete();
@@ -593,6 +594,7 @@ export default function Helloasso() {
                 )}
             </div>
             <ModalNouveauFormHelloasso ouvert={afficherModalNewForm} onFermer={() => setAfficherModalNewForm(false)} setFormulaires={setForms} />
+            <ConnexionHelloAsso />
         </>
     );
 }

@@ -27,7 +27,7 @@ import routeurHelloasso from "./rmc/routeurs/helloasso.js";
 dotenv.config({ quiet: true, path: "../.env" });
 const { PORT_EXPRESS, IP_FRONTEND } = process.env;
 const port = PORT_EXPRESS || 8100;
-
+console.log(IP_FRONTEND)
 const app = e();
 
 app.set('trust proxy', 1);
@@ -55,7 +55,8 @@ app.use(cors({
 }));
 
 app.use(e.json());
-app.use(cookieParser());
+// app.use(cookieParser());
+app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(generaleLimiteur);
 
 app.use(accessibiliteBdd(bdd));

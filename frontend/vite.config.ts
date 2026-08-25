@@ -64,11 +64,13 @@ export default defineConfig(({ mode }) => {
             port: parseInt(env.VITE_PORT_APPLICATION),
             historyApiFallback: true,
             proxy: proxyConfig,
-            host: true,
+            host: "0.0.0.0",
+            allowedHosts: true, // Désactive le blocage strict du header Host par Vite
             watch: {
                 usePolling: true,
             },
             hmr: {
+                host: "localhost", // Indique au navigateur Windows où joindre le WebSocket HMR
                 clientPort: parseInt(env.VITE_PORT_APPLICATION),
             },
         },

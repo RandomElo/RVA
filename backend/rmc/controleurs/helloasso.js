@@ -1,5 +1,12 @@
-import { getAccessToken, getTokenUtilisateur, clientOAuth, setTokensUtilisateur } from "../../fonctions/helloasso/clientHelloasso.js";
+import {
+    getAccessToken,
+    getTokenUtilisateur,
+    clientOAuth,
+    setTokensUtilisateur,
+    estConnecteHelloAsso,
+} from "../../fonctions/helloasso/clientHelloasso.js";
 import gestionErreur from "../middlewares/gestionErreur.js";
+import crypto from "crypto";
 const NOM_COOKIE_STATE = "helloasso_oauth_state";
 const MAPPING_CATEGORIES = {
     adhesion: "Membership",
@@ -33,15 +40,14 @@ function nettoyerChampsFormulaire(champs) {
 /* ------------------------------------------------------------------ */
 /*  CONTRÔLEURS CONNEXION                                             */
 /* ------------------------------------------------------------------ */
+
 // A. Redirection de l'admin vers HelloAsso
 export const initerConnexionHelloAsso = (req, res) => {
     const state = crypto.randomBytes(24).toString("hex");
 
-    // Cookie signé, httpOnly, courte durée de vie (5 min suffisent
-    // pour faire l'aller-retour OAuth)
     res.cookie(NOM_COOKIE_STATE, state, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
+        secure: process.env.MODE === "production",
         sameSite: "lax",
         signed: true,
         maxAge: 5 * 60 * 1000,
@@ -49,42 +55,71 @@ export const initerConnexionHelloAsso = (req, res) => {
 
     const authorizationUri = clientOAuth.authorizeURL({
         redirect_uri: process.env.HELLOASSO_REDIRECT_URI,
-        scope: 'organization',
+        scope: "organization",
         state,
     });
 
     res.redirect(authorizationUri);
 };
 
-// B. Callback d'autorisation (réception du code)
+// B. Callback d'autorisation (réception du code) — ouvert dans une popup,
+// on répond en HTML pour prévenir la fenêtre parente puis se fermer.
 export const callbackHelloAsso = gestionErreur(async (req, res) => {
     const { code, state } = req.query;
-    const stateAttendu = req.signedCookies?.[NOM_COOKIE_STATE];
+    console.log("=========")
+    console.log("QUERYYYYY")
+    console.log(code)
+    console.log("=========")
 
-    // On invalide le cookie dans tous les cas (usage unique)
+    const stateAttendu = req.signedCookies?.[NOM_COOKIE_STATE];
     res.clearCookie(NOM_COOKIE_STATE);
 
+    const envoyerPage = (succes, message) => {
+        const origineFrontend = process.env.FRONTEND_URL;
+        res.status(200).send(`
+            <!DOCTYPE html>
+            <html>
+              <body>
+                <script>
+                  if (window.opener) {
+                    window.opener.postMessage(
+                      { type: "helloasso-oauth", succes: ${JSON.stringify(succes)}, message: ${JSON.stringify(message)} },
+                      ${JSON.stringify(origineFrontend)}
+                    );
+                  }
+                  window.close();
+                </script>
+                <p>${message}</p>
+              </body>
+            </html>
+        `);
+    };
+
     if (!code) {
-        return res.status(400).json({ etat: false, detail: "Code d'autorisation manquant dans l'URL." });
+        return envoyerPage(false, "Code d'autorisation manquant.");
     }
 
     if (!state || !stateAttendu || state !== stateAttendu) {
-        return res.status(400).json({ etat: false, detail: "Requête OAuth invalide ou expirée (state incorrect)." });
+        return envoyerPage(false, "Requête OAuth invalide ou expirée.");
     }
 
-    const accessToken = await clientOAuth.getToken({
-        code,
-        redirect_uri: process.env.HELLOASSO_REDIRECT_URI,
-    });
+    try {
+        const accessToken = await clientOAuth.getToken({
+            code,
+            redirect_uri: process.env.HELLOASSO_REDIRECT_URI,
+        });
 
-    setTokensUtilisateur(accessToken.token);
-
-    res.status(200).json({
-        etat: true,
-        notification: "Connexion HelloAsso réussie !",
-        detail: "Vous pouvez désormais créer et modifier des formulaires.",
-    });
+        setTokensUtilisateur(accessToken.token);
+        envoyerPage(true, "Connexion HelloAsso réussie ! Vous pouvez fermer cette fenêtre.");
+    } catch (erreur) {
+        envoyerPage(false, "Échec de la connexion HelloAsso : " + erreur.message);
+    }
 }, "callbackHelloAsso", "Erreur lors de la récupération du token utilisateur");
+
+// C. Statut de connexion (utilisé par le frontend pour afficher l'état)
+export const statutConnexionHelloAsso = (req, res) => {
+    res.status(200).json({ etat: true, connecte: estConnecteHelloAsso() });
+};
 
 /* ------------------------------------------------------------------ */
 /*  CONTRÔLEURS                                                       */
