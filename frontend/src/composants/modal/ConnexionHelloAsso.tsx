@@ -14,7 +14,7 @@ export default function ConnexionHelloAsso() {
         setVerification(true);
         try {
             const reponse = await requete({ url: "/helloasso/statut-connexion" });
-            setConnecte(Boolean(reponse?.connecte));
+            setConnecte(Boolean(reponse));
         } catch (erreur) {
             console.error("Erreur vérification statut HelloAsso :", erreur);
             setConnecte(false);

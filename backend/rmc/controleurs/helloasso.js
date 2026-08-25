@@ -118,7 +118,7 @@ export const callbackHelloAsso = gestionErreur(async (req, res) => {
 
 // C. Statut de connexion (utilisé par le frontend pour afficher l'état)
 export const statutConnexionHelloAsso = (req, res) => {
-    res.status(200).json({ etat: true, connecte: estConnecteHelloAsso() });
+    res.status(200).json({ etat: true, detail: estConnecteHelloAsso() });
 };
 
 /* ------------------------------------------------------------------ */
@@ -342,8 +342,6 @@ export const creerFormulaire = gestionErreur(async (req, res) => {
 
     res.status(201).json({
         etat: true,
-        formulaire: nouveauFormulaire,
-        notification: "Le formulaire a été créé avec succès sur HelloAsso.",
         detail: listeMiseAJour,
     });
 }, "creerFormulaireHelloAsso", "Erreur lors de la création du formulaire HelloAsso");
