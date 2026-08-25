@@ -20,7 +20,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRequete } from "../../fonctions/requete";
-import { Newspaper, CalendarDays, Users, ArrowRight, ShieldCheck, ChartLine, BookOpenText, Stethoscope, Image, NotebookPen, Loader2 } from "lucide-react";
+import { Newspaper, CalendarDays, Users, ArrowRight, ShieldCheck, ChartLine, BookOpenText, Stethoscope, Image, NotebookPen, Loader2, HandCoins } from "lucide-react";
 
 interface Stats {
     nbrAdherents: number;
@@ -80,6 +80,12 @@ const SECTIONS: SectionAdmin[] = [
         description: "Référencer les kinés, podologues, ostéopathes et médecins du sport, avec leurs coordonnées.",
         url: "/administration/specialistes-sante",
         icone: Stethoscope,
+    }, 
+    {
+        titre: "HelloAsso",
+        description: "Gérer les adhésions, suivre les paiements, formulaires et cotisations du club.",
+        url: "/administration/helloasso",
+        icone: HandCoins,
     },
     {
         titre: "Statistiques",

@@ -10,7 +10,7 @@ export default defineConfig(({ mode }) => {
     // Cible du backend : vérifie env (loadEnv), process.env puis le fallback Docker
     const backendUrl = env.VITE_API_INTERNAL_URL || "http://backend:8100";
     // Liste des préfixes de routes API à rediriger
-    const proxyRoutes = ["/utilisateurs", "/autres", "/articles", "/courses", "/statistiques", "/specialistes", "/fichiers", "/images", "/pages"];
+    const proxyRoutes = ["/utilisateurs", "/autres", "/articles", "/courses", "/statistiques", "/specialistes", "/fichiers", "/images", "/pages", "/helloasso"];
 
     // Génération dynamique de l'objet proxy
     const proxyConfig: Record<string, any> = {};

@@ -22,6 +22,7 @@ import routeurPages from "./rmc/routeurs/pages.js";
 import { generaleLimiteur } from "./rmc/middlewares/limiteurRequetes.js";
 import { logger } from "./fonctions/utilitaires/logger.js";
 import { loggerRequete } from "./rmc/middlewares/loggerRequere.js";
+import routeurHelloasso from "./rmc/routeurs/helloasso.js";
 
 dotenv.config({ quiet: true, path: "../.env" });
 const { PORT_EXPRESS, IP_FRONTEND } = process.env;
@@ -68,6 +69,7 @@ app.use("/specialistes", accesUtilisateur, routeurSpecialistes);
 app.use("/statistiques", routeurStatistiques);
 app.use("/images", routeurImages);
 app.use("/pages", routeurPages);
+app.use("/helloasso", routeurHelloasso)
 
 // Stockage de l'instance du serveur dans 'server' pour permettre l'arrêt propre
 const server = app.listen(port, () => logger.info({ type: 'BOOT' }, `🚀 Serveur démarré sur le port ${port}`));

@@ -33,6 +33,7 @@ const Statistiques = lazy(() => import("./pages/administration/Statistiques"));
 const EditionTextesPage = lazy(() => import("./pages/administration/EditionPage"));
 const GestionImages = lazy(() => import("./pages/administration/GestionImages"));
 const GestionPages = lazy(() => import("./pages/administration/GestionPages"));
+const Helloasso = lazy(() => import("./pages/administration/Helloasso"))
 
 // B. Espace Adhérents & Rédaction
 const Trombinoscope = lazy(() => import("./pages/ressources/Trombinoscope"));
@@ -160,6 +161,7 @@ const router = createBrowserRouter([
                     { path: "/administration/edition-page/*", element: <EditionTextesPage /> },
                     { path: "/administration/images", element: <GestionImages /> },
                     { path: "/administration/pages", element: <GestionPages /> },
+                    { path: "/administration/helloasso", element: <Helloasso /> },
                     { path: "/administration/creation-page", element: <RedactionArticle type="nouvellePage" /> },
                     {
                         path: "/administration/modifier-article/:url",
