@@ -1,6 +1,5 @@
 # Étape 1 : Build de l'application (Vite JS compile dans /app/dist)
 FROM node:20-alpine AS builder
-
 WORKDIR /app
 
 # Déclaration des arguments provenant de docker-compose.yml
@@ -17,9 +16,10 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-# Installation des dépendances système :
-# - Node/Chromium pour le prerender avec Puppeteer
-# - Certbot/OpenSSL pour la gestion autonome des certificats HTTPS
+# Étape 2 : Runtime Nginx + Node.js + Chromium + Certbot
+FROM alpine:latest AS runner
+
+# Installation complète de Nginx et des dépendances système
 RUN apk add --no-cache \
     nginx \
     nginx-mod-http-brotli \
@@ -40,17 +40,18 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 
 WORKDIR /app
 
-# Copie du projet compilé et des fichiers de configuration
+# Copie du projet compilé depuis l'étape builder
 COPY --from=builder /app /app
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+# Copie des fichiers de configuration Nginx
 COPY nginx/nginx.conf /etc/nginx/nginx.conf
 COPY nginx/default.conf /etc/nginx/conf.d/default.conf
 COPY nginx/security-headers.conf /etc/nginx/security-headers.conf
-COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Intégration du script d'entrée autonome
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
 EXPOSE 80 443
-
 CMD ["/entrypoint.sh"]
