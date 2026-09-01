@@ -123,7 +123,7 @@ export default function Footer() {
 
                 {/* Navigation principale */}
                 <nav className="flex flex-col gap-2">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-club-100/60">
+                    <span className="text-xs font-bold uppercase tracking-wide text-club-100/90">
                         Navigation
                     </span>
                     {LIENS_FOOTER_STATIQUES.map((lien) => (
@@ -142,7 +142,7 @@ export default function Footer() {
                 {/* Pages dynamiques (si existantes) */}
                 {pagesModifiables.length > 0 && (
                     <nav className="flex flex-col gap-2">
-                        <span className="text-xs font-semibold uppercase tracking-wide text-club-100/60">
+                        <span className="text-xs font-bold uppercase tracking-wide text-club-100/90">
                             Autres pages
                         </span>
                         {pagesModifiables.map((lien) => (
@@ -161,7 +161,7 @@ export default function Footer() {
 
                 {/* Réseaux sociaux */}
                 <div className="flex flex-col gap-3">
-                    <span className="text-xs font-semibold uppercase tracking-wide text-club-100/60">
+                    <span className="text-xs font-bold uppercase tracking-wide text-club-100">
                         Suivez-nous
                     </span>
                     <div className="flex items-center gap-3">

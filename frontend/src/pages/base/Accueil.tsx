@@ -246,7 +246,7 @@ export default function Accueil() {
                             >
                                 <Link
                                     to="/notre-histoire"
-                                    className="relative overflow-hidden rounded-lg bg-accent-500 px-6 py-3 text-base font-medium text-white shadow-accent-500/30 transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-accent-700 hover:shadow-xl hover:shadow-accent-500/40 active:translate-y-0 active:scale-100"
+                                    className="relative overflow-hidden rounded-lg bg-accent-700 px-6 py-3 text-base font-medium text-white shadow-accent-500/30 transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-accent-700 active:translate-y-0 active:scale-100"
                                 >
                                     En savoir plus sur le club
                                 </Link>
@@ -274,7 +274,7 @@ export default function Accueil() {
                                     className="h-full w-full object-cover rounded-2xl transition-transform duration-700 ease-out hover:scale-120"
                                     loading="eager"
                                     fetchPriority="high"
-                                    decoding="sync"
+                                    decoding="async"
                                 />
                             </div>
                         </div>
@@ -288,7 +288,7 @@ export default function Accueil() {
                             <ImageCache src="/img/thomas.webp" alt={`Photo de ${accueilJSON.nomCoach}`} className="rounded-full" />
                         </div>
                         <div className="sm:h-[169.5px]">
-                            <p className="text-sm font-medium uppercase tracking-wide text-club-400">Notre entraîneur</p>
+                            <p className="text-sm font-medium uppercase tracking-wide text-club-600">Notre entraîneur</p>
                             <h2 className="mt-1 font-display text-2xl font-semibold text-club-600">
                                 {accueilJSON.nomCoach}
                             </h2>

@@ -1,5 +1,4 @@
 import { createBrowserRouter, RouterProvider, type Params } from "react-router-dom";
-import { GoogleOAuthProvider } from '@react-oauth/google';
 import { lazy, Suspense } from "react";
 
 // Contextes
@@ -194,9 +193,7 @@ export default function App() {
             <ResponsiveProvider>
                 <ErreurProvider>
                     <AuthProvider>
-                        <GoogleOAuthProvider clientId={import.meta.env.VITE_O_AUTH}>
-                            <RouterProvider router={router} />
-                        </GoogleOAuthProvider>
+                        <RouterProvider router={router} />
                     </AuthProvider>
                 </ErreurProvider>
             </ResponsiveProvider>

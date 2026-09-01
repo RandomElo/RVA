@@ -44,3 +44,4 @@ contenu-extraction.txt
 /dozzle-users.yml
 /frontend/Dockerfile.dev
 /docker-compose.override.yml
+/frontend/nginx/security-headers.dev.conf
