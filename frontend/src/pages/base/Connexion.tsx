@@ -32,7 +32,7 @@
  */
 
 import { useEffect, useState } from "react";
-import { Mail, ArrowRight, Loader2, CheckCircle2, AlertCircle, Eye, EyeOff, Lock, KeyRound } from "lucide-react";
+import { Mail, ArrowRight, Loader2, CheckCircle2, AlertCircle, Lock, KeyRound } from "lucide-react";
 import { useGoogleLogin } from "@react-oauth/google";
 import Google from "../../assets/google.svg?react";
 import { useRequete } from "../../fonctions/requete";

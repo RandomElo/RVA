@@ -108,12 +108,12 @@ function Reveal({ children, className = "", delai = 0, direction = "bas", as = "
     }, [reduitMouvement]);
 
     const etatDepart: Record<string, string> = {
-        haut: "translate-y-[-48px] scale-[0.94] blur-[6px]",
-        bas: "translate-y-[48px] scale-[0.94] blur-[6px]",
-        gauche: "translate-x-[-56px] scale-[0.94] blur-[6px]",
-        droite: "translate-x-[56px] scale-[0.94] blur-[6px]",
-        zoom: "scale-[0.82] blur-[6px]",
-        zoomRotate: "scale-[0.85] rotate-[-3deg] blur-[6px]"
+        haut: "translate-y-[-48px] scale-[0.94]",
+        bas: "translate-y-[48px] scale-[0.94]",
+        gauche: "translate-x-[-56px] scale-[0.94]",
+        droite: "translate-x-[56px] scale-[0.94]",
+        zoom: "scale-[0.82]",
+        zoomRotate: "scale-[0.85] rotate-[-3deg]"
     };
 
     const style: CSSProperties = {
@@ -128,7 +128,7 @@ function Reveal({ children, className = "", delai = 0, direction = "bas", as = "
             ref={ref as never}
             style={style}
             className={`transform transition-all will-change-transform ${visible
-                ? "opacity-100 translate-y-0 translate-x-0 scale-100 rotate-0 blur-0"
+                ? "opacity-100 translate-y-0 translate-x-0 scale-100 rotate-0"
                 : `opacity-0 ${etatDepart[direction]}`
                 } ${className}`}
         >
@@ -158,25 +158,25 @@ export default function Accueil() {
 
     useEffect(() => {
         async function chargerPageAccueil() {
-                const texteCacheInitial = await requeteJSON("accueil", (nouvellesDonnees) => {
-                    if (nouvellesDonnees) {
-                        setAccueilJSON((prev) => ({ ...prev, ...nouvellesDonnees }));
-                    }
-                });
-
-                if (texteCacheInitial) {
-                    setAccueilJSON((prev) => ({ ...prev, ...texteCacheInitial }));
+            const texteCacheInitial = await requeteJSON("accueil", (nouvellesDonnees) => {
+                if (nouvellesDonnees) {
+                    setAccueilJSON((prev) => ({ ...prev, ...nouvellesDonnees }));
                 }
+            });
 
-                const [articlesDonnees, coursesDonnees] = await Promise.all([
-                    requete({ url: "/articles/recuperer-qlq-articles?nbrArticles=3" }),
-                    requete({ url: "/courses/courses-accueil" })
-                ]);
+            if (texteCacheInitial) {
+                setAccueilJSON((prev) => ({ ...prev, ...texteCacheInitial }));
+            }
 
-                setArticles(articlesDonnees);
-                setCourses(coursesDonnees);
+            const [articlesDonnees, coursesDonnees] = await Promise.all([
+                requete({ url: "/articles/recuperer-qlq-articles?nbrArticles=3" }),
+                requete({ url: "/courses/courses-accueil" })
+            ]);
 
-         
+            setArticles(articlesDonnees);
+            setCourses(coursesDonnees);
+
+
         }
 
         chargerPageAccueil();
@@ -269,6 +269,8 @@ export default function Accueil() {
                                 <img
                                     src="/img/banniere.webp"
                                     alt="Photo du groupe Running Vincennes Association"
+                                    width={800}
+                                    height={600}
                                     className="h-full w-full object-cover rounded-2xl transition-transform duration-700 ease-out hover:scale-120"
                                     loading="eager"
                                     fetchPriority="high"
@@ -392,7 +394,14 @@ export default function Accueil() {
                                                 <article>
                                                     <div className="relative h-40 w-full shrink-0 overflow-hidden bg-club-50">
                                                         {news.imageUrl ? (
-                                                            <img src={news.imageUrl} alt={news.titre} className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110" loading="lazy" />
+                                                            <img
+                                                                src={news.imageUrl}
+                                                                alt={news.titre}
+                                                                width={640}
+                                                                height={360}
+                                                                className="h-full w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                                                                loading="lazy"
+                                                            />
                                                         ) : (
                                                             <div className="flex h-full w-full items-center justify-center text-club-300 transition-transform duration-500 group-hover:scale-110">
                                                                 {Icone && <Icone size={32} />}

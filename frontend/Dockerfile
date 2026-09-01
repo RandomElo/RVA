@@ -44,8 +44,9 @@ WORKDIR /app
 
 # Copie du projet compilé et des fichiers de configuration
 COPY --from=builder /app /app
-COPY nginx.conf /etc/nginx/nginx.conf
-COPY default.conf /etc/nginx/conf.d/default.conf
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
+COPY nginx/default.conf /etc/nginx/conf.d/default.conf
+COPY nginx/security-headers.conf /etc/nginx/security-headers.conf
 COPY --from=builder /app/dist /usr/share/nginx/html
 
 # Intégration du script d'entrée autonome

@@ -1,18 +1,18 @@
 // mailer.service.js
-import hbs from "nodemailer-express-handlebars"
 import transporteur from "./transporteur.js"
 
-export default async function envoiMail(to, subject, template, context, replyTo = null) {
+export default async function envoiMail(to, subject, template, context, replyTo = null, attachments = []) {
     return transporteur.sendMail({
-        from: process.env.MAIL_FROM, // Doit être votre email de compte Brevo
-        to,                          // Chaîne de caractères : "mail1, mail2, mail3, mail4"
+        from: process.env.MAIL_FROM,
+        to,
         subject,
-        template,                    // Nom du fichier template (ex: 'welcome')
-        context,                     // Variables injectées {}
+        template,
+        context,
+        attachments, // [{ filename, content (Buffer) }, ...]
         headers: {
             "X-Sib-Headers": JSON.stringify({
                 "X-Mailin-Tag": "PasDeTracking",
-                "X-Mailin-tracking": "0" // Désactive le tracking pour cet envoi précis
+                "X-Mailin-tracking": "0"
             })
         },
         ...(replyTo && { replyTo }),

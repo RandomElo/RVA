@@ -1,7 +1,9 @@
 import e from "express"
-import { ajouterPhotosZip, anniversaireDuJour, anniversaires, changementMdp, connexionGoogle, connexionParMail, deconnexion, enregistrerPhotoControleur, exporterDonnees, inviterAdherent, inviterAdherentCsv, modifierInformationsUtilisateur, photo, recupererUtilisateurs, relancerInitialisationCompte, supprimer, supprimerPhoto, trombinoscope, verification, verificationCode, verifierMotDePasse } from "../controleurs/utilisateurs.js"
+import { ajouterPhotosZip, anniversaireDuJour, anniversaires, changementMdp, connexionGoogle, connexionParMail, deconnexion, enregistrerPhotoControleur, envoiMailAdherents, exporterDonnees, inviterAdherent, inviterAdherentCsv, modifierInformationsUtilisateur, photo, recupererUtilisateurs, relancerInitialisationCompte, supprimer, supprimerPhoto, trombinoscope, verification, verificationCode, verifierMotDePasse } from "../controleurs/utilisateurs.js"
+
 import { accesAdmin } from "../middlewares/accesAdmin.js";
-import { enregistrerTrombinoscope } from "../../fonctions/utilitaires/enregistrementPhoto.js";
+
+import { enregistrerPiecesJointesMail, enregistrerTrombinoscope } from "../../fonctions/utilitaires/enregistrementPhoto.js";
 import multer from "multer";
 import { accesUtilisateur } from "../middlewares/accesUtilisateurs.js";
 import { authLimiteur, uploadLimiteur } from "../middlewares/limiteurRequetes.js";
@@ -40,6 +42,7 @@ routeurUtilisateurs.get("/recuperer-utilisateurs", accesAdmin, recupererUtilisat
 routeurUtilisateurs.get("/exporter/:id", accesAdmin, exporterDonnees)
 routeurUtilisateurs.post("/relancer-mail-initialisation", accesAdmin, relancerInitialisationCompte)
 routeurUtilisateurs.post("/changement-mdp", accesAdmin, changementMdp)
+routeurUtilisateurs.post("/envoyer-mail-adherents", accesAdmin, enregistrerPiecesJointesMail.array("piecesJointes", 10), envoiMailAdherents)
 
 // Anniversaire
 routeurUtilisateurs.get("/anniversaires-du-jour", accesUtilisateur, anniversaireDuJour);

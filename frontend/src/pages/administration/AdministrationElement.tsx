@@ -38,6 +38,7 @@ import { type Specialiste } from "../../constantes/types/specialistesSante";
 import ModalNouveauSpecialiste from "../../composants/specialistesSante/ModalNouveauSpecialiste";
 import ModalConfirmationRelance from "../../composants/modal/administration/ModalConfirmerRelance";
 import ModalModiferAlbum from "../../composants/modal/administration/ModalModifierAlbum";
+import ModalMailAdherents from "../../composants/modal/administration/ModalMailAdherents";
 
 type Statut = "brouillon" | "publie" | "suggestion";
 
@@ -107,6 +108,8 @@ export default function AdministrationElement({ mode }: Props) {
     const [modalActionsAdherents, setModalActionsAdherents] = useState<null | Adherent>(null)
     const [modalConfirmerRelance, setModalConfirmerRelance] = useState<Adherent | null>(null)
     const [modalModifierAlbum, setModalModifierAlbum] = useState<string | null>(null)
+    const [modalMailAdherents, setModalMailAdherents] = useState<number | null>(null)
+
     // Modales spécialiste
     const [modalModifierSpecialiste, setModalModifierSpecialiste] = useState<Specialiste | null>(null)
 
@@ -300,7 +303,18 @@ export default function AdministrationElement({ mode }: Props) {
                 </div>
             </div>
             {mode === "adherents" &&
-                <div className="flex justify-end mb-5">
+                <div className="flex justify-end gap-3 mb-5">
+                    {adherents &&
+                        <button
+                            type="button"
+                            className="flex items-center justify-center gap-2 rounded-lg border border-club-200 px-4 py-2.5 text-sm font-medium text-[#0B2270] transition hover:bg-club-50"
+                            onClick={() => setModalMailAdherents(adherents.length)}
+                        >
+                            <Mail size={16} />
+                            Envoyer un mail aux adhérents
+                        </button>
+                    }
+
                     <button
                         className="flex items-center justify-center  gap-2 rounded-lg bg-accent-600 px-4 py-2.5 text-sm font-medium text-white transition bg-accent-500 hover:bg-accent-700"
                         onClick={() => setModalImportPhotosZip(true)}
@@ -558,6 +572,8 @@ export default function AdministrationElement({ mode }: Props) {
                     <ModalActionsAdherent ouvert={modalActionsAdherents !== null} onFermer={() => setModalActionsAdherents(null)} adherent={modalActionsAdherents} setAdherents={setAdherents} setModalInviterMembre={setModalInviterMembre} />
 
                     <ModalConfirmationRelance ouvert={!!modalConfirmerRelance} onFermer={() => setModalConfirmerRelance(null)} mail={modalConfirmerRelance?.mail} />
+
+                    <ModalMailAdherents ouvert={!!modalMailAdherents} nombreDestinataires={modalMailAdherents!} onFermer={() => setModalMailAdherents(null)} />
 
                 </>
             }

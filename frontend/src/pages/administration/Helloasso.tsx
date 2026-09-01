@@ -4,7 +4,7 @@ import { ExternalLink, Calendar, Users, Ticket, Heart, Eye, X, Loader2, UserChec
 import type { HelloAssoForm, HelloAssoFormsResponse, HelloAssoItem } from "../../constantes/types/helloasso";
 import { normaliserVille, supprimerAccents } from "../../fonctions/normaliserVille";
 import ModalNouveauFormHelloasso from "../../composants/modal/administration/ModalNouveauFormHelloasso";
-import ConnexionHelloAsso from "../../composants/modal/ConnexionHelloAsso";
+// import ConnexionHelloAsso from "../../composants/modal/ConnexionHelloAsso";
 
 export default function Helloasso() {
     const requete = useRequete();
@@ -244,11 +244,11 @@ export default function Helloasso() {
             <div className="p-6 max-w-6xl mx-auto">
                 <div className="flex justify-between items-center mb-6">
                     <h1 className="text-2xl font-bold">Formulaires & Campagnes HelloAsso</h1>
-                    <button
+                    {/* <button
                         onClick={() => setAfficherModalNewForm(true)}
                         className="py-2 px-4 bg-[#dbeafe] hover:bg-[#bfdbfe] text-[#3353d3] font-medium rounded-lg text-sm transition-colors duration-200">
                         Nouveau formulaire
-                    </button>
+                    </button> */}
                 </div>
 
                 {/* Cartes des formulaires */}
@@ -594,7 +594,7 @@ export default function Helloasso() {
                 )}
             </div>
             <ModalNouveauFormHelloasso ouvert={afficherModalNewForm} onFermer={() => setAfficherModalNewForm(false)} setFormulaires={setForms} />
-            <ConnexionHelloAsso />
+            {/* <ConnexionHelloAsso /> */}
         </>
     );
 }

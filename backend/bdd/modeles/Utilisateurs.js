@@ -79,7 +79,7 @@ export default function (bdd) {
             });
             return res
                 .cookie("utilisateur", tokenJWT, {
-                    maxAge: 72 * 60 * 60 * 24 * 1000,
+                    maxAge: 3 * 24 * 60 * 60 * 1000,
                     httpOnly: true,
                     sameSite: "Strict",
                     secure: process.env.MODE == "production",

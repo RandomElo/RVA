@@ -4,10 +4,14 @@ import {
     clientOAuth,
     setTokensUtilisateur,
     estConnecteHelloAsso,
+    genererPKCE,
 } from "../../fonctions/helloasso/clientHelloasso.js";
 import gestionErreur from "../middlewares/gestionErreur.js";
 import crypto from "crypto";
+
 const NOM_COOKIE_STATE = "helloasso_oauth_state";
+const NOM_COOKIE_VERIFIER = "helloasso_oauth_verifier";
+
 const MAPPING_CATEGORIES = {
     adhesion: "Membership",
     evenement: "Event",

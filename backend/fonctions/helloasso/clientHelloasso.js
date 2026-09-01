@@ -2,10 +2,12 @@ import { ClientCredentials, AuthorizationCode } from 'simple-oauth2';
 import fs from 'fs';
 import path from 'path';
 import crypto from "crypto"
+import { logger } from '../utilitaires/logger.js';
 
 // -------------------------------------------------------------
 // 1. CLIENT CREDENTIALS (Pour la lecture et les paiements)
 // -------------------------------------------------------------
+
 const oauthClientCredentials = new ClientCredentials({
     client: {
         id: process.env.HELLOASSO_CLIENT_ID,
@@ -15,24 +17,38 @@ const oauthClientCredentials = new ClientCredentials({
         tokenHost: process.env.HELLOASSO_BASE_URL || 'https://api.helloasso-sandbox.com',
         tokenPath: '/oauth2/token',
     },
+    options: {
+        bodyFormat: 'form',
+    },
 });
-
 let clientCredentialsCache = null;
 let clientCredentialsExpiresAt = 0;
 
+let clientCredentialsToken = null;
+
 export async function getAccessToken() {
-    const now = Math.floor(Date.now() / 1000);
-
-    if (clientCredentialsCache && now < clientCredentialsExpiresAt - 60) {
-        return clientCredentialsCache;
+    if (clientCredentialsToken && !clientCredentialsToken.expired(60)) {
+        return clientCredentialsToken.token.access_token;
     }
+    console.log(oauthClientCredentials)
 
-    const result = await oauthClientCredentials.getToken();
+    logger.info('[HelloAsso] tokenHost:', process.env.HELLOASSO_BASE_URL || 'https://api.helloasso-sandbox.com');
+    logger.info('[HelloAsso] client_id présent:', Boolean(process.env.HELLOASSO_CLIENT_ID));
+    logger.info('[HelloAsso] client_secret présent:', Boolean(process.env.HELLOASSO_CLIENT_SECRET));
 
-    clientCredentialsCache = result.token.access_token;
-    clientCredentialsExpiresAt = Math.floor(new Date(result.token.expires_at).getTime() / 1000);
+    try {
+        clientCredentialsToken = await oauthClientCredentials.getToken({});
+    } catch (err) {
+        logger.error('[HelloAsso] échec getToken:', err.data?.payload || err.message);
+        console.log(err)
+        logger.error(err.data.payload)
 
-    return clientCredentialsCache;
+        throw err;
+    }
+    console.log("=========================")
+    console.log(clientCredentialsCache)
+    console.log("=========================")
+    return clientCredentialsToken.token.access_token;
 }
 
 // -------------------------------------------------------------

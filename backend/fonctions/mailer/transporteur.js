@@ -30,6 +30,7 @@ const hbsInstance = create({
     helpers: {
         year: () => new Date().getFullYear(),
         inc: (valeur) => valeur + 1,
+        gt: (a, b) => a > b,
     },
 });
 

@@ -422,7 +422,8 @@ export const enregistrerNewsletter = gestionErreur(async (req, res) => {
 
     // Envoi des mails de notification
     const utilisateurs = await req.Utilisateurs.findAll({
-        where: { role: "adherent", recevoirNewsletter: true, derniereConnexion: { [Op.ne]: null, }, },
+        // where: { role: "adherent", recevoirNewsletter: true, derniereConnexion: { [Op.ne]: null, }, },
+        where: { role: "adherent", recevoirNewsletter: true },
         attributes: ["id", "prenom", "mail"],
         raw: true,
     });
@@ -600,7 +601,7 @@ export const recupererAlbum = gestionErreur(async (req, res) => {
 export const modifierAlbum = gestionErreur(async (req, res) => {
     const { url, images } = req.body;
 
-    if (!url ||!Array.isArray(images) ||
+    if (!url || !Array.isArray(images) ||
         !images.every(
             (image) =>
                 image !== null &&

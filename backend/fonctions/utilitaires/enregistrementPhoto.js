@@ -8,9 +8,10 @@ import sharp from "sharp";
 // 1. Centralisation des chemins
 export const DOSSIER_ADHERENTS = path.join(process.cwd(), "medias", "adherents");
 export const DOSSIER_GALERIE = path.join(process.cwd(), "medias", "galerie");
+export const DOSSIER_MAILS = path.join(process.cwd(), "medias", "mails");
 
 // 2. Traitement groupé de la création des dossiers
-[DOSSIER_ADHERENTS, DOSSIER_GALERIE].forEach((dossier) => {
+[DOSSIER_ADHERENTS, DOSSIER_GALERIE, DOSSIER_MAILS].forEach((dossier) => {
     if (!fs.existsSync(dossier)) {
         fs.mkdirSync(dossier, { recursive: true });
     }
@@ -47,4 +48,29 @@ export const sauvegarderEnWebp = async (buffer, dossierDestination, qualite = 80
         .toFile(cheminComplet);
 
     return nomFichier;
+};
+
+const pieceJointeFilter = (req, file, cb) => {
+    const typesAcceptes = ["application/pdf", "image/png", "image/jpeg", "image/jpg", "image/webp"];
+    if (!typesAcceptes.includes(file.mimetype)) {
+        return cb(new Error("Le fichier doit être un PDF ou une image (png, jpg, webp)"), false);
+    }
+    cb(null, true);
+};
+
+export const enregistrerPiecesJointesMail = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: pieceJointeFilter,
+});
+
+// 8. Sauvegarde d'une pièce jointe en conservant son format d'origine
+export const sauvegarderPieceJointe = async (buffer, nomOriginal, dossierDestination = DOSSIER_MAILS) => {
+    const extension = path.extname(nomOriginal).toLowerCase() || ".bin";
+    const nomFichier = `${randomUUID()}${extension}`;
+    const cheminComplet = path.join(dossierDestination, nomFichier);
+
+    fs.writeFileSync(cheminComplet, buffer);
+
+    return { nomFichier, nomOriginal };
 };
