@@ -1,0 +1,36 @@
+# Running Vincennes Association (RVA)
+
+> Club de course à pied affilié à la Fédération Française d'Athlétisme (FFA), basé à Vincennes. Le club propose des entraînements collectifs encadrés toute la saison (mardi soir sur stade, samedi matin au Bois de Vincennes), ouverts aux débutants comme aux confirmés, ainsi qu'un accompagnement vers les courses françaises (10 km, semi-marathon, marathon).
+
+Ce site présente le club, son actualité, son calendrier de courses et des ressources gratuites pour les coureurs (calcul de VMA, plans d'entraînement, lexique). Certaines pages nécessitent une authentification (espace adhérents) et ne sont pas listées ici.
+
+## Le club
+
+- [Accueil](https://www.running-vincennes.fr/): présentation générale du club, entraîneur, horaires d'entraînement et dernières actualités.
+- [Notre histoire](https://www.running-vincennes.fr/notre-histoire): présentation détaillée du club et de son parcours.
+- [Nos partenaires](https://www.running-vincennes.fr/nos-partenaires): partenaires et sponsors du club.
+- [Contactez-nous](https://www.running-vincennes.fr/contactez-nous): formulaire et informations de contact pour rejoindre le club ou poser une question.
+
+## Courses et actualités
+
+- [Calendrier des courses](https://www.running-vincennes.fr/calendrier): courses auxquelles participent les membres du club, mises à jour régulièrement.
+- [Blog](https://www.running-vincennes.fr/blog): articles et actualités du club.
+
+## Ressources pour coureurs
+
+- [Toutes les ressources](https://www.running-vincennes.fr/ressources): index des ressources d'entraînement proposées par le club.
+- [Calculateur de VMA](https://www.running-vincennes.fr/ressources/vma): estimation des allures d'entraînement à partir de la VMA.
+- [Tests VMA](https://www.running-vincennes.fr/ressources/tests-vma): protocoles pour évaluer sa vitesse maximale aérobie.
+- [Plan d'entraînement](https://www.running-vincennes.fr/ressources/plan-entrainement): plans adaptés à différents objectifs, du 10 km au marathon.
+- [Lexique du coureur](https://www.running-vincennes.fr/ressources/lexique): définitions des termes courants (fractionné, VMA, seuil, etc.).
+
+## Informations légales
+
+- [Mentions légales](https://www.running-vincennes.fr/mentions-legales)
+- [Politique de confidentialité](https://www.running-vincennes.fr/politique-confidentialite)
+- [CGU](https://www.running-vincennes.fr/cgu)
+- [Crédits](https://www.running-vincennes.fr/credits)
+
+## Optional
+
+- Espace membres ([connexion](https://www.running-vincennes.fr/connexion)) et pages d'administration: accès réservé aux adhérents et administrateurs, non pertinent pour l'indexation générale.

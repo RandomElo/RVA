@@ -268,13 +268,15 @@ export default function Accueil() {
                             <div className={`h-full w-full ${heroCharge ? "animate-[float_5s_ease-in-out_infinite]" : ""}`}>
                                 <img
                                     src="/img/banniere.webp"
-                                    alt="Photo du groupe Running Vincennes Association"
+                                    srcSet="/img/banniere-560.webp 560w, /img/banniere.webp 800w"
+                                    sizes="(min-width: 768px) 530px, 100vw"
+                                    alt="Photo du club Running Vincennes Association"
                                     width={800}
                                     height={600}
-                                    className="h-full w-full object-cover rounded-2xl transition-transform duration-700 ease-out hover:scale-120"
                                     loading="eager"
                                     fetchPriority="high"
                                     decoding="async"
+                                    className="h-full w-full object-cover rounded-2xl transition-transform duration-700 ease-out hover:scale-120"
                                 />
                             </div>
                         </div>
@@ -285,7 +287,7 @@ export default function Accueil() {
                 <section className="mx-auto max-w-6xl px-6 py-16 sm:h-[297.5px]">
                     <Reveal className="grid grid-cols-1 items-center gap-10 md:grid-cols-[auto_1fr] sm:h-[169.5px]" direction="zoom" duree={800}>
                         <div className="mx-auto flex h-32 w-32 shrink-0 items-center justify-center rounded-full border border-club-200 bg-club-50 text-center text-xs text-club-700 transition-all duration-500 ease-out hover:scale-110 hover:rotate-3 hover:shadow-lg hover:shadow-club-200/50 md:mx-0">
-                            <ImageCache src="/img/thomas.webp" alt={`Photo de ${accueilJSON.nomCoach}`} className="rounded-full" />
+                            <ImageCache src="/img/thomas.webp" alt={`Photo de ${accueilJSON.nomCoach}`} className="rounded-full" width={128} height={128} />
                         </div>
                         <div className="sm:h-[169.5px]">
                             <p className="text-sm font-medium uppercase tracking-wide text-club-600">Notre entraîneur</p>

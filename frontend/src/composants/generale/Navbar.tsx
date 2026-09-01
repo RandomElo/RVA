@@ -2,7 +2,7 @@
  * Navbar du site - Version Optimisée
  */
 
-import { useEffect, useMemo, useRef, useState, useTransition, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition, useCallback, lazy, Suspense } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Menu, X, ChevronDown, LogOut, User, Loader2, Key } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
@@ -11,7 +11,7 @@ import Logo from "../../assets/logo.svg?react";
 import { useNotifications } from "../../contexts/NotificationsContext";
 import BandeauAnniversaire from "./BandeauAnniversaire";
 import type { Role } from "../../constantes/types/auth";
-import ModalChangementMdp from "../modal/administration/ModalChangementMdp";
+const ModalChangementMdp = lazy(() => import("../modal/administration/ModalChangementMdp"));
 
 interface Lien {
     href: string;
@@ -373,8 +373,11 @@ export default function Navbar() {
                 {/* BARRE DE CHARGEMENT SUPERIEURE */}
                 <div className="h-1 w-full overflow-hidden relative bg-club-600">
                     <div
-                        style={{ transitionDuration: estEnTransition ? '3500ms' : '0ms' }}
-                        className={`h-full bg-emerald-700 transition-all ease-out ${estEnTransition ? "w-full opacity-100" : "w-0 opacity-0"
+                        style={{
+                            transitionDuration: estEnTransition ? '3500ms' : '0ms',
+                            transformOrigin: 'left',
+                        }}
+                        className={`h-full w-full bg-emerald-700 transition-[transform,opacity] ease-out ${estEnTransition ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0"
                             }`}
                     />
                 </div>
@@ -714,7 +717,11 @@ export default function Navbar() {
                     </nav>
                 )}
             </header>
-            <ModalChangementMdp ouvert={modalChangementMdp} onFermer={() => setModalChangementMdp(false)} />
+            {modalChangementMdp && (
+                <Suspense fallback={null}>
+                    <ModalChangementMdp ouvert={modalChangementMdp} onFermer={() => setModalChangementMdp(false)} />
+                </Suspense>
+            )}
         </>
     );
 }

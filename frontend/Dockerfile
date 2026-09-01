@@ -25,6 +25,7 @@ FROM nginx:alpine
 # - Node/Chromium pour le prerender avec Puppeteer
 # - Certbot/OpenSSL pour la gestion autonome des certificats HTTPS
 RUN apk add --no-cache \
+    nginx-mod-http-brotli \
     nodejs \
     npm \
     chromium \
