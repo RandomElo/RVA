@@ -17,14 +17,11 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-
-# Étape 2 : Runtime Nginx + Node.js + Chromium + Certbot
-FROM nginx:alpine
-
 # Installation des dépendances système :
 # - Node/Chromium pour le prerender avec Puppeteer
 # - Certbot/OpenSSL pour la gestion autonome des certificats HTTPS
 RUN apk add --no-cache \
+    nginx \
     nginx-mod-http-brotli \
     nodejs \
     npm \
