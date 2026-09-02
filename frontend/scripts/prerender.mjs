@@ -167,7 +167,7 @@ async function main() {
                 link.setAttribute('rel', 'canonical');
                 link.setAttribute('href', `${domain}${currentRoute}`);
                 document.head.appendChild(link);
-            }, route, NOM_DOMAINE);
+            }, route, "https://" + NOM_DOMAINE);
 
             let html = await page.content();
 

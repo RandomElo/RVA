@@ -173,16 +173,16 @@ export default function Blog() {
                 </nav>
 
                 {/* Grille d'articles ou Squelettes de chargement (3 cartes) */}
-                 {articles == null  ? (
+                {articles == null ? (
                     <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         {Array.from({ length: 3 }).map((_, index) => (
                             <CarteSqueletteArticle key={index} />
                         ))}
                     </div>
                 ) : articlesFiltres.length === 0 ? (
-                    <div className="flex flex-col items-center content-center gap-2 rounded-xl h-[342px] border border-dashed border-club-200 px-4 py-16 sm:py-20 text-center">
-                        <Inbox size={28} className="text-[#0B2270]/30" />
-                        <p className="text-sm text-[#0B2270]/60">
+                    <div className="flex flex-col items-center justify-center gap-2 rounded-xl h-[342px] border border-dashed border-club-200 px-4 py-16 sm:py-20 text-center">
+                        <Inbox size={28} className="text-[#0B2270]/40" />
+                        <p className="text-sm font-medium text-[#0B2270]/85">
                             Aucune actualité dans cette catégorie pour le moment.
                         </p>
                     </div>
