@@ -268,7 +268,7 @@ export default function Accueil() {
                             <div className={`h-full w-full ${heroCharge ? "animate-[float_5s_ease-in-out_infinite]" : ""}`}>
                                 <img
                                     src="/img/banniere.webp"
-                                    srcSet="/img/banniere-560.webp 560w, /img/banniere.webp 800w"
+                                    srcSet="/img/banniere-530.webp 530w, /img/banniere.webp 800w"
                                     sizes="(min-width: 768px) 530px, 100vw"
                                     alt="Photo du club Running Vincennes Association"
                                     width={800}

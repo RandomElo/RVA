@@ -1,13 +1,31 @@
-import { useEffect, useState } from "react";
-import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, PieChart, Pie, Sector, DefaultLegendContent, } from "recharts";
+import { useEffect, useState, lazy, Suspense } from "react";
 import type { DonneesDashboardStatistiques } from "../../constantes/types/statistiques";
-import { Mail, Newspaper, ArrowUpRight, type LucideIcon, BookOpenText, } from "lucide-react";
+import {
+    Mail,
+    Newspaper,
+    ArrowUpRight,
+    type LucideIcon,
+    BookOpenText,
+} from "lucide-react";
 import { useRequete, type Requete } from "../../fonctions/requete";
 import { Link } from "react-router-dom";
 import { useNotifications } from "../../contexts/NotificationsContext";
 
-const COULEUR_VUES = "#0F2C8F"; // club-600
-const COULEURS_REPARTITION = ["#4574D2", "#EE8659"]; // adherent / visiteur
+const GraphiqueEvolutionMensuelle = lazy(() =>
+    import("../../composants/administration/StatistiquesCharts").then((m) => ({
+        default: m.GraphiqueEvolutionMensuelle,
+    }))
+);
+const GraphiqueAdherentsVisiteursParMois = lazy(() =>
+    import("../../composants/administration/StatistiquesCharts").then((m) => ({
+        default: m.GraphiqueAdherentsVisiteursParMois,
+    }))
+);
+const GraphiqueRepartitionPie = lazy(() =>
+    import("../../composants/administration/StatistiquesCharts").then((m) => ({
+        default: m.GraphiqueRepartitionPie,
+    }))
+);
 
 async function recupererStatistiquesAdmin(
     requete: Requete,
@@ -44,17 +62,6 @@ const titreNewsletter = (url: string) => {
     };
 
     return `Newsletter ${mois[match[1]] ?? match[1]} ${match[2]}`;
-};
-
-const formaterMois = (mois: string) => {
-    const [annee, numeroMois] = mois.split("-");
-
-    const resultat = new Intl.DateTimeFormat("fr-FR", {
-        month: "long",
-        year: "numeric",
-    }).format(new Date(Number(annee), Number(numeroMois) - 1));
-
-    return resultat.charAt(0).toUpperCase() + resultat.slice(1);
 };
 
 function CarteChiffreCle({
@@ -160,6 +167,14 @@ function BlocErreur({ message }: { message: string }) {
     );
 }
 
+function BlocChargementGraphique() {
+    return (
+        <div className="flex h-60 items-center justify-center rounded-xl border border-club-100 bg-white font-body text-sm text-club-500">
+            Chargement du graphique…
+        </div>
+    );
+}
+
 export default function Statistiques() {
     const [donnees, setDonnees] = useState<DonneesDashboardStatistiques | null>(null);
     const [enChargement, setEnChargement] = useState<boolean>(true);
@@ -203,19 +218,6 @@ export default function Statistiques() {
             ignorer = true;
         };
     }, [periode.debut, periode.fin]);
-
-    const repartition = donnees
-        ? [
-            {
-                nom: "Adhérents",
-                valeur: donnees.chiffresCles.repartitionVisiteurAdherent.adherent,
-            },
-            {
-                nom: "Visiteurs",
-                valeur: donnees.chiffresCles.repartitionVisiteurAdherent.visiteur,
-            },
-        ]
-        : [];
 
     async function handleEnvoyerRecap() {
         try {
@@ -306,62 +308,12 @@ export default function Statistiques() {
                     {/* Graphiques + Cartes */}
                     <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-2">
                         <div className="flex flex-col gap-6">
-                            <div className="rounded-xl border border-club-100 bg-white p-5 shadow-sm">
-                                <h2 className="font-display mb-4 text-lg font-semibold text-club-900">
-                                    Évolution mensuelle
-                                </h2>
-                                <ResponsiveContainer width="100%" height={240}>
-                                    <LineChart data={donnees.evolutionMensuelle}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#EAF0FB" />
-                                        <XAxis
-                                            dataKey="mois"
-                                            tick={{ fontSize: 12 }}
-                                            tickFormatter={formaterMois}
-                                        />
-                                        <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                                        <Tooltip
-                                            labelFormatter={(mois) => formaterMois(String(mois))}
-                                        />
-                                        <Legend />
-                                        <Line
-                                            type="monotone"
-                                            dataKey="clics"
-                                            name="Vues de pages"
-                                            stroke={COULEUR_VUES}
-                                            strokeWidth={2}
-                                        />
-                                    </LineChart>
-                                </ResponsiveContainer>
-                            </div>
-
-                            <div className="rounded-xl border border-club-100 bg-white p-5 shadow-sm">
-                                <h2 className="font-display mb-4 text-lg font-semibold text-club-900">
-                                    Adhérents vs visiteurs par mois
-                                </h2>
-                                <ResponsiveContainer width="100%" height={240}>
-                                    <BarChart data={donnees.adherentsVisiteursParMois}>
-                                        <CartesianGrid strokeDasharray="3 3" stroke="#EAF0FB" />
-                                        <XAxis dataKey="mois" tick={{ fontSize: 12 }} />
-                                        <YAxis tick={{ fontSize: 12 }} allowDecimals={false} />
-                                        <Tooltip />
-                                        <Legend />
-                                        <Bar
-                                            dataKey="adherents"
-                                            name="Adhérents"
-                                            stackId="repartition"
-                                            fill={COULEURS_REPARTITION[0]}
-                                            radius={[0, 0, 0, 0]}
-                                        />
-                                        <Bar
-                                            dataKey="visiteurs"
-                                            name="Visiteurs"
-                                            stackId="repartition"
-                                            fill={COULEURS_REPARTITION[1]}
-                                            radius={[4, 4, 0, 0]}
-                                        />
-                                    </BarChart>
-                                </ResponsiveContainer>
-                            </div>
+                            <Suspense fallback={<BlocChargementGraphique />}>
+                                <GraphiqueEvolutionMensuelle donnees={donnees} />
+                            </Suspense>
+                            <Suspense fallback={<BlocChargementGraphique />}>
+                                <GraphiqueAdherentsVisiteursParMois donnees={donnees} />
+                            </Suspense>
                         </div>
 
                         <div className="flex flex-col gap-6">
@@ -397,76 +349,9 @@ export default function Statistiques() {
 
                     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
                         {/* Répartition visiteur / adhérent */}
-                        <div className="rounded-xl border border-club-100 bg-white p-5 shadow-sm">
-                            <h2 className="font-display mb-4 text-lg font-semibold text-club-900">
-                                Adhérents vs visiteurs
-                            </h2>
-                            <ResponsiveContainer width="100%" height={260}>
-                                <PieChart>
-                                    <Pie
-                                        data={repartition}
-                                        dataKey="valeur"
-                                        nameKey="nom"
-                                        innerRadius={60}
-                                        outerRadius={90}
-                                        shape={(props) => (
-                                            <Sector
-                                                {...props}
-                                                fill={
-                                                    COULEURS_REPARTITION[
-                                                    props.index % COULEURS_REPARTITION.length
-                                                    ]
-                                                }
-                                            />
-                                        )}
-                                    />
-                                    <Tooltip
-                                        content={({ active, payload: tooltipPayload, ...props }) => {
-                                            const activeIndex =
-                                                props.activeIndex != null
-                                                    ? Number(props.activeIndex)
-                                                    : -1;
-                                            const entry =
-                                                activeIndex !== -1 ? repartition[activeIndex] : null;
-                                            if (!active || !entry) return null;
-                                            return (
-                                                <div className="rounded-lg border border-club-100 bg-white px-3 py-2 text-sm shadow-sm">
-                                                    <div className="flex items-center gap-2">
-                                                        <span
-                                                            className="h-2 w-2 rounded-full"
-                                                            style={{
-                                                                backgroundColor:
-                                                                    COULEURS_REPARTITION[
-                                                                    activeIndex % COULEURS_REPARTITION.length
-                                                                    ],
-                                                            }}
-                                                        />
-                                                        <span>{entry.nom}</span>
-                                                    </div>
-                                                    <span className="font-semibold">{entry.valeur}</span>
-                                                </div>
-                                            );
-                                        }}
-                                    />
-                                    <Legend
-                                        iconType="circle"
-                                        iconSize={8}
-                                        content={(props) => {
-                                            const legendPayload = repartition.map((entry, index) => ({
-                                                color:
-                                                    COULEURS_REPARTITION[
-                                                    index % COULEURS_REPARTITION.length
-                                                    ],
-                                                payload: entry,
-                                                type: props.iconType,
-                                                value: entry.nom,
-                                            }));
-                                            return <DefaultLegendContent {...props} payload={legendPayload} />;
-                                        }}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
+                        <Suspense fallback={<BlocChargementGraphique />}>
+                            <GraphiqueRepartitionPie donnees={donnees} />
+                        </Suspense>
 
                         <div className="flex-1">
                             <CarteListe
