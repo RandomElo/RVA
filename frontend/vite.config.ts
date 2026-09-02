@@ -31,43 +31,30 @@ export default defineConfig(({ mode }) => {
             }),
         ],
         build: {
-            // Seuil de warning baissé pour mieux surveiller la taille
             chunkSizeWarningLimit: 500,
-            
-            // Suppression des commentaires et minification agressive
             target: "es2022",
             minify: "esbuild",
             cssMinify: true,
             
             rollupOptions: {
                 output: {
-                    // Nettoie la liste des préchargements HTML pour éviter de télécharger 
-                    // les chunks qui ne servent qu'aux pages dynamiques/lazy-loaded
-                    experimentalMinChunkSize: 10000,
-                    
                     manualChunks(id) {
                         if (id.includes("node_modules")) {
-                            // L'éditeur Tiptap et Turndown (Lourd -> Lazy-loaded sur la page dédiée)
                             if (id.includes("@tiptap") || id.includes("turndown") || id.includes("prosemirror")) {
                                 return "vendor-editor";
                             }
-                            // Graphiques et cartes (Lourd -> Lazy-loaded)
                             if (id.includes("recharts") || id.includes("d3-") || id.includes("d3")) {
                                 return "vendor-charts";
                             }
-                            // Outils d'export / DOM
                             if (id.includes("html2canvas") || id.includes("dompurify")) {
                                 return "vendor-dom-utils";
                             }
-                            // Authentification et sécurité
                             if (id.includes("@react-oauth") || id.includes("turnstile") || id.includes("jwt-decode")) {
                                 return "vendor-auth";
                             }
-                            // Icônes
                             if (id.includes("lucide-react")) {
                                 return "vendor-icons";
                             }
-                            // Core React (Indispensable immédiatement)
                             if (
                                 id.includes("node_modules/react/") || 
                                 id.includes("node_modules/react-dom/") || 
