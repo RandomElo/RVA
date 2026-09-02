@@ -11,21 +11,22 @@ import { useRequete, type Requete } from "../../fonctions/requete";
 import { Link } from "react-router-dom";
 import { useNotifications } from "../../contexts/NotificationsContext";
 
-const GraphiqueEvolutionMensuelle = lazy(() =>
-    import("../../composants/administration/StatistiquesCharts").then((m) => ({
-        default: m.GraphiqueEvolutionMensuelle,
-    }))
-);
-const GraphiqueAdherentsVisiteursParMois = lazy(() =>
-    import("../../composants/administration/StatistiquesCharts").then((m) => ({
-        default: m.GraphiqueAdherentsVisiteursParMois,
-    }))
-);
-const GraphiqueRepartitionPie = lazy(() =>
-    import("../../composants/administration/StatistiquesCharts").then((m) => ({
-        default: m.GraphiqueRepartitionPie,
-    }))
-);
+
+
+const GraphiqueEvolutionMensuelle = lazy(async () => {
+    const m = await import("../../composants/administration/StatistiquesCharts");
+    return { default: m.GraphiqueEvolutionMensuelle };
+});
+
+const GraphiqueAdherentsVisiteursParMois = lazy(async () => {
+    const m = await import("../../composants/administration/StatistiquesCharts");
+    return { default: m.GraphiqueAdherentsVisiteursParMois };
+});
+
+const GraphiqueRepartitionPie = lazy(async () => {
+    const m = await import("../../composants/administration/StatistiquesCharts");
+    return { default: m.GraphiqueRepartitionPie };
+});
 
 async function recupererStatistiquesAdmin(
     requete: Requete,

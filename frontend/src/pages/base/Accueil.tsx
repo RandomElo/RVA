@@ -224,9 +224,15 @@ export default function Accueil() {
                             </span>
 
                             <h1
-                                className={`mt-5 transform font-display text-4xl font-bold leading-tight text-white transition-all ease-out md:text-5xl ${heroCharge ? "opacity-100 translate-y-0 blur-0" : "opacity-0 translate-y-10 blur-sm"
+                                className={`mt-5 font-display text-4xl font-bold leading-tight text-white transition-all transform-gpu md:text-5xl ${heroCharge
+                                        ? "opacity-100 translate-y-0"
+                                        : "opacity-0 translate-y-4"
                                     }`}
-                                style={{ transitionDuration: "900ms", transitionDelay: heroCharge ? "150ms" : "0ms", transitionTimingFunction: EASE_EXPO_OUT }}
+                                style={{
+                                    transitionDuration: "600ms",
+                                    transitionDelay: "0ms",
+                                    transitionTimingFunction: EASE_EXPO_OUT
+                                }}
                             >
                                 RUNNING VINCENNES ASSOCIATION
                             </h1>
