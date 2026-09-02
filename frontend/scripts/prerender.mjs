@@ -153,10 +153,24 @@ async function main() {
 
             await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
 
-            // 1. Utiliser `let` au lieu de `const` pour pouvoir modifier le contenu
+            // 1. Nettoyage directement DANS LE DOM du navigateur via Puppeteer
+            await page.evaluate((currentRoute, domain) => {
+                // Récupère toutes les balises canonicals présentes
+                const canonicals = Array.from(document.querySelectorAll('link[rel="canonical"]'));
+
+                // Supprime TOUTES les canonicals existantes
+                canonicals.forEach(el => el.remove());
+
+                // Crée UNE SEULE balise propre avec l'URL finale de production
+                const link = document.createElement('link');
+                link.setAttribute('rel', 'canonical');
+                link.setAttribute('href', `${domain}${currentRoute}`);
+                document.head.appendChild(link);
+            }, route, "https://votre-domaine-de-prod.fr"); // 👈 Remplacez par votre vrai domaine
+
             let html = await page.content();
 
-            // 2. Nettoyage des URLs absolues locales (127.0.0.1 ou localhost)
+            // 2. Nettoyage des URLs locales (votre regex habituelle)
             const localUrlRegex = new RegExp(`http://(?:127\\.0\\.0\\.1|${HOST}):\\d+`, "g");
             html = html.replace(localUrlRegex, "");
 
