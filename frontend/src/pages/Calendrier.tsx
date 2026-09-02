@@ -476,14 +476,14 @@ export default function Calendrier() {
                 <section className="mx-auto max-w-6xl px-4 py-10 sm:px-6 sm:py-14">
                     <div className="flex flex-col items-start justify-between gap-1 sm:flex-row sm:items-end sm:gap-4">
                         <div>
-                            <p className="text-xs font-medium uppercase tracking-wide text-club-400 sm:text-sm">
+                            <p className="text-xs font-medium uppercase tracking-wide text-club-600 sm:text-sm">
                                 À venir
                             </p>
                             <h2 className="mt-1 font-display text-xl font-semibold text-club-600 sm:text-2xl">
                                 Prochaines échéances
                             </h2>
                         </div>
-                        <span className="text-xs text-club-400 sm:text-sm">
+                        <span className="text-xs text-club-600 sm:text-sm">
                             {enChargement ? "Chargement..." : `${aVenir.length} courses trouvées`}
                         </span>
                     </div>

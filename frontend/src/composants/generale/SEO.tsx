@@ -9,15 +9,17 @@ interface SEOProps {
     children?: ReactNode;
 }
 
+const nomDomaine = import.meta.env.VITE_NOM_DOMAINE
+
 // Image par défaut si l'article n'en possède pas
-const IMAGE_PAR_DEFAUT = "https://www.running-vincennes.fr/images/og-default.jpg";
+const IMAGE_PAR_DEFAUT = `https://${nomDomaine}/img/banniere-1600.webp`;
 
 export default function SEO({ titre, description, chemin, image, children }: SEOProps) {
-    const url = `https://www.running-vincennes.fr${chemin}`;
+    const url = `https://${nomDomaine}${chemin}`;
 
     // Si l'image est un chemin relatif (ex: /uploads/img.jpg), on le transforme en URL absolue
     const imageUrlAbsolue = image
-        ? (image.startsWith("http") ? image : `https://www.running-vincennes.fr${image}`)
+        ? (image.startsWith("http") ? image : `https://${nomDomaine}${image}`)
         : IMAGE_PAR_DEFAUT;
 
     return (
