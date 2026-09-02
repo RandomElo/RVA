@@ -7,11 +7,7 @@ export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, process.cwd(), "");
 
     const backendUrl = env.VITE_API_INTERNAL_URL || "http://backend:8100";
-    const proxyRoutes = [
-        "/utilisateurs", "/autres", "/articles", "/courses", 
-        "/statistiques", "/specialistes", "/fichiers", "/images", 
-        "/pages", "/helloasso"
-    ];
+    const proxyRoutes = ["/utilisateurs", "/autres", "/articles", "/courses", "/statistiques", "/specialistes", "/fichiers", "/images", "/pages", "/helloasso"];
 
     const proxyConfig: Record<string, any> = {};
     proxyRoutes.forEach((route) => {
@@ -32,11 +28,12 @@ export default defineConfig(({ mode }) => {
         ],
         build: {
             chunkSizeWarningLimit: 500,
-            
+
             target: "es2022",
             minify: "oxc",
+            cssCodeSplit: true,
             cssMinify: true,
-            
+
             rollupOptions: {
                 output: {
                     manualChunks(id) {
@@ -56,12 +53,7 @@ export default defineConfig(({ mode }) => {
                             if (id.includes("lucide-react")) {
                                 return "vendor-icons";
                             }
-                            if (
-                                id.includes("node_modules/react/") || 
-                                id.includes("node_modules/react-dom/") || 
-                                id.includes("node_modules/react-router") ||
-                                id.includes("node_modules/scheduler/")
-                            ) {
+                            if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/") || id.includes("node_modules/react-router") || id.includes("node_modules/scheduler/")) {
                                 return "vendor-react-core";
                             }
                         }

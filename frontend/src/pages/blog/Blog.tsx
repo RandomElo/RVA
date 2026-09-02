@@ -172,10 +172,10 @@ export default function Blog() {
                     })}
                 </nav>
 
-                {/* Grille d'articles ou Squelettes de chargement (9 cartes) */}
+                {/* Grille d'articles ou Squelettes de chargement (3 cartes) */}
                 {articles === null ? (
                     <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {Array.from({ length: 9 }).map((_, index) => (
+                        {Array.from({ length: 3 }).map((_, index) => (
                             <CarteSqueletteArticle key={index} />
                         ))}
                     </div>
