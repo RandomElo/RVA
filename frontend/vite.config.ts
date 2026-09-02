@@ -32,8 +32,9 @@ export default defineConfig(({ mode }) => {
         ],
         build: {
             chunkSizeWarningLimit: 500,
+            
             target: "es2022",
-            minify: "esbuild",
+            minify: "oxc", // <-- Changé ici (remplace 'esbuild')
             cssMinify: true,
             
             rollupOptions: {
