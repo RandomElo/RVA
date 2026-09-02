@@ -4,15 +4,15 @@ import tailwindcss from "@tailwindcss/vite";
 import svgr from "vite-plugin-svgr";
 
 export default defineConfig(({ mode }) => {
-    // Charge les variables .env et les arguments transmis au build
     const env = loadEnv(mode, process.cwd(), "");
 
-    // Cible du backend : vérifie env (loadEnv), process.env puis le fallback Docker
     const backendUrl = env.VITE_API_INTERNAL_URL || "http://backend:8100";
-    // Liste des préfixes de routes API à rediriger
-    const proxyRoutes = ["/utilisateurs", "/autres", "/articles", "/courses", "/statistiques", "/specialistes", "/fichiers", "/images", "/pages", "/helloasso"];
+    const proxyRoutes = [
+        "/utilisateurs", "/autres", "/articles", "/courses", 
+        "/statistiques", "/specialistes", "/fichiers", "/images", 
+        "/pages", "/helloasso"
+    ];
 
-    // Génération dynamique de l'objet proxy
     const proxyConfig: Record<string, any> = {};
     proxyRoutes.forEach((route) => {
         proxyConfig[route] = {
@@ -31,53 +31,73 @@ export default defineConfig(({ mode }) => {
             }),
         ],
         build: {
-            chunkSizeWarningLimit: 800,
+            // Seuil de warning baissé pour mieux surveiller la taille
+            chunkSizeWarningLimit: 500,
+            
+            // Suppression des commentaires et minification agressive
+            target: "es2022",
+            minify: "esbuild",
+            cssMinify: true,
+            
             rollupOptions: {
                 output: {
+                    // Nettoie la liste des préchargements HTML pour éviter de télécharger 
+                    // les chunks qui ne servent qu'aux pages dynamiques/lazy-loaded
+                    experimentalMinChunkSize: 10000,
+                    
                     manualChunks(id) {
                         if (id.includes("node_modules")) {
-                            if (id.includes("@tiptap") || id.includes("turndown")) {
+                            // L'éditeur Tiptap et Turndown (Lourd -> Lazy-loaded sur la page dédiée)
+                            if (id.includes("@tiptap") || id.includes("turndown") || id.includes("prosemirror")) {
                                 return "vendor-editor";
                             }
-                            if (id.includes("recharts") || id.includes("d3")) {
+                            // Graphiques et cartes (Lourd -> Lazy-loaded)
+                            if (id.includes("recharts") || id.includes("d3-") || id.includes("d3")) {
                                 return "vendor-charts";
                             }
-                            if (id.includes("@react-oauth") || id.includes("@marsidev/react-turnstile") || id.includes("jwt-decode")) {
-                                return "vendor-auth";
-                            }
-                            if (id.includes("dompurify") || id.includes("html2canvas-pro")) {
+                            // Outils d'export / DOM
+                            if (id.includes("html2canvas") || id.includes("dompurify")) {
                                 return "vendor-dom-utils";
                             }
+                            // Authentification et sécurité
+                            if (id.includes("@react-oauth") || id.includes("turnstile") || id.includes("jwt-decode")) {
+                                return "vendor-auth";
+                            }
+                            // Icônes
                             if (id.includes("lucide-react")) {
                                 return "vendor-icons";
                             }
-                            if (id.includes("node_modules/react/") || id.includes("node_modules/react-dom/") || id.includes("node_modules/react-router-dom/") || id.includes("node_modules/react-helmet-async/")) {
+                            // Core React (Indispensable immédiatement)
+                            if (
+                                id.includes("node_modules/react/") || 
+                                id.includes("node_modules/react-dom/") || 
+                                id.includes("node_modules/react-router") ||
+                                id.includes("node_modules/scheduler/")
+                            ) {
                                 return "vendor-react-core";
                             }
-                            return "vendor-others";
                         }
                     },
                 },
             },
         },
         server: {
-            port: parseInt(env.VITE_PORT_APPLICATION),
+            port: parseInt(env.VITE_PORT_APPLICATION || "3000"),
             historyApiFallback: true,
             proxy: proxyConfig,
             host: "0.0.0.0",
-            allowedHosts: true, // Désactive le blocage strict du header Host par Vite
+            allowedHosts: true,
             watch: {
                 usePolling: true,
             },
             hmr: {
-                host: "localhost", // Indique au navigateur Windows où joindre le WebSocket HMR
-                clientPort: parseInt(env.VITE_PORT_APPLICATION),
+                host: "localhost",
+                clientPort: parseInt(env.VITE_PORT_APPLICATION || "3000"),
             },
         },
-        // Nécessaire pour Puppeteer et `vite preview` pendant la phase de prerendering
         preview: {
-            port: parseInt(env.VITE_PRERENDER_PORT),
-            host: true, // Recommandé en Docker pour autoriser les connexions entrantes
+            port: parseInt(env.VITE_PRERENDER_PORT || "3001"),
+            host: true,
             proxy: proxyConfig,
         },
     };

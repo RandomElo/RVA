@@ -8,46 +8,47 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { HelmetProvider } from 'react-helmet-async';
 import { PageProtegee } from "./composants/PageProtegee";
 
-// Layout & Composants de structure
+// Layout & Composants de structure (Requis au 1er affichage)
 import Generale from "./composants/generale/Generale";
 import ErreurElement from "./composants/erreur/ErreurElement";
 
-// ⚡ 1. PAGES EN CHARGEMENT DIRECT (Eager Loading)
-// Visibles en 1 clic depuis le menu principal -> Navigation ultra-fluide !
+// ⚡ 1. SEULE LA PAGE D'ACCUEIL EST EN EAGER LOADING
 import Accueil from "./pages/base/Accueil";
-import HistoireDuClub from "./pages/NotreHistoire";
-import Contact from "./pages/base/ContactezNous";
-import Calendrier from "./pages/Calendrier";
-import Blog from "./pages/blog/Blog";
-import NosPartenaires from "./pages/NosPartenaires";
-import NosRessources from "./pages/ressources/RessourcesEntrainement";
-import Connexion from "./pages/base/Connexion";
 
-// 💤 2. PAGES EN LAZY LOADING (Chargées à la demande)
+// 💤 2. TOUTES LES AUTRES PAGES SONT EN LAZY LOADING (Inclus Blog, Calendrier, Connexion)
 
-// A. Administration (Inutile pour 95% des visiteurs)
+// Public principal
+const Calendrier = lazy(() => import("./pages/Calendrier"));
+const Blog = lazy(() => import("./pages/blog/Blog"));
+const NosRessources = lazy(() => import("./pages/ressources/RessourcesEntrainement"));
+const Connexion = lazy(() => import("./pages/base/Connexion"));
+const HistoireDuClub = lazy(() => import("./pages/NotreHistoire"));
+const Contact = lazy(() => import("./pages/base/ContactezNous"));
+const NosPartenaires = lazy(() => import("./pages/NosPartenaires"));
+
+// Administration
 const AdminAccueil = lazy(() => import("./pages/administration/InterfaceAdministration"));
 const AdministrationElement = lazy(() => import("./pages/administration/AdministrationElement"));
 const Statistiques = lazy(() => import("./pages/administration/Statistiques"));
 const EditionTextesPage = lazy(() => import("./pages/administration/EditionPage"));
 const GestionImages = lazy(() => import("./pages/administration/GestionImages"));
 const GestionPages = lazy(() => import("./pages/administration/GestionPages"));
-const Helloasso = lazy(() => import("./pages/administration/Helloasso"))
+const Helloasso = lazy(() => import("./pages/administration/Helloasso"));
 
-// B. Espace Adhérents & Rédaction
+// Espace Adhérents & Rédaction
 const Trombinoscope = lazy(() => import("./pages/ressources/Trombinoscope"));
 const SpecialistesSante = lazy(() => import("./pages/ressources/SpecialistesSante"));
 const RedactionArticle = lazy(() => import("./pages/blog/RedactionArticle"));
 const Anniversaires = lazy(() => import("./pages/ressources/Anniversaires"));
 const CategoriesFFA = lazy(() => import("./pages/ressources/CategoriesFFA"));
 
-// C. Outils spécifiques & Calculateurs (Contiennent du JS plus lourd)
+// Outils spécifiques & Calculateurs
 const ArticleDetailPage = lazy(() => import("./pages/blog/ArticleDetail"));
 const CalculateurVMA = lazy(() => import("./pages/ressources/Allures"));
 const PlanEntrainement = lazy(() => import("./pages/ressources/PlanEntrainement"));
 const TestsVMA = lazy(() => import("./pages/ressources/TestsVma"));
 
-// D. Pages Juridiques & Techniques (Visites très rares)
+// Pages Juridiques & Technique
 const Lexique = lazy(() => import("./pages/ressources/Lexique"));
 const MentionsLegales = lazy(() => import("./pages/legal/MentionsLegales"));
 const PolitiqueConfidentialite = lazy(() => import("./pages/legal/PolitiquesConfidentialite"));
@@ -56,66 +57,50 @@ const Credits = lazy(() => import("./pages/legal/Credits"));
 const Token = lazy(() => import("./pages/Token"));
 const PageBdd = lazy(() => import("./pages/base/PageBdd"));
 
-// Composant fallback pour le chargement des chunks
+// Fallback léger
 const PageLoader = () => (
     <div className="flex min-h-[50vh] items-center justify-center">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-accent-500 border-t-transparent"></div>
     </div>
 );
-async function loaderModifierArticle(params: Params<string>) {
 
+// Loaders asynchrones
+async function loaderModifierArticle(params: Params<string>) {
     const { url } = params;
     const requete = await fetch("/articles/recuperer-article-admin/" + url, {
         method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
     });
 
-    if (!requete.ok) {
-        throw new Response("Erreur lors de la récupération de l'article", {
-            status: 500,
-        });
-    }
+    if (!requete.ok) throw new Response("Erreur lors de la récupération de l'article", { status: 500 });
     const reponse = await requete.json();
-    if (!reponse.etat) {
-        throw new Response("Impossible de charger les données de l'article", {
-            status: 500,
-        });
-    }
+    if (!reponse.etat) throw new Response("Impossible de charger les données de l'article", { status: 500 });
     return reponse.detail;
 }
 
 async function loaderModifierPage(params: Params<string>) {
-
     const { url } = params;
     const requete = await fetch("/pages/details-admin/" + url, {
         method: "GET",
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         credentials: "include",
     });
 
-    if (!requete.ok) {
-        throw new Response("Erreur lors de la récupération de l'article", {
-            status: 500,
-        });
-    }
+    if (!requete.ok) throw new Response("Erreur lors de la récupération de l'article", { status: 500 });
     const reponse = await requete.json();
-    if (!reponse.etat) {
-        throw new Response("Impossible de charger les données de l'article", {
-            status: 500,
-        });
-    }
+    if (!reponse.etat) throw new Response("Impossible de charger les données de l'article", { status: 500 });
     return reponse.detail;
 }
 
 const router = createBrowserRouter([
     {
         path: "/",
-        element: <Suspense fallback={<PageLoader />}> <Generale /></Suspense>,
+        element: (
+            <Suspense fallback={<PageLoader />}>
+                <Generale />
+            </Suspense>
+        ),
         errorElement: <ErreurElement />,
         children: [
             // --- ROUTES PUBLIQUES ---
@@ -174,6 +159,7 @@ const router = createBrowserRouter([
                     },
                 ],
             },
+
             // --- PAGES LÉGALES ---
             { path: "/mentions-legales", element: <MentionsLegales /> },
             { path: "/politique-confidentialite", element: <PolitiqueConfidentialite /> },
