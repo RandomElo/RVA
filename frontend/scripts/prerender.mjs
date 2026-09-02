@@ -22,6 +22,7 @@ const env = loadEnv(process.env.NODE_ENV || "production", root, "");
 
 const PORT = env.VITE_PRERENDER_PORT || process.env.VITE_PRERENDER_PORT;
 const INTERNAL_SECRET = env.INTERNAL_SECRET || process.env.INTERNAL_SECRET;
+const NOM_DOMAINE = env.VITE_NOM_DOMAINE
 
 // Garde cette liste synchronisée avec les routes de ton app
 const routes = [
@@ -166,7 +167,7 @@ async function main() {
                 link.setAttribute('rel', 'canonical');
                 link.setAttribute('href', `${domain}${currentRoute}`);
                 document.head.appendChild(link);
-            }, route, "https://votre-domaine-de-prod.fr"); // 👈 Remplacez par votre vrai domaine
+            }, route, NOM_DOMAINE);
 
             let html = await page.content();
 
