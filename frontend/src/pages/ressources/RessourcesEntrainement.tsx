@@ -250,15 +250,15 @@ export default function NosRessources() {
                                                 <Icone size={20} />
                                             </div>
                                             <h3 className="mt-4 font-display text-base font-semibold text-[#040F33]">{r.titre}</h3>
-                                            <p className="mt-1.5 text-sm text-[#0B2270]/85">{r.description}</p>
+                                            <p className="mt-1.5 text-sm text-[#0B2270]">{r.description}</p>
                                             {r.disponible ? (
                                                 <span className="mt-4 flex items-center gap-1 text-sm font-medium text-club-600 transition group-hover:gap-2">
                                                     Découvrir
                                                     <ArrowRight size={14} />
                                                 </span>
                                             ) : (
-                                                <span className="mt-4 flex items-center gap-1.5 text-xs font-medium text-[#0B2270]/85">
-                                                    <Clock size={12} />
+                                                <span className="mt-4 flex items-center gap-1.5 text-xs font-semibold text-[#0B2270]">
+                                                    <Clock size={12} className="text-[#0B2270]/60" />
                                                     Bientôt disponible
                                                 </span>
                                             )}
@@ -281,7 +281,7 @@ export default function NosRessources() {
                                     ) : (
                                         <div
                                             key={r.id}
-                                            className="group flex cursor-not-allowed flex-col rounded-xl border border-dashed border-club-200 bg-club-50/40 p-5 opacity-70"
+                                            className="group flex cursor-not-allowed flex-col rounded-xl border border-dashed border-club-200 bg-club-50/40 p-5"
                                         >
                                             {contenuCarte}
                                         </div>
