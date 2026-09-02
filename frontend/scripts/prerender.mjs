@@ -153,15 +153,14 @@ async function main() {
 
             await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
 
-            const html = await page.content();
+            // 1. Utiliser `let` au lieu de `const` pour pouvoir modifier le contenu
+            let html = await page.content();
 
-            // 1. Remplace les URLs 127.0.0.1 (avec n'importe quel port) par des chemins relatifs ou le domaine de prod
-            const localUrlRegex = new RegExp(`http://${HOST}:${PORT}`, "g");
-            html = html.replace(/http:\/\/127\.0\.0\.1:\d+/g, "");
+            // 2. Nettoyage des URLs absolues locales (127.0.0.1 ou localhost)
+            const localUrlRegex = new RegExp(`http://(?:127\\.0\\.0\\.1|${HOST}):\\d+`, "g");
+            html = html.replace(localUrlRegex, "");
 
-            // 2. Nettoie les éventuelles traces de scripts/imports résolus en 127.0.0.1
-            html = html.replace(/http:\/\/127\.0\.0\.1:\d+/g,
-
+            // 3. Écriture du fichier HTML
             const outDir = route === "/" ? distDir : path.join(distDir, route.replace(/^\//, ""));
             await mkdir(outDir, { recursive: true });
             await writeFile(path.join(outDir, "index.html"), html, "utf-8");
