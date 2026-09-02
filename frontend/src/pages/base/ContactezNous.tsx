@@ -220,7 +220,7 @@ export default function Contact() {
                             <button
                                 type="submit"
                                 disabled={envoiEnCours}
-                                className="flex items-center w-fit gap-2 ml-auto rounded-lg bg-accent-500 px-6 py-2.5 text-base font-medium text-white transition hover:bg-accent-700 disabled:opacity-60"
+                                className="flex items-center w-fit gap-2 ml-auto rounded-lg bg-accent-600 px-6 py-2.5 text-base font-semibold text-white transition hover:bg-accent-700 disabled:opacity-60"
                             >
                                 {envoiEnCours ? <Loader2 size={16} className="animate-spin" /> : <Send size={18} />}
                                 Envoyer le message

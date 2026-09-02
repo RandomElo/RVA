@@ -173,7 +173,7 @@ export default function Footer() {
                                 rel="noopener noreferrer"
                                 aria-label={label}
                                 title={label}
-                                className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 text-white transition hover:border-accent-600 hover:bg-accent-600 hover:text-white"
+                                className="flex h-10 w-10 items-center justify-center rounded-lg border border-white/20 text-white transition hover:border-accent-700 hover:bg-accent-700 hover:text-white"
                             >
                                 <Icon className={`${classNameIcone} text-white`} />
                             </a>
