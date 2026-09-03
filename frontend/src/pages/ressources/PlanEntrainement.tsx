@@ -83,20 +83,23 @@ const WEEK_TYPE_LABEL: Record<WeekType, string> = {
     recovery: "Semaine d'assimilation",
     taper: "Semaine d'affûtage",
 };
+
 const WEEK_TYPE_TAG: Record<WeekType, string> = {
     build: "Charge normale",
     recovery: "Volume réduit ~-35%",
     taper: "Approche de la course",
 };
+
 const WEEK_TYPE_BAR: Record<WeekType, string> = {
     build: "bg-club-600",
     recovery: "bg-club-400",
-    taper: "bg-accent-500",
+    taper: "bg-accent-600",
 };
+
 const WEEK_TYPE_BADGE: Record<WeekType, string> = {
     build: "bg-club-50 text-club-700",
     recovery: "bg-club-100 text-club-700",
-    taper: "bg-accent-50 text-accent-700",
+    taper: "bg-accent-100 text-accent-700", 
 };
 
 
@@ -502,8 +505,15 @@ export default function PlanEntrainement() {
                     <div className="rounded-xl border border-club-100 bg-white p-6 print:hidden">
                         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                             <div>
-                                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-400">Objectif</label>
-                                <select value={distance} onChange={(e) => handleDistanceChange(e.target.value as DistanceKey)} className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none">
+                                <label htmlFor="inputObjectif" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
+                                    Objectif
+                                </label>
+                                <select
+                                    id="inputObjectif"
+                                    value={distance}
+                                    onChange={(e) => handleDistanceChange(e.target.value as DistanceKey)}
+                                    className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none"
+                                >
                                     {(Object.keys(DIST_PARAMS) as DistanceKey[]).map((k) => (
                                         <option key={k} value={k}>
                                             {DIST_PARAMS[k].label}
@@ -513,8 +523,15 @@ export default function PlanEntrainement() {
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-400">Temps repère (10 km)</label>
-                                <select value={category} onChange={(e) => handleCategoryChange(e.target.value)} className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none">
+                                <label htmlFor="inputTempsRepere" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
+                                    Temps repère (10 km)
+                                </label>
+                                <select
+                                    id="inputTempsRepere"
+                                    value={category}
+                                    onChange={(e) => handleCategoryChange(e.target.value)}
+                                    className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none"
+                                >
                                     <option value="custom">Selon VMA</option>
                                     <option value="38">Sub 38'</option>
                                     <option value="40">Sub 40'</option>
@@ -524,13 +541,16 @@ export default function PlanEntrainement() {
                                     <option value="55">Sub 55'</option>
                                     <option value="60">Sub 1h</option>
                                 </select>
-                                <p className="mt-1 text-xs text-club-400">{categoryHint}</p>
+                                <p className="mt-1 text-xs text-club-600">{categoryHint}</p>
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-400">VMA (km/h)</label>
+                                <label htmlFor="inputVMA" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
+                                    VMA (km/h)
+                                </label>
                                 <input
                                     type="number"
+                                    id="inputVMA"
                                     step={0.1}
                                     min={8}
                                     max={24}
@@ -542,8 +562,15 @@ export default function PlanEntrainement() {
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-400">Séances / semaine</label>
-                                <select value={seances} onChange={(e) => setSeances(parseInt(e.target.value, 10))} className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none">
+                                <label htmlFor="seancesParSemaine" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
+                                    Séances / semaine
+                                </label>
+                                <select
+                                    id="seancesParSemaine"
+                                    value={seances}
+                                    onChange={(e) => setSeances(parseInt(e.target.value, 10))}
+                                    className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none"
+                                >
                                     {[2, 3, 4, 5, 6].map((n) => (
                                         <option key={n} value={n}>
                                             {n}
@@ -553,9 +580,12 @@ export default function PlanEntrainement() {
                             </div>
 
                             <div>
-                                <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-400">Nombre de semaines</label>
+                                <label htmlFor="inputNbrSemaines" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
+                                    Nombre de semaines
+                                </label>
                                 <input
                                     type="number"
+                                    id="inputNbrSemaines"
                                     min={3}
                                     max={20}
                                     value={nbSemaines}
@@ -566,17 +596,18 @@ export default function PlanEntrainement() {
                             </div>
 
                             <div>
-                                <label className="flex items-end gap-1 mb-1">
-                                    <span className="text-xs font-semibold uppercase tracking-wide text-club-400">
+                                <label htmlFor="inputKmHebdoVise" className="flex items-end gap-1 mb-1">
+                                    <span className="block text-xs font-semibold uppercase tracking-wide text-club-600">
                                         Km hebdo visé
                                     </span>
-                                    <span className="text-[10px] text-club-400">
+                                    <span className="text-[10px] text-club-600">
                                         (en pointe)
                                     </span>
                                 </label>
 
                                 <input
                                     type="number"
+                                    id="inputKmHebdoVise"
                                     min={15}
                                     max={220}
                                     value={targetKm}
