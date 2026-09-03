@@ -248,8 +248,9 @@ export default function TestsVMA() {
                         </div>
 
                         <div className="mt-6 flex flex-wrap items-center gap-3 rounded-lg bg-club-50 p-4">
-                            <label className="text-xs font-semibold uppercase tracking-wide text-club-400">Voir un exemple pour une VMA de</label>
+                            <label htmlFor="inputExempleVMA" className="text-xs font-semibold uppercase tracking-wide text-club-600">Voir un exemple pour une VMA de</label>
                             <input
+                                id="inputExempleVMA"
                                 type="text"
                                 inputMode="decimal"
                                 onKeyDown={bloqueurToucheInvalide}
@@ -257,7 +258,7 @@ export default function TestsVMA() {
                                 onChange={(e) => setVmaExample(nettoyerNombre(e.target.value))}
                                 className="w-24 rounded-md border border-club-200 px-2 py-1 text-sm font-semibold text-club-900 focus:border-club-600 focus:outline-none"
                             />
-                            <span className="text-xs font-semibold uppercase tracking-wide text-club-400">km/h</span>
+                            <span className="text-xs font-semibold uppercase tracking-wide text-club-600">km/h</span>
                         </div>
 
                         <div className="mt-4 overflow-hidden rounded-xl border border-club-100">
@@ -275,19 +276,19 @@ export default function TestsVMA() {
                                         <tr key={z.label} className={i % 2 === 0 ? "bg-white" : "bg-club-50"}>
                                             <td className="px-4 py-3 font-medium text-club-700">
                                                 {z.label}
-                                                <p className="mt-0.5 text-xs font-normal text-club-400">{z.desc}</p>
+                                                <p className="mt-0.5 text-xs font-normal text-club-600">{z.desc}</p>
                                             </td>
                                             <td className="px-4 py-3 text-club-700">
                                                 {Math.round(z.pct[0] * 100)}–{Math.round(z.pct[1] * 100)}%
                                             </td>
-                                            <td className="px-4 py-3 font-display font-bold text-accent-500">{paceRange(parseFloat(vmaExample) || 0, z.pct[0], z.pct[1])}</td>
+                                            <td className="px-4 py-3 font-display font-bold text-accent-700">{paceRange(parseFloat(vmaExample) || 0, z.pct[0], z.pct[1])}</td>
                                             <td className="hidden px-4 py-3 text-xs text-club-600 sm:table-cell">{z.usage}</td>
                                         </tr>
                                     ))}
                                 </tbody>
                             </table>
                         </div>
-                        <p className="mt-2 text-xs text-club-400">{testsVMAJSON.alluresCourse}</p>
+                        <p className="mt-2 text-xs text-club-600">{testsVMAJSON.alluresCourse}</p>
                     </section>
 
                     {/* ============ PARTIE 2 ============ */}
@@ -302,7 +303,7 @@ export default function TestsVMA() {
                         </div>
 
                         <div className="mt-6 rounded-lg bg-club-50 p-4">
-                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-400">Distance totale parcourue pendant le test (mètres)</label>
+                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">Distance totale parcourue pendant le test (mètres)</label>
                             <div className="flex flex-wrap items-center gap-3">
                                 <input
                                     type="text"
@@ -315,7 +316,7 @@ export default function TestsVMA() {
                                 />
                                 {vamevalResult && (
                                     <span className="text-sm text-club-700">
-                                        → dernier palier complété : <b>{vamevalResult.palier}</b> — VMA estimée : <span className="font-display font-bold text-accent-500">{vamevalResult.vma} km/h</span>
+                                        → dernier palier complété : <b>{vamevalResult.palier}</b> — VMA estimée : <span className="font-display font-bold text-accent-700">{vamevalResult.vma} km/h</span>
                                         {vamevalResult.next && (
                                             <>
                                                 {" "}
@@ -325,7 +326,7 @@ export default function TestsVMA() {
                                     </span>
                                 )}
                             </div>
-                            <p className="mt-2 text-xs text-club-400">Si l'arrêt a lieu en cours de palier, on peut affiner : VMA = vitesse du palier précédent + (temps tenu sur le palier ÷ 60) × 0,5.</p>
+                            <p className="mt-2 text-xs text-club-600">Si l'arrêt a lieu en cours de palier, on peut affiner : VMA = vitesse du palier précédent + (temps tenu sur le palier ÷ 60) × 0,5.</p>
                         </div>
 
                         <div className="mt-4 max-h-96 overflow-y-auto overflow-x-hidden rounded-xl border border-club-100">
@@ -348,7 +349,7 @@ export default function TestsVMA() {
                                 </tbody>
                             </table>
                         </div>
-                        <p className="mt-2 text-xs text-club-400">Source : « Comment évaluer et développer vos capacités aérobies » — Cazorla &amp; Léger.</p>
+                        <p className="mt-2 text-xs text-club-600">Source : « Comment évaluer et développer vos capacités aérobies » — Cazorla &amp; Léger.</p>
                     </section>
 
                     {/* ============ PARTIE 3 ============ */}
@@ -364,7 +365,7 @@ export default function TestsVMA() {
                         </div>
 
                         <div className="mt-6 rounded-lg bg-club-50 p-4">
-                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-400">Dernier palier complété avec succès</label>
+                            <label className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">Dernier palier complété avec succès</label>
                             <div className="flex flex-wrap items-center gap-3">
                                 <input
                                     type="text"
@@ -377,7 +378,7 @@ export default function TestsVMA() {
                                 />
                                 {mercierResult && (
                                     <span className="text-sm text-club-700">
-                                        → VMA estimée : <span className="font-display font-bold text-accent-500">{mercierResult.vma.toFixed(1)} km/h</span>
+                                        → VMA estimée : <span className="font-display font-bold text-accent-700">{mercierResult.vma.toFixed(1)} km/h</span>
                                         {mercierResult.next && (
                                             <>
                                                 {" "}
@@ -390,7 +391,7 @@ export default function TestsVMA() {
 
                             {mercierResult?.next && (
                                 <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-club-200 pt-3">
-                                    <label className="text-xs font-semibold uppercase tracking-wide text-club-400">Distance parcourue dans le palier {mercierResult.next.palier} (non terminé, en m)</label>
+                                    <label className="text-xs font-semibold uppercase tracking-wide text-club-600">Distance parcourue dans le palier {mercierResult.next.palier} (non terminé, en m)</label>
                                     <input
                                         type="text"
                                         inputMode="numeric"
@@ -402,13 +403,13 @@ export default function TestsVMA() {
                                     />
                                     {mercierRefined && (
                                         <span className="text-sm text-club-700">
-                                            → VMA affinée : <span className="font-display font-bold text-accent-500">{mercierRefined} km/h</span>
+                                            → VMA affinée : <span className="font-display font-bold text-accent-700">{mercierRefined} km/h</span>
                                         </span>
                                     )}
                                 </div>
                             )}
 
-                            <p className="mt-2 text-xs text-club-400">Affinement : VMA = vitesse du dernier palier complété + (distance parcourue dans le palier suivant ÷ distance objectif de ce palier) × 0,5.</p>
+                            <p className="mt-2 text-xs text-club-600">Affinement : VMA = vitesse du dernier palier complété + (distance parcourue dans le palier suivant ÷ distance objectif de ce palier) × 0,5.</p>
                         </div>
 
                         <div className="mt-4 max-h-96 overflow-y-auto overflow-x-hidden rounded-xl border border-club-100">
