@@ -90,16 +90,20 @@ const WEEK_TYPE_TAG: Record<WeekType, string> = {
     taper: "Approche de la course",
 };
 
+/* Contraste : le texte du bandeau (`text-white`, pleine opacité) doit
+ * atteindre >= 4.5:1 sur chacun de ces fonds. bg-club-400 a été remplacé
+ * par bg-club-700 pour la semaine d'assimilation (club-400 était trop
+ * clair pour du texte blanc à pleine opacité). */
 const WEEK_TYPE_BAR: Record<WeekType, string> = {
     build: "bg-club-600",
-    recovery: "bg-club-400",
+    recovery: "bg-club-700",
     taper: "bg-accent-600",
 };
 
 const WEEK_TYPE_BADGE: Record<WeekType, string> = {
     build: "bg-club-50 text-club-700",
     recovery: "bg-club-100 text-club-700",
-    taper: "bg-accent-100 text-accent-700", 
+    taper: "bg-accent-100 text-accent-700",
 };
 
 
@@ -618,7 +622,7 @@ export default function PlanEntrainement() {
                                     }}
                                     className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none"
                                 />
-                                <button type="button" onClick={() => setTargetKmManual(false)} className="mt-1 text-xs font-medium text-accent-500 hover:text-accent-700">
+                                <button type="button" onClick={() => setTargetKmManual(false)} className="mt-1 text-xs font-medium text-accent-700 hover:text-accent-600">
                                     ↺ recalculer la suggestion
                                 </button>
                             </div>
@@ -645,7 +649,7 @@ export default function PlanEntrainement() {
                         )}
 
                         <div className="mt-6 flex flex-wrap gap-3">
-                            <button type="button" onClick={handleGenerate} className="rounded-lg bg-accent-500 px-6 py-3 font-medium text-white transition hover:bg-accent-700">
+                            <button type="button" onClick={handleGenerate} className="rounded-lg bg-accent-600 px-6 py-3 font-medium text-white transition hover:bg-accent-700">
                                 Générer le plan
                             </button>
                             <button
@@ -689,20 +693,20 @@ export default function PlanEntrainement() {
                             </div>
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
                                 <div>
-                                    <span className="text-club-400 block font-medium uppercase">VMA</span>
+                                    <span className="text-club-600 block font-medium uppercase">VMA</span>
                                     <span className="font-bold text-club-800 text-sm">{vma} km/h</span>
                                 </div>
                                 <div>
-                                    <span className="text-club-400 block font-medium uppercase">Durée</span>
+                                    <span className="text-club-600 block font-medium uppercase">Durée</span>
                                     <span className="font-bold text-club-800 text-sm">{nbSemaines} Semaines</span>
                                 </div>
                                 <div>
-                                    <span className="text-club-400 block font-medium uppercase">Fréquence</span>
+                                    <span className="text-club-600 block font-medium uppercase">Fréquence</span>
                                     <span className="font-bold text-club-800 text-sm">{seances} séances / sem.</span>
                                 </div>
                                 <div>
-                                    <span className="text-club-400 block font-medium uppercase">Volume max</span>
-                                    <span className="font-bold text-accent-500 text-sm">~{targetKm} km / sem.</span>
+                                    <span className="text-club-600 block font-medium uppercase">Volume max</span>
+                                    <span className="font-bold text-accent-700 text-sm">~{targetKm} km / sem.</span>
                                 </div>
                             </div>
                         </div>
@@ -720,7 +724,7 @@ export default function PlanEntrainement() {
                                                 <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/90 font-display text-sm font-bold text-club-700">S{w.num}</span>
                                                 <div>
                                                     <h3 className="font-display text-base font-semibold uppercase tracking-wide text-white">Semaine {w.num}</h3>
-                                                    <span className="text-xs uppercase tracking-wide text-white/80">
+                                                    <span className="text-xs uppercase tracking-wide text-white">
                                                         {WEEK_TYPE_LABEL[w.type]} · {WEEK_TYPE_TAG[w.type]}
                                                     </span>
                                                 </div>
@@ -728,7 +732,7 @@ export default function PlanEntrainement() {
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
                                                     <div className="font-display text-lg font-bold text-white">{totals.km} km</div>
-                                                    <div className="text-xs text-white/80">{totals.durStr}</div>
+                                                    <div className="text-xs text-white">{totals.durStr}</div>
                                                 </div>
                                             </div>
                                         </div>
@@ -738,9 +742,9 @@ export default function PlanEntrainement() {
                                                 <div key={si} className="border-b border-r border-club-100 p-5 last:border-r-0">
                                                     <span className={`mb-2 inline-block rounded-full px-3 py-1 text-[11px] font-medium ${WEEK_TYPE_BADGE[w.type]}`}>{s.label}</span>
                                                     <p className="text-xs leading-relaxed text-club-900/70">{s.desc}</p>
-                                                    <p className="mt-3 font-display text-sm font-bold text-accent-500">{s.pace}</p>
+                                                    <p className="mt-3 font-display text-sm font-bold text-accent-700">{s.pace}</p>
                                                     <p className="mt-1 text-xs font-medium text-club-600">{s.vol}</p>
-                                                    <p className="mt-2 border-t border-dashed border-club-100 pt-2 text-[11px] text-club-400">{formatMin(s.durationMin)}</p>
+                                                    <p className="mt-2 border-t border-dashed border-club-100 pt-2 text-[11px] text-club-600">{formatMin(s.durationMin)}</p>
                                                 </div>
                                             ))}
                                         </div>
