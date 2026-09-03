@@ -397,7 +397,7 @@ export default function Lexique() {
                 <section className="sticky top-0 z-10 border-b border-club-100 bg-white/95 backdrop-blur">
                     <div className="mx-auto max-w-6xl px-6 py-5">
                         <div className="relative">
-                            <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-club-400" />
+                            <Search size={18} className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-club-600" />
                             <input
                                 type="text"
                                 value={recherche}
@@ -410,7 +410,7 @@ export default function Lexique() {
                                     type="button"
                                     onClick={() => setRecherche("")}
                                     aria-label="Effacer la recherche"
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-club-400 transition hover:bg-club-50 hover:text-club-700"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 rounded-full p-1 text-club-600 transition hover:bg-club-50 hover:text-club-700"
                                 >
                                     <X size={16} />
                                 </button>
@@ -471,7 +471,7 @@ export default function Lexique() {
                                                 <Icone size={16} />
                                             </span>
                                             <h2 className="font-display text-xl font-semibold text-club-600">{categorie}</h2>
-                                            <span className="ml-1 text-xs font-medium text-club-400">({termes.length})</span>
+                                            <span className="ml-1 text-xs font-medium text-club-600">({termes.length})</span>
                                         </div>
 
                                         <dl className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
