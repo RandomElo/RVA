@@ -73,7 +73,7 @@ export default function NosPartenaires() {
                         <h1 className="mt-4 font-display text-3xl font-bold text-white md:text-4xl">
                             {donnees.titre || "Ils soutiennent le club"}
                         </h1>
-                        <p className="mt-3 max-w-xl text-sm leading-relaxed text-club-100 md:text-base">
+                        <p className="mt-3 max-w-xl text-sm leading-relaxed text-white/90 md:text-base">
                             {donnees.description || "Un grand merci à nos partenaires qui accompagnent le club au quotidien."}
                         </p>
                     </div>
@@ -100,19 +100,19 @@ export default function NosPartenaires() {
                                                 className="h-full w-full object-contain p-6 transition duration-300 group-hover:scale-105"
                                             />
                                         ) : (
-                                            <Handshake size={32} className="text-club-300" />
+                                            <Handshake size={32} className="text-club-600" />
                                         )}
                                     </div>
                                     <div className="flex flex-1 flex-col p-5">
-                                        <h2 className="font-display text-base font-semibold text-club-700">
+                                        <h2 className="font-display text-base font-semibold text-club-900">
                                             {partenaire.nom}
                                         </h2>
                                         {partenaire.description && (
-                                            <p className="mt-2 flex-1 text-sm leading-relaxed text-club-900/75">
+                                            <p className="mt-2 flex-1 text-sm leading-relaxed text-club-900">
                                                 {partenaire.description}
                                             </p>
                                         )}
-                                        <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-accent-500 group-hover:text-accent-700">
+                                        <span className="mt-4 inline-flex items-center gap-1 text-sm font-semibold text-accent-700 group-hover:underline">
                                             Visiter le site <ExternalLink size={14} />
                                         </span>
                                     </div>
@@ -128,7 +128,7 @@ export default function NosPartenaires() {
                             <h2 className="mt-4 font-display text-xl font-bold text-club-900">
                                 Aucun partenaire pour le moment
                             </h2>
-                            <p className="mt-2 text-sm leading-relaxed text-club-900/70">
+                            <p className="mt-2 text-sm leading-relaxed text-club-900">
                                 Vous souhaitez associer l'image de votre entreprise ou commerce à notre club et soutenir nos athlètes au quotidien ?
                             </p>
                             <a
