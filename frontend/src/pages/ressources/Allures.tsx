@@ -148,7 +148,7 @@ export default function CalculateurVMA() {
                 label: vmaJSON.palier4Titre,
                 description: vmaJSON.palier4Description,
                 delta: 4,
-                carte: "border border-accent-500 bg-accent-500",
+                carte: "border border-accent-600 bg-accent-600",
                 pastille: "bg-white text-accent-700",
             },
         ];
@@ -199,6 +199,7 @@ export default function CalculateurVMA() {
                 {/* VMA input */}
                 <div className="mt-8 flex flex-wrap items-center gap-4 rounded-2xl border border-club-100 bg-club-50 p-6">
                     <div className="flex items-center gap-2">
+                        <label htmlFor="vma" className="text-sm text-club-600">Votre VMA : </label>
                         <button
                             type="button"
                             onClick={() => setVma((v) => Math.max(5, Number(((parseFloat(v) || 0) - 0.1).toFixed(1))).toString())}
@@ -216,7 +217,7 @@ export default function CalculateurVMA() {
                             onChange={(e) => setVma(nettoyerNombre(e.target.value))}
                             className="w-24 rounded-lg border border-club-200 bg-white px-3 py-2 text-center font-semibold text-club-700 outline-none focus:border-club-600"
                         />
-                        <span className="text-sm text-club-400">km/h</span>
+                        <span className="text-sm text-club-600">km/h</span>
                         <button
                             type="button"
                             onClick={() => setVma((v) => Math.min(30, Number(((parseFloat(v) || 0) + 0.1).toFixed(1))).toString())}
@@ -226,12 +227,12 @@ export default function CalculateurVMA() {
                             +
                         </button>
                     </div>
-                    <span className="text-sm text-club-400">
+                    <span className="text-sm text-club-600">
                         soit une allure de <span className="font-semibold text-club-700">{vitesseVersAllure(vmaNum)}/km</span> au 100% de ta VMA
                     </span>
                 </div>
                 
-                <p className="mt-6 text-xs text-club-400">{vmaJSON.paragrapheAvertissement}</p>
+                <p className="mt-6 text-xs text-club-600">{vmaJSON.paragrapheAvertissement}</p>
 
                 {/* Sélection des distances */}
                 <div className="mt-6 h-auto rounded-2xl border border-club-100 bg-white p-5 sm:h-[151.5px]">
@@ -258,7 +259,7 @@ export default function CalculateurVMA() {
                 <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
                     {NIVEAUX.map((niveau) => (
                         <div key={niveau.id} className="rounded-lg border border-club-100 bg-white px-4 py-3">
-                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${niveau.id === "objectif" || niveau.id === "record" ? "bg-club-600 text-white" : "bg-club-50 text-club-700"} ${niveau.id === "record" ? "bg-accent-500" : ""}`}>{niveau.label}</span>
+                            <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${niveau.id === "objectif" || niveau.id === "record" ? "bg-club-600 text-white" : "bg-club-50 text-club-700"} ${niveau.id === "record" ? "bg-accent-600" : ""}`}>{niveau.label}</span>
                             <p className="mt-2 text-xs leading-snug text-club-900/70">{niveau.description}</p>
                         </div>
                     ))}
@@ -266,7 +267,7 @@ export default function CalculateurVMA() {
 
                 {/* Cartes par distance */}
                 {distancesAffichees.length === 0 ? (
-                    <p className="mt-8 rounded-xl border border-dashed border-club-200 bg-club-50 px-5 py-6 text-center text-sm text-club-400">Sélectionne au moins une distance ci-dessus pour afficher les allures.</p>
+                    <p className="mt-8 rounded-xl border border-dashed border-club-200 bg-club-50 px-5 py-6 text-center text-sm text-club-600">Sélectionne au moins une distance ci-dessus pour afficher les allures.</p>
                 ) : (
                     <div className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
                         {objectifsParDistance.map(({ distance, objectifs }) => (
@@ -279,7 +280,7 @@ export default function CalculateurVMA() {
                                         <div key={niveau.id} className={`flex items-center justify-between rounded-lg px-3 py-2 ${niveau.carte}`}>
                                             <div>
                                                 <p className={`text-xs font-semibold ${niveau.id === "objectif" || niveau.id === "record" ? "text-white" : "text-club-700"}`}>{niveau.label}</p>
-                                                <p className={`text-[11px] ${niveau.id === "objectif" || niveau.id === "record" ? "text-white/80" : "text-club-400"}`}>
+                                                <p className={`text-[11px] ${niveau.id === "objectif" || niveau.id === "record" ? "text-white" : "text-club-600"}`}>
                                                     {pourcentage.toFixed(0)}% VMA · {allure}/km
                                                 </p>
                                             </div>
