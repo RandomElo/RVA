@@ -2,91 +2,91 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
-    <loc>https://www.running-vincennes.fr/</loc>
+    <loc>https://www.rva.smce.ovh/</loc>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/notre-histoire</loc>
+    <loc>https://www.rva.smce.ovh/notre-histoire</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/contactez-nous</loc>
+    <loc>https://www.rva.smce.ovh/contactez-nous</loc>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/nos-partenaires</loc>
+    <loc>https://www.rva.smce.ovh/nos-partenaires</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/calendrier</loc>
+    <loc>https://www.rva.smce.ovh/calendrier</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/blog</loc>
+    <loc>https://www.rva.smce.ovh/blog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/ressources</loc>
+    <loc>https://www.rva.smce.ovh/ressources</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/ressources/plan-entrainement</loc>
+    <loc>https://www.rva.smce.ovh/ressources/plan-entrainement</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/ressources/tests-vma</loc>
+    <loc>https://www.rva.smce.ovh/ressources/tests-vma</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/ressources/vma</loc>
+    <loc>https://www.rva.smce.ovh/ressources/vma</loc>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/ressources/lexique</loc>
+    <loc>https://www.rva.smce.ovh/ressources/lexique</loc>
     <changefreq>monthly</changefreq>
     <priority>0.5</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/mentions-legales</loc>
+    <loc>https://www.rva.smce.ovh/mentions-legales</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/politique-confidentialite</loc>
+    <loc>https://www.rva.smce.ovh/politique-confidentialite</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/cgu</loc>
+    <loc>https://www.rva.smce.ovh/cgu</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
 
   <url>
-    <loc>https://www.running-vincennes.fr/credits</loc>
+    <loc>https://www.rva.smce.ovh/credits</loc>
     <changefreq>yearly</changefreq>
     <priority>0.2</priority>
   </url>
