@@ -155,3 +155,35 @@ export const healthCheck = gestionErreur(async (req, res) => {
 
 }, "controleurHealthCheck", "Erreur lors du health check")
 
+export const verifierCaptcha = gestionErreur(async (req, res) => {
+    const { token } = req.body;
+
+    if (!token) {
+        return res.status(400).json({ success: false, message: "Jeton Turnstile manquant." });
+    }
+
+    try {
+        // Validation du jeton auprès des serveurs Cloudflare
+        const formData = new FormData();
+        formData.append("secret", process.env.CLOUDFLARE_SECRET_KEY);
+        formData.append("response", token);
+        formData.append("remoteip", req.ip); // Optionnel mais recommandé
+
+        const response = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+            method: "POST",
+            body: formData,
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            return res.json({ etat: true, detail: "Vérification réussie." });
+        } else {
+            // Échec de validation (jeton invalide, expiré ou réutilisé)
+            return res.status(400).json({ etat: false, detail: "Échec de validation du Captcha.", });
+        }
+    } catch (error) {
+        console.error("Erreur validation Turnstile:", error);
+        return res.status(500).json({ success: false, message: "Erreur serveur lors de la vérification." });
+    }
+}, "controleurVerifierCaptcha", "Erreur lors de la vérification du captcha")

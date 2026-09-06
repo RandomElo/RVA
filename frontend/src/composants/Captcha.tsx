@@ -1,24 +1,39 @@
 import { useState } from "react";
 import { Turnstile } from "@marsidev/react-turnstile";
 import { ShieldCheck, Loader2, AlertTriangle } from "lucide-react";
+import { useRequete } from "../fonctions/requete";
 
 interface Props {
-    // Clé de site Turnstile (clé de TEST officielle Cloudflare par défaut, toujours valide)
     siteKey?: string;
-    // Mode : 'invisible' pour exécution automatique ou 'managed' pour clic/défi visuel
     mode?: "invisible" | "managed";
-    // Passée à true si la vérification réussit, à false en cas d'échec/expiration.
     setAccesVerifier: (verifie: boolean) => void;
 }
 
 type Etat = "chargement" | "verifie" | "erreur";
 
-export default function Captcha({ siteKey = "1x00000000000000000000AA", mode = "invisible", setAccesVerifier }: Props) {
+export default function Captcha({
+    siteKey = import.meta.env.DEV ? "1x00000000000000000000AA" : import.meta.env.VITE_CLOUDFLARE_SITE,
+    mode = "invisible",
+    setAccesVerifier,
+}: Props) {
     const [etat, setEtat] = useState<Etat>("chargement");
+    const requete = useRequete()
 
-    function gererSucces() {
-        setEtat("verifie");
-        setAccesVerifier(true);
+    async function gererSucces(token: string) {
+        if (!import.meta.env.DEV) {
+            const reponse = await requete({ url: '/autres/verifier-captcha', methode: "POST", corps: { token } })
+
+            if (reponse) {
+                setEtat("verifie");
+                setAccesVerifier(true);
+            } else {
+                setEtat("erreur");
+                setAccesVerifier(false);
+            }
+        } else {
+            setEtat("verifie");
+            setAccesVerifier(true);
+        }
     }
 
     function gererEchec() {
@@ -27,7 +42,7 @@ export default function Captcha({ siteKey = "1x00000000000000000000AA", mode = "
     }
 
     return (
-        <div className="mx-auto my-10 flex max-w-sm flex-col items-center justify-center gap-3  bg-white px-6 py-8 text-center">
+        <div className="mx-auto my-10 flex max-w-sm flex-col items-center justify-center gap-3 bg-white px-6 py-8 text-center">
             <div className={`flex h-11 w-11 items-center justify-center rounded-full ${etat === "erreur" ? "bg-red-50" : "bg-club-50"}`}>
                 {etat === "chargement" && <Loader2 size={20} className="animate-spin text-club-600" />}
                 {etat === "verifie" && <ShieldCheck size={20} className="text-club-600" />}
@@ -59,7 +74,7 @@ export default function Captcha({ siteKey = "1x00000000000000000000AA", mode = "
                 <Turnstile
                     siteKey={siteKey}
                     options={{ action: "validation-lien-mail", theme: "light", size: "invisible" }}
-                    onSuccess={gererSucces}
+                    onSuccess={(token) => gererSucces(token)}
                     onError={gererEchec}
                     onExpire={gererEchec}
                 />

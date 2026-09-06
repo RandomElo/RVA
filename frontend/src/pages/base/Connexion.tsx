@@ -16,13 +16,13 @@ const DELAI_AFFICHAGE_CODE_MS = 10_000;
 // ----------------------------------------------------------------------
 // Sous-composant isolé pour utiliser le hook useGoogleLogin à l'intérieur du Provider
 // ----------------------------------------------------------------------
-function BoutonGoogleLogin({ 
-    enCours, 
-    setEnCours, 
-    setErreur 
-}: { 
-    enCours: boolean; 
-    setEnCours: (b: boolean) => void; 
+function BoutonGoogleLogin({
+    enCours,
+    setEnCours,
+    setErreur
+}: {
+    enCours: boolean;
+    setEnCours: (b: boolean) => void;
     setErreur: (e: { bloquante: boolean; detail: string } | null) => void;
 }) {
     const requete = useRequete();
@@ -196,7 +196,7 @@ export default function Connexion() {
     }
 
     if (!accesVerifier) {
-        return <Captcha setAccesVerifier={setAccesVerifier} />;
+        return <Captcha setAccesVerifier={setAccesVerifier} />
     }
 
     return (
@@ -218,10 +218,10 @@ export default function Connexion() {
                         </div>
 
                         {/* Option 1 — Google OAuth isolé */}
-                        <BoutonGoogleLogin 
-                            enCours={enCours} 
-                            setEnCours={setEnCours} 
-                            setErreur={setErreur} 
+                        <BoutonGoogleLogin
+                            enCours={enCours}
+                            setEnCours={setEnCours}
+                            setErreur={setErreur}
                         />
 
                         {/* Séparateur */}

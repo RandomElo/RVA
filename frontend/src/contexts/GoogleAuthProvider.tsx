@@ -14,11 +14,16 @@ export default function GoogleAuthProvider({ children }: Props) {
     const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
 
     if (!clientId) {
-        return null;
+        return <>{children}</>;
     }
 
     return (
-        <Suspense fallback={<div className="h-10 w-full animate-pulse rounded-lg bg-club-100" />}>
+        <Suspense
+            fallback={
+                /* On réserve un espace vide identique au bloc du formulaire */
+                <div className="w-full min-h-[420px] rounded-2xl bg-club-50/40 p-8 shadow-sm backdrop-blur-sm animate-pulse" />
+            }
+        >
             <LazyGoogleProvider clientId={clientId}>
                 {children}
             </LazyGoogleProvider>
