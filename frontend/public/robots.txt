@@ -8,4 +8,4 @@ Disallow: /ressources/specialistes-sante
 Disallow: /ressources/trombinoscope
 Disallow: /t/
 
-Sitemap: https://www.running-vincennes.fr/sitemap.xml
+Sitemap: https://rva.smce.ovh/sitemap.xml
