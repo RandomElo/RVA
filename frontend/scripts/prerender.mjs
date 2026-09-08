@@ -156,13 +156,24 @@ async function main() {
 
             // 1. Nettoyage directement DANS LE DOM du navigateur via Puppeteer
             await page.evaluate((currentRoute, domain) => {
-                // Récupère toutes les balises canonicals présentes
-                const canonicals = Array.from(document.querySelectorAll('link[rel="canonical"]'));
+                // --- GESTION DU TITLE (Dédoublonnage) ---
+                const titles = Array.from(document.querySelectorAll('title'));
+                let lastTitleText = document.title; // Conserve le titre le plus récent défini par React
 
-                // Supprime TOUTES les canonicals existantes
+                // Supprime TOUTES les balises <title> existantes dans le DOM
+                titles.forEach(el => el.remove());
+
+                // Réinjecte une SEULE balise <title> propre
+                if (lastTitleText) {
+                    const newTitle = document.createElement('title');
+                    newTitle.textContent = lastTitleText;
+                    document.head.appendChild(newTitle);
+                }
+
+                // --- GESTION DU CANONICAL (Dédoublonnage) ---
+                const canonicals = Array.from(document.querySelectorAll('link[rel="canonical"]'));
                 canonicals.forEach(el => el.remove());
 
-                // Crée UNE SEULE balise propre avec l'URL finale de production
                 const link = document.createElement('link');
                 link.setAttribute('rel', 'canonical');
                 link.setAttribute('href', `${domain}${currentRoute}`);
