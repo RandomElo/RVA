@@ -154,30 +154,44 @@ async function main() {
 
             await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
 
-            // 1. Nettoyage directement DANS LE DOM du navigateur via Puppeteer
+            // 1. Nettoyage et dédoublonnage automatique du DOM
             await page.evaluate((currentRoute, domain) => {
-                // --- GESTION DU TITLE (Dédoublonnage) ---
-                const titles = Array.from(document.querySelectorAll('title'));
-                let lastTitleText = document.title; // Conserve le titre le plus récent défini par React
+                // Nettoie toutes les balises en double générées dans le <head>
+                const cleanDuplicates = (selector) => {
+                    const nodes = document.querySelectorAll(selector);
+                    if (nodes.length > 1) {
+                        // Ne conserve que la toute dernière balise injectée par React
+                        for (let i = 0; i < nodes.length - 1; i++) {
+                            nodes[i].remove();
+                        }
+                    }
+                };
 
-                // Supprime TOUTES les balises <title> existantes dans le DOM
-                titles.forEach(el => el.remove());
+                // Dédoublonnage précis par sélecteur
+                cleanDuplicates('title');
+                cleanDuplicates('link[rel="canonical"]');
+                cleanDuplicates('link[rel="preload"][as="image"]');
+                cleanDuplicates('meta[name="description"]');
+                cleanDuplicates('meta[name="twitter:card"]');
+                cleanDuplicates('meta[name="twitter:title"]');
+                cleanDuplicates('meta[name="twitter:description"]');
+                cleanDuplicates('meta[name="twitter:image"]');
 
-                // Réinjecte une SEULE balise <title> propre
-                if (lastTitleText) {
-                    const newTitle = document.createElement('title');
-                    newTitle.textContent = lastTitleText;
-                    document.head.appendChild(newTitle);
+                const ogProperties = ['og:site_name', 'og:title', 'og:description', 'og:url', 'og:type', 'og:image', 'og:locale'];
+                ogProperties.forEach(prop => cleanDuplicates(`meta[property="${prop}"]`));
+
+                // Suppression des scripts et styles injectés par des extensions Chrome (Merci-App, Grammarly...)
+                document.querySelectorAll('style, script').forEach(el => {
+                    if (el.textContent.includes('ms-editor') || el.textContent.includes('assets.merci-app.com')) {
+                        el.remove();
+                    }
+                });
+
+                // Mettre à jour la balise canonical avec la bonne URL finale
+                let canonical = document.querySelector('link[rel="canonical"]');
+                if (canonical) {
+                    canonical.setAttribute('href', `${domain}${currentRoute}`);
                 }
-
-                // --- GESTION DU CANONICAL (Dédoublonnage) ---
-                const canonicals = Array.from(document.querySelectorAll('link[rel="canonical"]'));
-                canonicals.forEach(el => el.remove());
-
-                const link = document.createElement('link');
-                link.setAttribute('rel', 'canonical');
-                link.setAttribute('href', `${domain}${currentRoute}`);
-                document.head.appendChild(link);
             }, route, "https://" + NOM_DOMAINE);
 
             let html = await page.content();

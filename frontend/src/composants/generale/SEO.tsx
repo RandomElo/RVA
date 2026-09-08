@@ -46,7 +46,6 @@ export default function SEO({ titre, description, chemin, image, children, noind
     };
 
     // Schéma SportsClub : renforce le référencement local
-    // ("course à pied Vincennes", "club running Vincennes", etc.)
     const schemaSportsClub = {
         "@context": "https://schema.org",
         "@type": "SportsClub",
@@ -78,33 +77,33 @@ export default function SEO({ titre, description, chemin, image, children, noind
     };
 
     return (
-        <Helmet>
+        <Helmet prioritizeSeoTags>
             {/* Balises principales */}
             <title>{titre}</title>
-            <meta name="description" content={description} />
-            <link rel="canonical" href={url} />
-            {noindex && <meta name="robots" content="noindex, follow" />}
+            <meta data-rh="true" name="description" content={description} />
+            <link data-rh="true" rel="canonical" href={url} />
+            {noindex && <meta data-rh="true" name="robots" content="noindex, follow" />}
 
             {/* Balises Open Graph */}
-            <meta property="og:site_name" content={NOM_DU_SITE} />
-            <meta property="og:title" content={titre} />
-            <meta property="og:description" content={description} />
-            <meta property="og:url" content={url} />
-            <meta property="og:type" content="website" />
-            <meta property="og:image" content={imageUrlAbsolue} />
-            <meta property="og:locale" content="fr_FR" />
+            <meta data-rh="true" property="og:site_name" content={NOM_DU_SITE} />
+            <meta data-rh="true" property="og:title" content={titre} />
+            <meta data-rh="true" property="og:description" content={description} />
+            <meta data-rh="true" property="og:url" content={url} />
+            <meta data-rh="true" property="og:type" content="website" />
+            <meta data-rh="true" property="og:image" content={imageUrlAbsolue} />
+            <meta data-rh="true" property="og:locale" content="fr_FR" />
 
             {/* Balises Twitter / X */}
-            <meta name="twitter:card" content="summary_large_image" />
-            <meta name="twitter:title" content={titre} />
-            <meta name="twitter:description" content={description} />
-            <meta name="twitter:image" content={imageUrlAbsolue} />
+            <meta data-rh="true" name="twitter:card" content="summary_large_image" />
+            <meta data-rh="true" name="twitter:title" content={titre} />
+            <meta data-rh="true" name="twitter:description" content={description} />
+            <meta data-rh="true" name="twitter:image" content={imageUrlAbsolue} />
 
             {/* Données structurées : identité du site + organisation locale */}
-            <script type="application/ld+json">
+            <script data-rh="true" type="application/ld+json">
                 {JSON.stringify(schemaWebSite)}
             </script>
-            <script type="application/ld+json">
+            <script data-rh="true" type="application/ld+json">
                 {JSON.stringify(schemaSportsClub)}
             </script>
 
