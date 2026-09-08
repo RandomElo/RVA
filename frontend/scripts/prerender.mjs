@@ -127,48 +127,49 @@ async function main() {
 
             await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
 
-            // Attendre un court instant que React-Helmet termine sa mise à jour du DOM
-            await new Promise((resolve) => setTimeout(resolve, 300));
+            // 1. Petite pause pour laisser React Helmet finir la mise à jour du DOM
+            await new Promise((resolve) => setTimeout(resolve, 500));
 
-            // Nettoyage rigoureux du DOM directement dans Puppeteer
+            // 2. Nettoyage absolu des doublons et des scories d'extensions
             await page.evaluate((currentRoute, domain) => {
-                const removeDuplicates = (selector) => {
-                    const elements = Array.from(document.querySelectorAll(selector));
-                    if (elements.length > 1) {
-                        // Conserve la toute dernière balise (celle mise à jour par Helmet) et supprime les précédentes
-                        elements.slice(0, -1).forEach((el) => el.remove());
+                // Supprime TOUS les doublons en ne gardant strictement que le dernier élément injecté par Helmet
+                const deduplicate = (selector) => {
+                    const nodes = Array.from(document.querySelectorAll(selector));
+                    if (nodes.length > 1) {
+                        nodes.slice(0, -1).forEach((node) => node.remove());
                     }
                 };
 
-                // Dédoublonnage des balises clés
-                removeDuplicates('title');
-                removeDuplicates('meta[name="description"]');
-                removeDuplicates('link[rel="canonical"]');
-                removeDuplicates('link[rel="preload"][as="image"]');
-                removeDuplicates('meta[name="twitter:card"]');
-                removeDuplicates('meta[name="twitter:title"]');
-                removeDuplicates('meta[name="twitter:description"]');
-                removeDuplicates('meta[name="twitter:image"]');
+                // Liste de toutes les balises SEO à purger
+                deduplicate('title');
+                deduplicate('meta[name="description"]');
+                deduplicate('link[rel="canonical"]');
+                deduplicate('link[rel="preload"][as="image"]');
+                deduplicate('meta[name="twitter:card"]');
+                deduplicate('meta[name="twitter:title"]');
+                deduplicate('meta[name="twitter:description"]');
+                deduplicate('meta[name="twitter:image"]');
 
                 const ogProps = [
-                    'og:site_name', 'og:title', 'og:description', 
+                    'og:site_name', 'og:title', 'og:description',
                     'og:url', 'og:type', 'og:image', 'og:locale'
                 ];
-                ogProps.forEach((prop) => removeDuplicates(`meta[property="${prop}"]`));
+                ogProps.forEach((prop) => deduplicate(`meta[property="${prop}"]`));
 
-                // Nettoyage des résidus d'extensions (Merci-App, Grammarly, etc.)
+                // Suppression chirurgicale du bloc CSS inséré par Merci-App / extensions Chrome
                 document.querySelectorAll('style, script').forEach((el) => {
+                    const content = el.textContent || '';
                     if (
-                        el.textContent.includes('ms-editor') || 
-                        el.textContent.includes('merci-app') ||
-                        el.id?.includes('editor')
+                        content.includes('ms-editor') ||
+                        content.includes('merci-app') ||
+                        content.includes('SpellingError')
                     ) {
                         el.remove();
                     }
                 });
 
-                // Harmoniser l'URL Canonical
-                let canonical = document.querySelector('link[rel="canonical"]');
+                // S'assure que le canonical pointe sur l'URL finale propre
+                const canonical = document.querySelector('link[rel="canonical"]');
                 if (canonical) {
                     canonical.setAttribute('href', `https://${domain}${currentRoute}`);
                 }
@@ -176,11 +177,11 @@ async function main() {
 
             let html = await page.content();
 
-            // Nettoyage des URLs de dev locales (127.0.0.1:4173)
+            // Nettoyage des URLs locales 127.0.0.1
             const localUrlRegex = new RegExp(`http://(?:127\\.0\\.0\\.1|${HOST}):\\d+`, "g");
             html = html.replace(localUrlRegex, "");
 
-            // Écriture des fichiers HTML statiques
+            // Écriture du fichier HTML
             const outDir = route === "/" ? distDir : path.join(distDir, route.replace(/^\//, ""));
             await mkdir(outDir, { recursive: true });
             await writeFile(path.join(outDir, "index.html"), html, "utf-8");
