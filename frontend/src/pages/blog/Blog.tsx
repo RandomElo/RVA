@@ -65,7 +65,7 @@ export default function Blog() {
     const { role } = useAuth();
 
     useEffect(() => {
-        document.title = "Blog — Running Vincennes Association";
+        document.title = "Blog | RVA";
 
         async function recuperer() {
             try {
@@ -99,7 +99,7 @@ export default function Blog() {
     return (
         <>
             <SEO
-                titre="Blog — Running Vincennes Association"
+                titre="Blog | RVA"
                 description="Retrouvez nos derniers articles, conseils d'entraînement, retours d'expérience sur les marathons et actualités du club Running Vincennes Association."
                 chemin="/blog"
             />

@@ -43,7 +43,7 @@ export default function SpecialistesSante() {
     const { role } = useAuth()
 
     useEffect(() => {
-        document.title = "Spécialistes & Recommandations — Running Vincennes Association";
+        document.title = "Spécialistes & Recommandations | RVA";
 
         async function recuperationDonnees() {
             try {

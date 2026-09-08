@@ -128,7 +128,7 @@ export default function Contact() {
     return (
         <>
             <SEO
-                titre="Contact & Adhésion — Running Vincennes Association"
+                titre="Contact & Adhésion | RVA"
                 description="Une question sur nos entraînements, nos cotisations ou l'inscription ? Contactez l'équipe de Running Vincennes Association, nous vous répondrons rapidement."
                 chemin="/contactez-nous"
             />

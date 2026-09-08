@@ -157,7 +157,7 @@ export default function CategoriesFFA() {
     return (
         <>
             <SEO
-                titre="Catégories d'âge FFA — Running Vincennes Association"
+                titre="Catégories d'âge FFA | RVA"
                 description="Trouvez votre catégorie d'âge FFA (Fédération Française d'Athlétisme) à partir de votre année de naissance : Seniors, Espoirs, Juniors, Masters..."
                 chemin="/ressources/categories-ffa"
             />

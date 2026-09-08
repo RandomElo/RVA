@@ -220,7 +220,7 @@ export default function TestsVMA() {
     return (
         <>
             <SEO
-                titre="Protocoles de Test VMA (Vameval, Demi-Cooper) : calcul et explications — Running Vincennes Association"
+                titre="Protocoles de Test VMA (Vameval, Demi-Cooper) : calcul et explications | RVA"
                 description="Comprendre et réaliser son test de VMA. Explications pas à pas du Vameval, Luc Léger et test Demi-Cooper pour mesurer votre potentiel physique."
                 chemin="/ressources/tests-vma"
             />

@@ -186,7 +186,7 @@ export default function CalculateurVMA() {
     return (
         <>
             <SEO
-                titre="Calculateur d'allures de course selon la VMA — Running Vincennes Association"
+                titre="Calculateur d'allures de course selon la VMA | RVA"
                 description="Calculez facilement votre VMA (Vitesse Maximale Aérobie) et vos temps de passage théoriques du 5km au marathon grâce à notre outil interactif."
                 chemin="/ressources/vma"
             />

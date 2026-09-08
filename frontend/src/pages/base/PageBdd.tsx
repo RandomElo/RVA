@@ -45,7 +45,7 @@ export default function PageBdd() {
         return (
             <>
                 <SEO
-                    titre="Chargement... — Running Vincennes Association"
+                    titre="Chargement... | RVA"
                     description="Chargement de votre page sur Running Vincennes Association."
                     chemin={url ? `/${url}` : "/"}
                 />
@@ -62,7 +62,7 @@ export default function PageBdd() {
         return (
             <>
                 <SEO
-                    titre="Page introuvable — Running Vincennes Association"
+                    titre="Page introuvable | RVA"
                     description="La page que vous recherchez n'existe pas ou a été déplacée."
                     chemin={url ? `/${url}` : "/404"}
                 />
@@ -82,7 +82,7 @@ export default function PageBdd() {
     return (
         <>
             <SEO
-                titre={`${donneesPage.titre} — Running Vincennes Association`}
+                titre={`${donneesPage.titre} | RVA`}
                 description={descriptionSeo || `Consultez la page ${donneesPage.titre} de l'association Running Vincennes.`}
                 chemin={`/${url}`}
             />

@@ -117,7 +117,7 @@ export default function Anniversaires() {
     return (
         <>
             <SEO
-                titre="Anniversaires — Running Vincennes Association (RVA)"
+                titre="Anniversaires | RVA (RVA)"
                 description="Les anniversaires des adhérents du club RVA, en liste ou en calendrier."
                 chemin="/anniversaires"
             />

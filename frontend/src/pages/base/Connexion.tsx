@@ -112,7 +112,7 @@ export default function Connexion() {
     const { verificationConnexion, role } = useAuth();
 
     useEffect(() => {
-        document.title = "Connexion — Running Vincennes Association";
+        document.title = "Connexion | RVA";
         if (role) {
             navigation("/");
         }

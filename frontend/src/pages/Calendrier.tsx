@@ -340,7 +340,7 @@ export default function Calendrier() {
     return (
         <>
             <SEO
-                titre={`${calendrierJSON.titre} 2026 — Running Vincennes Association`}
+                titre={`${calendrierJSON.titre} 2026 | RVA`}
                 description={calendrierJSON.introduction}
                 chemin="/calendrier"
             />

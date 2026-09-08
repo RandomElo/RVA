@@ -93,7 +93,7 @@ export default function MentionsLegales() {
     return (
         <>
             <SEO
-                titre="Mentions Légales — Running Vincennes Association"
+                titre="Mentions Légales | RVA"
                 description="Consultez les mentions légales et informations éditoriales relatives au site officiel du club de course à pied Running Vincennes Association."
                 chemin="/mentions-legales"
             />

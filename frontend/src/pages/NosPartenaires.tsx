@@ -61,7 +61,7 @@ export default function NosPartenaires() {
     return (
         <>
             <SEO
-                titre="Nos partenaires — Running Vincennes Association"
+                titre="Nos partenaires | RVA"
                 description="Découvrez les entreprises, commerces et acteurs locaux qui soutiennent le club Running Vincennes Association et accompagnent nos athlètes au quotidien"
                 chemin="/nos-partenaires"
             />

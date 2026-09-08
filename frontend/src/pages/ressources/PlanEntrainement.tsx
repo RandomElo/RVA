@@ -488,7 +488,7 @@ export default function PlanEntrainement() {
     return (
         <>
             <SEO
-                titre="Générateur de plan d'entraînement running personnalisé — Running Vincennes Association"
+                titre="Générateur de plan d'entraînement running personnalisé | RVA"
                 description="Téléchargez nos plans d’entraînement de course à pied adaptés à votre niveau, vos objectifs et vos contraintes. Préparez efficacement votre 10 km, semi-marathon ou marathon."
                 chemin="/ressources/plan-entrainement"
             />

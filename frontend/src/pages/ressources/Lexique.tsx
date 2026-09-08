@@ -371,7 +371,7 @@ export default function Lexique() {
     return (
         <>
             <SEO
-                titre="Lexique & Vocabulaire de la Course à Pied — Running Vincennes Association"
+                titre="Lexique & Vocabulaire de la Course à Pied | RVA"
                 description="VMA, Fartlek, PPG, Seuil, SL, EF... Découvrez le dictionnaire complet du vocabulaire de la course à pied pour tout comprendre au jargon running."
                 chemin="/ressources/lexique"
             />

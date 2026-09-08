@@ -185,8 +185,8 @@ export default function Accueil() {
     return (
         <>
             <SEO
-                titre="Running Vincennes Association (RVA) — Club de course à pied à Vincennes"
-                description="Rejoignez le club Running Vincennes Association ! Entraînements collectifs de course à pied, tous niveaux, préparation aux courses et convivialité au Bois de Vincennes."
+                titre="Course à pied à Vincennes | Running Vincennes Association"
+                description="Courir à Vincennes avec le club : entraînements collectifs tous niveaux, préparation aux courses, dans le Bois de Vincennes. Rejoignez-nous !"
                 chemin="/"
             >
                 <link rel="preload" as="image" href="/img/banniere.webp" fetchPriority="high" />

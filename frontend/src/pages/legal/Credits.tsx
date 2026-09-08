@@ -105,7 +105,7 @@ export default function Credits() {
     return (
         <>
             <SEO
-                titre={`${textes.titre} — Running Vincennes Association`}
+                titre={`${textes.titre} | RVA`}
                 description="Remerciements et crédits pour les photographies, icônes et composants techniques utilisés sur le site de Running Vincennes Association."
                 chemin="/credits"
             />

@@ -221,7 +221,7 @@ export default function NosRessources() {
     return (
         <>
             <SEO
-                titre="Guides & Ressources d'Entraînement Running — Running Vincennes Association"
+                titre="Guides & Ressources d'Entraînement Running | RVA"
                 description="Accédez à nos outils gratuits pour coureurs : calculatrices de VMA, plans d'entraînement marathon/10km, tests physiques et lexique de la course à pied"
                 chemin="/ressources"
             />

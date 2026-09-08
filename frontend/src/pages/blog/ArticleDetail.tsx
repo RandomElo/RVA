@@ -54,7 +54,7 @@ export default function ArticleDetailPage() {
         return (
             <>
                 <SEO
-                    titre="Chargement de l'article... — Running Vincennes Association"
+                    titre="Chargement de l'article... | RVA"
                     description="Lecture de l'actualité en cours sur Running Vincennes Association."
                     chemin={url ? `/blog/${url}` : "/blog"}
                 />
@@ -71,7 +71,7 @@ export default function ArticleDetailPage() {
         return (
             <>
                 <SEO
-                    titre="Article introuvable — Running Vincennes Association"
+                    titre="Article introuvable | RVA"
                     description="L'article que vous cherchez n'existe pas ou n'est plus disponible."
                     chemin={url ? `/blog/${url}` : "/404"}
                 />
@@ -94,7 +94,7 @@ export default function ArticleDetailPage() {
     return (
         <>
             <SEO
-                titre={`${article.titre} — Running Vincennes Association`}
+                titre={`${article.titre} | RVA`}
                 description={descriptionSeo}
                 chemin={`/blog/${url}`}
                 image={article.imageUrl}

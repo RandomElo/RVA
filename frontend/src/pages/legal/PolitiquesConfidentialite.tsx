@@ -115,7 +115,7 @@ export default function PolitiqueConfidentialite() {
     return (
         <>
             <SEO
-                titre="Politique de Confidentialité — Running Vincennes Association"
+                titre="Politique de Confidentialité | RVA"
                 description="Information sur le traitement et la protection de vos données personnelles collectées sur le site Running Vincennes (conformité RGPD)."
                 chemin="/politique-confidentialite"
             />

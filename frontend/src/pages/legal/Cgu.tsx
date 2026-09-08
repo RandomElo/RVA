@@ -147,7 +147,7 @@ export default function CGU() {
     return (
         <>
             <SEO
-                titre="Conditions Générales d'Utilisation — Running Vincennes Association"
+                titre="Conditions Générales d'Utilisation | RVA"
                 description="Consultez les conditions générales d'utilisation du site Running Vincennes Association et de ses espaces réservés aux adhérents."
                 chemin="/cgu"
             />
