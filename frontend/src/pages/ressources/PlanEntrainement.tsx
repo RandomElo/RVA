@@ -60,7 +60,6 @@ interface Week {
 const DONNNEES_PAR_DEFAULT = {
     titre: "Générateur de plans d'entraînement",
     description: "Choisissez la distance, la VMA et le nombre de séances par semaine : les allures et volumes de chaque séance se calculent automatiquement, avec des semaines d'assimilation à volume réduit et un affûtage avant la course.",
-    repereAllures: "<b>Repères d'allure :</b> EF = endurance fondamentale (65–75% VMA) · Seuil = tempo continu (85–90% VMA) · Fractionné long = 400–1000m (90–95% VMA) · Fractionné court = 200–400m (100–110% VMA) · Allure spécifique = allure visée le jour de la course. <b>Jamais plus de 2 séances d'intensité par semaine</b> (le reste est EF, récup active ou PPG). Une semaine sur quatre est allégée, et les 1 à 2 dernières semaines sont affûtées avant la course.",
     avertissement: "<b>⚠️ Ceci n'est pas un plan encadré par un coach.</b> Cet outil génère automatiquement des idées de séances à partir de formules génériques (VMA, distance, nombre de séances). Il ne remplace pas l'avis d'un entraîneur qui connaît votre historique, vos sensations et vos éventuelles blessures. Utilisez-le comme point de départ pour vous inspirer, pas comme une prescription à suivre à la lettre. En cas de douleur, de fatigue inhabituelle ou de doute, adaptez la séance ou consultez un professionnel (coach du club, médecin du sport).",
     philosophie: "<b>Notre philosophie d'entraînement :</b> progresser sans se blesser. Le plan suit la logique 80/20 : la grande majorité des séances se courent en endurance fondamentale, à allure confortable, et seules 1 à 2 séances par semaine sont réellement intenses (seuil ou fractionné). La charge monte progressivement, avec une semaine allégée tous les 4 semaines pour laisser le corps assimiler le travail, puis un affûtage en fin de préparation pour arriver reposé le jour de la course. La régularité et la récupération comptent souvent plus que l'intensité d'une séance isolée."
 }
@@ -97,6 +96,32 @@ const WEEK_TYPE_TAG: Record<WeekType, string> = {
     recovery: "Volume réduit ~-35%",
     taper: "Approche de la course",
 };
+
+/*
+ * Source unique de vérité pour les % de VMA de chaque type de séance.
+ * Utilisée à la fois par buildSession() (calcul réel des allures) et par
+ * la modale "Notre méthode" (affichage). Modifier une valeur ici la met
+ * à jour automatiquement aux deux endroits — plus de risque de décalage
+ * entre le texte affiché et l'allure réellement calculée.
+ */
+const PACE_PCT: Record<"RECUP" | "EF" | "LONGUE" | "SEUIL" | "FRAC_LONG" | "FRAC_COURT", { min: number; max: number }> = {
+    RECUP: { min: 0.55, max: 0.65 },
+    EF: { min: 0.58, max: 0.68 },
+    LONGUE: { min: 0.63, max: 0.68 },
+    SEUIL: { min: 0.85, max: 0.9 },
+    FRAC_LONG: { min: 0.9, max: 0.95 },
+    FRAC_COURT: { min: 1.0, max: 1.1 },
+};
+
+/* Libellés + descriptions courtes pour le tableau de la modale. */
+const REPERES_ALLURES: { kind: keyof typeof PACE_PCT; label: string; desc: string }[] = [
+    { kind: "RECUP", label: "Récupération", desc: "Décrassage, très facile" },
+    { kind: "EF", label: "Endurance fondamentale", desc: "Aisance respiratoire, discussion possible" },
+    { kind: "LONGUE", label: "Sortie longue", desc: "Allure régulière, terrain roulant" },
+    { kind: "SEUIL", label: "Seuil (tempo)", desc: "Effort continu soutenu mais tenable" },
+    { kind: "FRAC_LONG", label: "Fractionné long", desc: "400–1000m, récup trot 2' à 3'" },
+    { kind: "FRAC_COURT", label: "Fractionné court", desc: "200–400m, récup trot 1' à 1'30" },
+];
 
 /* Contraste : le texte du bandeau (`text-white`, pleine opacité) doit
  * atteindre >= 4.5:1 sur chacun de ces fonds. bg-club-400 a été remplacé
@@ -228,12 +253,53 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
                 distanceKm: distKmForMin(dur, vma, pctMid) + WARMUP_KM + COOLDOWN_KM,
             };
         }
+        case "EF": {
+            const dur = Math.max(25, roundTo(params.efBaseMin * factor, 5));
+            return {
+                kind,
+                label: "Endurance fondamentale",
+                desc: "Footing continu, aisance respiratoire, discussion possible.",
+                pace: paceRange(vma, PACE_PCT.EF.min, PACE_PCT.EF.max),
+                vol: `${dur} min`,
+                durationMin: dur,
+                distanceKm: distKmForMin(dur, vma, (PACE_PCT.EF.min + PACE_PCT.EF.max) / 2),
+            };
+        }
+        case "LONGUE": {
+            const km = Math.max(5, Math.round(params.longueBase * factor * 10) / 10);
+            return {
+                kind,
+                label: "Sortie longue",
+                desc: "Endurance, allure régulière, terrain roulant.",
+                pace: paceRange(vma, PACE_PCT.LONGUE.min, PACE_PCT.LONGUE.max),
+                vol: `${km} km`,
+                durationMin: minForKm(km, vma, (PACE_PCT.LONGUE.min + PACE_PCT.LONGUE.max) / 2),
+                distanceKm: km,
+            };
+        }
+        case "SEUIL": {
+            const dur = Math.max(10, roundTo(params.seuilBaseMin * factor, 5));
+            const pctMin = PACE_PCT.SEUIL.min * ageFactor;
+            const pctMax = PACE_PCT.SEUIL.max * ageFactor;
+            const pctMid = (pctMin + pctMax) / 2;
+            const warmMin = minForKm(WARMUP_KM, vma, 0.65);
+            const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
+            return {
+                kind,
+                label: "Seuil (tempo)",
+                desc: `Échauffement ${WARMUP_KM} km, effort continu soutenu mais tenable, puis récup ${COOLDOWN_KM} km.`,
+                pace: paceRange(vma, pctMin, pctMax),
+                vol: `${WARMUP_KM}km éch. + ${dur}min continu + ${COOLDOWN_KM}km récup`,
+                durationMin: dur + warmMin + coolMin,
+                distanceKm: distKmForMin(dur, vma, pctMid) + WARMUP_KM + COOLDOWN_KM,
+            };
+        }
         case "FRAC_COURT": {
             const reps = Math.max(4, Math.round(params.fracCourt.reps * factor));
             const runKm = (reps * params.fracCourt.dist) / 1000;
-            const pctMin = 1.0 * ageFactor;
-            const pctMax = 1.1 * ageFactor;
-            const runMin = minForKm(runKm, vma, 1.05 * ageFactor);
+            const pctMin = PACE_PCT.FRAC_COURT.min * ageFactor;
+            const pctMax = PACE_PCT.FRAC_COURT.max * ageFactor;
+            const runMin = minForKm(runKm, vma, ((PACE_PCT.FRAC_COURT.min + PACE_PCT.FRAC_COURT.max) / 2) * ageFactor);
             const recupMin = reps * 1.25;
             const warmMin = minForKm(WARMUP_KM, vma, 0.65);
             const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
@@ -250,9 +316,9 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
         case "FRAC_LONG": {
             const reps = Math.max(3, Math.round(params.fracLong.reps * factor));
             const runKm = (reps * params.fracLong.dist) / 1000;
-            const pctMin = 0.9 * ageFactor;
-            const pctMax = 0.95 * ageFactor;
-            const runMin = minForKm(runKm, vma, 0.925 * ageFactor);
+            const pctMin = PACE_PCT.FRAC_LONG.min * ageFactor;
+            const pctMax = PACE_PCT.FRAC_LONG.max * ageFactor;
+            const runMin = minForKm(runKm, vma, ((PACE_PCT.FRAC_LONG.min + PACE_PCT.FRAC_LONG.max) / 2) * ageFactor);
             const recupMin = reps * 2.5;
             const warmMin = minForKm(WARMUP_KM, vma, 0.65);
             const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
@@ -266,34 +332,16 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
                 distanceKm: runKm + distKmForMin(recupMin, vma, 0.5) + WARMUP_KM + COOLDOWN_KM,
             };
         }
-        case "ALLURE_SPE": {
-            const dur = Math.max(10, roundTo(params.allureSpeBaseMin * factor, 5));
-            const [pminBase, pmaxBase] = params.allureSpePct;
-            const pmin = pminBase * ageFactor;
-            const pmax = pmaxBase * ageFactor;
-            const pmid = (pmin + pmax) / 2;
-            const warmMin = minForKm(WARMUP_KM, vma, 0.65);
-            const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
-            return {
-                kind,
-                label: "Allure spécifique",
-                desc: `Échauffement ${WARMUP_KM} km, puis allure visée le jour de la course, puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, pmin, pmax),
-                vol: `${WARMUP_KM}km éch. + ${dur}min à allure objectif + ${COOLDOWN_KM}km récup`,
-                durationMin: dur + warmMin + coolMin,
-                distanceKm: distKmForMin(dur, vma, pmid) + WARMUP_KM + COOLDOWN_KM,
-            };
-        }
         case "RECUP": {
             const dur = Math.max(15, roundTo(20 * factor, 5));
             return {
                 kind,
                 label: "Footing récupération",
                 desc: "Très facile, décrassage, aucune notion de performance.",
-                pace: paceRange(vma, 0.55, 0.65),
+                pace: paceRange(vma, PACE_PCT.RECUP.min, PACE_PCT.RECUP.max),
                 vol: `${dur} min`,
                 durationMin: dur,
-                distanceKm: distKmForMin(dur, vma, 0.6),
+                distanceKm: distKmForMin(dur, vma, (PACE_PCT.RECUP.min + PACE_PCT.RECUP.max) / 2),
             };
         }
         case "PPG": {
@@ -834,6 +882,7 @@ export default function PlanEntrainement() {
                 {/* MODAL — Notre méthode d'entraînement (philosophie, repères d'allures, facteur âge) */}
                 <Modal ouvert={modalMethodeOuverte} titre="Notre méthode d'entraînement" onFermer={() => setModalMethodeOuverte(false)} largeurMax="lg">
                     <div className="space-y-6">
+                        {/* PHILOSOPHIE */}
                         {planEntrainementJSON.philosophie && (
                             <section>
                                 <h3 className="mb-2 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wide text-accent-700">
@@ -847,27 +896,104 @@ export default function PlanEntrainement() {
                             </section>
                         )}
 
-                        {planEntrainementJSON.repereAllures && (
-                            <section className="border-t border-club-100 pt-5">
-                                <h3 className="mb-2 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wide text-club-700">
-                                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-club-600" />
-                                    Repères d'allures
-                                </h3>
-                                <p
-                                    className="text-sm leading-relaxed text-club-700"
-                                    dangerouslySetInnerHTML={{ __html: contenuPropre(planEntrainementJSON.repereAllures) }}
-                                />
-                            </section>
-                        )}
+                        {/* REPÈRES D'ALLURE — tableau */}
+                        <section className="border-t border-club-100 pt-5">
+                            <h3 className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wide text-club-700">
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-club-600" />
+                                Repères d'allure (% de VMA)
+                            </h3>
+                            <div className="overflow-hidden rounded-lg border border-club-100">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-club-50">
+                                        <tr>
+                                            <th className="px-3 py-2 font-semibold text-club-700">Séance</th>
+                                            <th className="px-3 py-2 font-semibold text-club-700 whitespace-nowrap">% VMA</th>
+                                            <th className="hidden px-3 py-2 font-semibold text-club-700 sm:table-cell">Repère</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-club-100">
+                                        {REPERES_ALLURES.map((r) => (
+                                            <tr key={r.kind}>
+                                                <td className="px-3 py-2 font-medium text-club-900">{r.label}</td>
+                                                <td className="whitespace-nowrap px-3 py-2 font-semibold text-accent-700">
+                                                    {Math.round(PACE_PCT[r.kind].min * 100)}–{Math.round(PACE_PCT[r.kind].max * 100)}%
+                                                </td>
+                                                <td className="hidden px-3 py-2 text-club-600 sm:table-cell">{r.desc}</td>
+                                            </tr>
+                                        ))}
+                                        <tr>
+                                            <td className="px-3 py-2 font-medium text-club-900">Allure spécifique</td>
+                                            <td className="whitespace-nowrap px-3 py-2 font-semibold text-accent-700">variable</td>
+                                            <td className="hidden px-3 py-2 text-club-600 sm:table-cell">Allure visée le jour de la course (voir tableau ci-dessous)</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900">
+                                ⚠️ Jamais plus de 2 séances d'intensité (seuil / fractionné) par semaine — le reste est EF, récup active ou PPG.
+                            </p>
+                        </section>
 
+                        {/* ALLURE SPÉCIFIQUE PAR DISTANCE — tableau */}
+                        <section className="border-t border-club-100 pt-5">
+                            <h3 className="mb-3 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wide text-club-700">
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-club-600" />
+                                Allure spécifique par distance
+                            </h3>
+                            <div className="overflow-hidden rounded-lg border border-club-100">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-club-50">
+                                        <tr>
+                                            <th className="px-3 py-2 font-semibold text-club-700">Distance</th>
+                                            <th className="px-3 py-2 font-semibold text-club-700 whitespace-nowrap">% VMA</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-club-100">
+                                        {(Object.keys(DIST_PARAMS) as DistanceKey[]).map((k) => {
+                                            const p = DIST_PARAMS[k];
+                                            return (
+                                                <tr key={k}>
+                                                    <td className="px-3 py-2 font-medium text-club-900">{p.label}</td>
+                                                    <td className="whitespace-nowrap px-3 py-2 font-semibold text-accent-700">
+                                                        {Math.round(p.allureSpePct[0] * 100)}–{Math.round(p.allureSpePct[1] * 100)}%
+                                                    </td>
+                                                </tr>
+                                            );
+                                        })}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+
+                        {/* FACTEUR ÂGE — tableau */}
                         <section className="border-t border-club-100 pt-5">
                             <h3 className="mb-2 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wide text-club-700">
                                 <span className="inline-block h-1.5 w-1.5 rounded-full bg-club-600" />
                                 Facteur âge
                             </h3>
-                            <p className="text-sm leading-relaxed text-club-700">
-                                À VMA égale, la capacité à tenir une intensité élevée diminue avec l'âge (récupération plus lente entre les répétitions et les séances, fatigue plus rapide). Les allures des séances de <b>seuil, fractionné et allure spécifique</b> sont donc légèrement assouplies selon la tranche d'âge sélectionnée. Les allures d'<b>endurance fondamentale et de sortie longue</b> restent inchangées : elles sont déjà conservatrices et ne posent pas ce problème.
+                            <p className="mb-3 text-sm leading-relaxed text-club-700">
+                                À VMA égale, la capacité à tenir une intensité élevée diminue avec l'âge. Les allures de <b>seuil, fractionné et allure spécifique</b> sont donc légèrement assouplies. L'<b>EF et la sortie longue</b> ne sont pas concernées, elles restent déjà conservatrices.
                             </p>
+                            <div className="overflow-hidden rounded-lg border border-club-100">
+                                <table className="w-full text-left text-xs">
+                                    <thead className="bg-club-50">
+                                        <tr>
+                                            <th className="px-3 py-2 font-semibold text-club-700">Tranche d'âge</th>
+                                            <th className="px-3 py-2 font-semibold text-club-700 whitespace-nowrap">Facteur</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-club-100">
+                                        {AGE_BRACKETS.map((b) => (
+                                            <tr key={b.key}>
+                                                <td className="px-3 py-2 font-medium text-club-900">{b.label}</td>
+                                                <td className="whitespace-nowrap px-3 py-2 font-semibold text-accent-700">
+                                                    {AGE_PACE_FACTOR[b.key].toFixed(2)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
                         </section>
                     </div>
                 </Modal>
