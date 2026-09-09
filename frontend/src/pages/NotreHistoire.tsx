@@ -127,7 +127,7 @@ export default function HistoireDuClub() {
         <>
             <SEO
                 titre="Histoire & Présentation du Club | RVA"
-                description="Découvrez l'histoire et les valeurs de Running Vincennes Association : un club passionné de course à pied dédié aux runners de tous niveaux au cœur du Val-de-Marne"
+                description="Découvrez l'histoire et les valeurs de Running Vincennes Association, club de course à pied pour runners de tous niveaux dans le Val-de-Marne."
                 chemin="/notre-histoire"
             />
 

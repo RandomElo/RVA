@@ -554,7 +554,7 @@ export default function PlanEntrainement() {
         <>
             <SEO
                 titre="Générateur de plan d'entraînement running personnalisé | RVA"
-                description="Téléchargez nos plans d’entraînement de course à pied adaptés à votre niveau, vos objectifs et vos contraintes. Préparez efficacement votre 10 km, semi-marathon ou marathon."
+                description="Téléchargez nos plans d'entraînement de course à pied selon votre niveau et vos objectifs. Préparez votre 10 km, semi-marathon ou marathon."
                 chemin="/ressources/plan-entrainement"
             />
 
