@@ -218,47 +218,6 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
                 kind,
                 label: "Endurance fondamentale",
                 desc: "Footing continu, aisance respiratoire, discussion possible.",
-                pace: paceRange(vma, 0.58, 0.68),
-                vol: `${dur} min`,
-                durationMin: dur,
-                distanceKm: distKmForMin(dur, vma, 0.63),
-            };
-        }
-        case "LONGUE": {
-            const km = Math.max(5, Math.round(params.longueBase * factor * 10) / 10);
-            return {
-                kind,
-                label: "Sortie longue",
-                desc: "Endurance, allure régulière, terrain roulant.",
-                pace: paceRange(vma, 0.63, 0.68),
-                vol: `${km} km`,
-                durationMin: minForKm(km, vma, 0.655),
-                distanceKm: km,
-            };
-        }
-        case "SEUIL": {
-            const dur = Math.max(10, roundTo(params.seuilBaseMin * factor, 5));
-            const pctMin = 0.85 * ageFactor;
-            const pctMax = 0.9 * ageFactor;
-            const pctMid = (pctMin + pctMax) / 2;
-            const warmMin = minForKm(WARMUP_KM, vma, 0.65);
-            const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
-            return {
-                kind,
-                label: "Seuil (tempo)",
-                desc: `Échauffement ${WARMUP_KM} km, effort continu soutenu mais tenable, puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, pctMin, pctMax),
-                vol: `${WARMUP_KM}km éch. + ${dur}min continu + ${COOLDOWN_KM}km récup`,
-                durationMin: dur + warmMin + coolMin,
-                distanceKm: distKmForMin(dur, vma, pctMid) + WARMUP_KM + COOLDOWN_KM,
-            };
-        }
-        case "EF": {
-            const dur = Math.max(25, roundTo(params.efBaseMin * factor, 5));
-            return {
-                kind,
-                label: "Endurance fondamentale",
-                desc: "Footing continu, aisance respiratoire, discussion possible.",
                 pace: paceRange(vma, PACE_PCT.EF.min, PACE_PCT.EF.max),
                 vol: `${dur} min`,
                 durationMin: dur,
@@ -356,6 +315,8 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
                 distanceKm: 0,
             };
         }
+        default:
+            throw new Error(`Type de séance inconnu : ${kind}`);
     }
 }
 
