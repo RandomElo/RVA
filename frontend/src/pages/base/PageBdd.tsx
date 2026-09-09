@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useRequete } from "../../fonctions/requete";
-import { Loader2 } from "lucide-react";
 import Erreur404 from "../../composants/erreur/Erreur404";
 import { contenuPropre } from "../../fonctions/sanitizeur";
 import SEO from "../../composants/generale/SEO";
