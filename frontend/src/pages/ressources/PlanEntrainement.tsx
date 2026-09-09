@@ -4,14 +4,21 @@
  * Calcule les allures de fractionné à partir de la VMA, plafonne à 2 séances
  * d'intensité par semaine, insère une semaine d'assimilation (volume réduit)
  * une semaine sur quatre, et affûte les 1 à 2 dernières semaines avant la course.
+ *
+ * Un facteur âge assouplit légèrement les allures des séances de qualité
+ * (seuil, fractionné, allure spécifique) : à VMA égale, la capacité à
+ * "tenir" une intensité élevée diminue avec l'âge (récupération plus lente
+ * entre les répétitions, fatigue plus rapide). Les allures d'endurance
+ * fondamentale et de sortie longue ne sont pas concernées.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas-pro";
 import { contenuPropre } from "../../fonctions/sanitizeur";
 import { useRequeteJSON } from "../../fonctions/requeteJSON";
-import { Loader2, Download, Clipboard, Check } from "lucide-react";
+import { Loader2, Download, Clipboard, Check, Lightbulb } from "lucide-react";
 import SEO from "../../composants/generale/SEO";
+import Modal from "../../composants/modal/Modal";
 import { bloqueurToucheInvalide, bloqueurToucheInvalideEntier, nettoyerEntier, nettoyerNombre } from "../../fonctions/nettoyeurNombre";
 
 /* ============================== TYPES ============================== */
@@ -19,6 +26,7 @@ import { bloqueurToucheInvalide, bloqueurToucheInvalideEntier, nettoyerEntier, n
 type DistanceKey = "5km" | "10km" | "semi" | "marathon";
 type SessionKind = "EF" | "LONGUE" | "SEUIL" | "FRAC_COURT" | "FRAC_LONG" | "ALLURE_SPE" | "RECUP" | "PPG";
 type WeekType = "build" | "recovery" | "taper";
+type AgeBracket = "<35" | "35-45" | "45-55" | "55+";
 
 interface DistParams {
     label: string;
@@ -52,7 +60,7 @@ interface Week {
 const DONNNEES_PAR_DEFAULT = {
     titre: "Générateur de plans d'entraînement",
     description: "Choisissez la distance, la VMA et le nombre de séances par semaine : les allures et volumes de chaque séance se calculent automatiquement, avec des semaines d'assimilation à volume réduit et un affûtage avant la course.",
-    repereAllures: "<b>Repères d'allure :</b> EF = endurance fondamentale (65–75% VMA) · Seuil = tempo continu (85–90% VMA) · Fractionné long = 400–1000m (90–95% VMA) · Fractionné court = 200–400m (100–110% VMA) · Allure spécifique = allure visée le jour de la course. <b>Jamais plus de 2 séances d'intensité par semaine</b> (le reste est EF, récup active ou PPG). Une semaine sur quatre est allégée, et les 1 à 2 dernières semaines sont affûtées avant la course.",
+    repereAllures: "<b>Repères d'allure :</b> EF = endurance fondamentale (58–68% VMA) · Seuil = tempo continu (85–90% VMA) · Fractionné long = 400–1000m (90–95% VMA) · Fractionné court = 200–400m (100–110% VMA) · Allure spécifique = allure visée le jour de la course. <b>Jamais plus de 2 séances d'intensité par semaine</b> (le reste est EF, récup active ou PPG). Une semaine sur quatre est allégée, et les 1 à 2 dernières semaines sont affûtées avant la course.",
     avertissement: "<b>⚠️ Ceci n'est pas un plan encadré par un coach.</b> Cet outil génère automatiquement des idées de séances à partir de formules génériques (VMA, distance, nombre de séances). Il ne remplace pas l'avis d'un entraîneur qui connaît votre historique, vos sensations et vos éventuelles blessures. Utilisez-le comme point de départ pour vous inspirer, pas comme une prescription à suivre à la lettre. En cas de douleur, de fatigue inhabituelle ou de doute, adaptez la séance ou consultez un professionnel (coach du club, médecin du sport).",
     philosophie: "<b>Notre philosophie d'entraînement :</b> progresser sans se blesser. Le plan suit la logique 80/20 : la grande majorité des séances se courent en endurance fondamentale, à allure confortable, et seules 1 à 2 séances par semaine sont réellement intenses (seuil ou fractionné). La charge monte progressivement, avec une semaine allégée tous les 4 semaines pour laisser le corps assimiler le travail, puis un affûtage en fin de préparation pour arriver reposé le jour de la course. La régularité et la récupération comptent souvent plus que l'intensité d'une séance isolée."
 }
@@ -106,6 +114,31 @@ const WEEK_TYPE_BADGE: Record<WeekType, string> = {
     taper: "bg-accent-100 text-accent-700",
 };
 
+/* Tranches d'âge disponibles dans le formulaire. */
+const AGE_BRACKETS: { key: AgeBracket; label: string }[] = [
+    { key: "<35", label: "Moins de 35 ans" },
+    { key: "35-45", label: "35 – 45 ans" },
+    { key: "45-55", label: "45 – 55 ans" },
+    { key: "55+", label: "55 ans et +" },
+];
+
+/*
+ * Facteur appliqué au % de VMA des séances de qualité (seuil, fractionné
+ * court/long, allure spécifique) uniquement. À VMA identique, la capacité à
+ * tenir une intensité élevée diminue avec l'âge (récupération plus lente
+ * entre les répétitions et les séances, fatigue plus rapide). Les allures
+ * d'endurance fondamentale et de sortie longue ne sont pas modifiées : elles
+ * sont déjà conservatrices et ne posent pas ce problème.
+ *
+ * Ce sont des coefficients de prudence, pas une table scientifique figée —
+ * à ajuster si l'expérience du club suggère d'autres valeurs.
+ */
+const AGE_PACE_FACTOR: Record<AgeBracket, number> = {
+    "<35": 1,
+    "35-45": 0.99,
+    "45-55": 0.97,
+    "55+": 0.94,
+};
 
 /* ============================== CALCULS ============================== */
 
@@ -132,8 +165,14 @@ function paceFromPct(vma: number, pct: number) {
     }
     return `${m}:${String(s).padStart(2, "0")}`;
 }
+/**
+ * Formate une fourchette d'allure de façon non ambiguë : "Entre X et Y /km"
+ * plutôt qu'une notation avec flèche (→), qui pouvait laisser penser à une
+ * progression pendant la séance alors qu'il s'agit d'une simple fourchette
+ * dans laquelle rester.
+ */
 function paceRange(vma: number, pctMin: number, pctMax: number) {
-    return `${paceFromPct(vma, pctMin)} → ${paceFromPct(vma, pctMax)} /km`;
+    return `Entre ${paceFromPct(vma, pctMin)} et ${paceFromPct(vma, pctMax)} /km`;
 }
 function formatMin(min: number) {
     const h = Math.floor(min / 60);
@@ -141,7 +180,12 @@ function formatMin(min: number) {
     return h > 0 ? `${h}h${String(m).padStart(2, "0")}` : `${m} min`;
 }
 
-function buildSession(kind: SessionKind, vma: number, params: DistParams, factor: number): Session {
+/**
+ * @param ageFactor Facteur multiplicatif appliqué au % de VMA des séances de
+ * qualité (SEUIL, FRAC_COURT, FRAC_LONG, ALLURE_SPE). 1 = aucun ajustement.
+ * Les autres types de séance (EF, LONGUE, RECUP, PPG) l'ignorent.
+ */
+function buildSession(kind: SessionKind, vma: number, params: DistParams, factor: number, ageFactor: number = 1): Session {
     switch (kind) {
         case "EF": {
             const dur = Math.max(25, roundTo(params.efBaseMin * factor, 5));
@@ -149,10 +193,10 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
                 kind,
                 label: "Endurance fondamentale",
                 desc: "Footing continu, aisance respiratoire, discussion possible.",
-                pace: paceRange(vma, 0.65, 0.75),
+                pace: paceRange(vma, 0.58, 0.68),
                 vol: `${dur} min`,
                 durationMin: dur,
-                distanceKm: distKmForMin(dur, vma, 0.7),
+                distanceKm: distKmForMin(dur, vma, 0.63),
             };
         }
         case "LONGUE": {
@@ -169,22 +213,27 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
         }
         case "SEUIL": {
             const dur = Math.max(10, roundTo(params.seuilBaseMin * factor, 5));
+            const pctMin = 0.85 * ageFactor;
+            const pctMax = 0.9 * ageFactor;
+            const pctMid = (pctMin + pctMax) / 2;
             const warmMin = minForKm(WARMUP_KM, vma, 0.65);
             const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
             return {
                 kind,
                 label: "Seuil (tempo)",
                 desc: `Échauffement ${WARMUP_KM} km, effort continu soutenu mais tenable, puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, 0.85, 0.9),
+                pace: paceRange(vma, pctMin, pctMax),
                 vol: `${WARMUP_KM}km éch. + ${dur}min continu + ${COOLDOWN_KM}km récup`,
                 durationMin: dur + warmMin + coolMin,
-                distanceKm: distKmForMin(dur, vma, 0.875) + WARMUP_KM + COOLDOWN_KM,
+                distanceKm: distKmForMin(dur, vma, pctMid) + WARMUP_KM + COOLDOWN_KM,
             };
         }
         case "FRAC_COURT": {
             const reps = Math.max(4, Math.round(params.fracCourt.reps * factor));
             const runKm = (reps * params.fracCourt.dist) / 1000;
-            const runMin = minForKm(runKm, vma, 1.05);
+            const pctMin = 1.0 * ageFactor;
+            const pctMax = 1.1 * ageFactor;
+            const runMin = minForKm(runKm, vma, 1.05 * ageFactor);
             const recupMin = reps * 1.25;
             const warmMin = minForKm(WARMUP_KM, vma, 0.65);
             const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
@@ -192,7 +241,7 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
                 kind,
                 label: "Fractionné court",
                 desc: `Échauffement ${WARMUP_KM} km, puis ${reps} × ${params.fracCourt.dist}m (récup trot 1' à 1'30 entre les fractions), puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, 1.0, 1.1),
+                pace: paceRange(vma, pctMin, pctMax),
                 vol: `${WARMUP_KM}km éch. + ${reps}×${params.fracCourt.dist}m + ${COOLDOWN_KM}km récup`,
                 durationMin: runMin + recupMin + warmMin + coolMin,
                 distanceKm: runKm + distKmForMin(recupMin, vma, 0.5) + WARMUP_KM + COOLDOWN_KM,
@@ -201,7 +250,9 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
         case "FRAC_LONG": {
             const reps = Math.max(3, Math.round(params.fracLong.reps * factor));
             const runKm = (reps * params.fracLong.dist) / 1000;
-            const runMin = minForKm(runKm, vma, 0.925);
+            const pctMin = 0.9 * ageFactor;
+            const pctMax = 0.95 * ageFactor;
+            const runMin = minForKm(runKm, vma, 0.925 * ageFactor);
             const recupMin = reps * 2.5;
             const warmMin = minForKm(WARMUP_KM, vma, 0.65);
             const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
@@ -209,7 +260,7 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
                 kind,
                 label: "Fractionné long",
                 desc: `Échauffement ${WARMUP_KM} km, puis ${reps} × ${params.fracLong.dist}m (récup trot 2' à 3' entre les fractions), puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, 0.9, 0.95),
+                pace: paceRange(vma, pctMin, pctMax),
                 vol: `${WARMUP_KM}km éch. + ${reps}×${params.fracLong.dist}m + ${COOLDOWN_KM}km récup`,
                 durationMin: runMin + recupMin + warmMin + coolMin,
                 distanceKm: runKm + distKmForMin(recupMin, vma, 0.5) + WARMUP_KM + COOLDOWN_KM,
@@ -217,7 +268,9 @@ function buildSession(kind: SessionKind, vma: number, params: DistParams, factor
         }
         case "ALLURE_SPE": {
             const dur = Math.max(10, roundTo(params.allureSpeBaseMin * factor, 5));
-            const [pmin, pmax] = params.allureSpePct;
+            const [pminBase, pmaxBase] = params.allureSpePct;
+            const pmin = pminBase * ageFactor;
+            const pmax = pmaxBase * ageFactor;
             const pmid = (pmin + pmax) / 2;
             const warmMin = minForKm(WARMUP_KM, vma, 0.65);
             const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
@@ -334,15 +387,16 @@ function weekTotals(w: Week) {
     return { km: Math.round(km * 10) / 10, durStr: formatMin(min) };
 }
 
-function generateWeeks(distanceKey: DistanceKey, vma: number, nbSeances: number, nbSemaines: number, targetKm: number): Week[] {
+function generateWeeks(distanceKey: DistanceKey, vma: number, nbSeances: number, nbSemaines: number, targetKm: number, ageBracket: AgeBracket): Week[] {
     const params = scaledParamsFor(distanceKey, nbSeances, targetKm, vma);
+    const ageFactor = AGE_PACE_FACTOR[ageBracket];
     const planTypes = computeWeekPlanTypes(nbSemaines, distanceKey);
     const lateBlockStart = nbSemaines - (distanceKey === "marathon" || distanceKey === "semi" ? 4 : 3);
     return planTypes.map((wt, idx) => {
         const weekIndex = idx + 1;
         const isLateBlock = weekIndex > lateBlockStart || wt.type === "taper";
         const kinds = getSessionKinds(nbSeances, weekIndex, isLateBlock);
-        const sessions = kinds.map((k) => buildSession(k, vma, params, wt.factor));
+        const sessions = kinds.map((k) => buildSession(k, vma, params, wt.factor, ageFactor));
         return { num: weekIndex, type: wt.type, sessions };
     });
 }
@@ -353,6 +407,7 @@ export default function PlanEntrainement() {
     const [distance, setDistance] = useState<DistanceKey>("10km");
     const [category, setCategory] = useState<string>("custom");
     const [vma, setVma] = useState<string>("15.5");
+    const [ageBracket, setAgeBracket] = useState<AgeBracket>("<35");
     const [seances, setSeances] = useState(3);
     const [nbSemaines, setNbSemaines] = useState<string>(DIST_PARAMS["10km"].defWeeks.toString());
     const [targetKm, setTargetKm] = useState<string>(() => suggestPeakKm("15.5", "10km"));
@@ -362,6 +417,7 @@ export default function PlanEntrainement() {
     const [isExporting, setIsExporting] = useState(false);
     const [generationPlanTexte, setGenerationPlanTexte] = useState<boolean>(false);
     const [copieReussie, setCopieReussie] = useState(false);
+    const [modalMethodeOuverte, setModalMethodeOuverte] = useState(false);
 
     const planContainerRef = useRef<HTMLDivElement>(null);
     const requeteJSON = useRequeteJSON();
@@ -386,7 +442,7 @@ export default function PlanEntrainement() {
 
     // Génère automatiquement un premier plan au chargement
     useEffect(() => {
-        setWeeks(generateWeeks(distance, parseFloat(vma) || 0, seances, parseInt(nbSemaines, 10) || 1, parseFloat(targetKm) || 0));
+        setWeeks(generateWeeks(distance, parseFloat(vma) || 0, seances, parseInt(nbSemaines, 10) || 1, parseFloat(targetKm) || 0, ageBracket));
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
@@ -408,7 +464,7 @@ export default function PlanEntrainement() {
         const numVma = parseFloat(vma) || 0;
         const numNbSemaines = parseInt(nbSemaines, 10) || 1;
         const numTargetKm = parseFloat(targetKm) || 0;
-        setWeeks(generateWeeks(distance, numVma, seances, numNbSemaines, numTargetKm));
+        setWeeks(generateWeeks(distance, numVma, seances, numNbSemaines, numTargetKm, ageBracket));
     }
 
     // Exportation sous forme d'image PNG via html2canvas
@@ -448,6 +504,7 @@ export default function PlanEntrainement() {
             textePlan += `Running Vincennes Association\n`;
             textePlan += `=========================================\n`;
             textePlan += `• VMA : ${vma} km/h\n`;
+            textePlan += `• Tranche d'âge : ${AGE_BRACKETS.find((b) => b.key === ageBracket)?.label ?? ageBracket}\n`;
             textePlan += `• Durée : ${nbSemaines} semaines\n`;
             textePlan += `• Séances/semaine : ${seances}\n`;
             textePlan += `• Volume max visé : ~${targetKm} km/semaine\n`;
@@ -507,7 +564,7 @@ export default function PlanEntrainement() {
                 {/* FORMULAIRE */}
                 <section className="mx-auto max-w-6xl px-6 py-10">
                     <div className="rounded-xl border border-club-100 bg-white p-6 print:hidden">
-                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+                        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
                             <div>
                                 <label htmlFor="inputObjectif" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
                                     Objectif
@@ -566,6 +623,24 @@ export default function PlanEntrainement() {
                             </div>
 
                             <div>
+                                <label htmlFor="inputAge" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
+                                    Tranche d'âge
+                                </label>
+                                <select
+                                    id="inputAge"
+                                    value={ageBracket}
+                                    onChange={(e) => setAgeBracket(e.target.value as AgeBracket)}
+                                    className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none"
+                                >
+                                    {AGE_BRACKETS.map((b) => (
+                                        <option key={b.key} value={b.key}>
+                                            {b.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div>
                                 <label htmlFor="seancesParSemaine" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
                                     Séances / semaine
                                 </label>
@@ -600,13 +675,8 @@ export default function PlanEntrainement() {
                             </div>
 
                             <div>
-                                <label htmlFor="inputKmHebdoVise" className="flex items-end gap-1 mb-1">
-                                    <span className="block text-xs font-semibold uppercase tracking-wide text-club-600">
-                                        Km hebdo visé
-                                    </span>
-                                    <span className="text-[10px] text-club-600">
-                                        (en pointe)
-                                    </span>
+                                <label htmlFor="inputKmHebdoVise" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
+                                    Km hebdo visé <span className="normal-case text-[10px] text-club-500">(en pointe)</span>
                                 </label>
 
                                 <input
@@ -628,23 +698,26 @@ export default function PlanEntrainement() {
                             </div>
                         </div>
 
-                        <p className="mt-6 rounded-lg bg-club-50 p-4 text-xs leading-relaxed text-club-700" dangerouslySetInnerHTML={{ __html: contenuPropre(planEntrainementJSON.repereAllures) }}>
-                        </p>
+                        {/* CARTE — accès à la méthode (philosophie, repères d'allures, facteur âge) */}
+                        <div className="mt-6 flex flex-col items-start justify-between gap-3 rounded-lg border border-club-100 bg-club-50 p-4 sm:flex-row sm:items-center">
+                            <p className="text-xs leading-relaxed text-club-700">
+                                Comment sont calculées les allures ? Pourquoi une semaine allégée sur quatre ? Retrouvez notre philosophie d'entraînement, les repères d'allure et l'effet de l'âge sur les séances de qualité.
+                            </p>
+                            <button
+                                type="button"
+                                onClick={() => setModalMethodeOuverte(true)}
+                                className="flex shrink-0 items-center gap-1.5 rounded-lg bg-club-600 px-4 py-2.5 text-xs font-semibold text-white transition hover:bg-club-700"
+                            >
+                                <Lightbulb size={18} />
+                                Notre méthode d'entraînement
+                            </button>
+                        </div>
 
-
-                        {/* AVERTISSEMENT — pas un coach */}
+                        {/* AVERTISSEMENT — pas un coach (toujours visible) */}
                         {planEntrainementJSON.avertissement && (
                             <p
                                 className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-900"
                                 dangerouslySetInnerHTML={{ __html: contenuPropre(planEntrainementJSON.avertissement) }}
-                            />
-                        )}
-
-                        {/* PHILOSOPHIE D'ENTRAÎNEMENT */}
-                        {planEntrainementJSON.philosophie && (
-                            <p
-                                className="mt-4 rounded-lg bg-club-50 p-4 text-xs leading-relaxed text-club-700"
-                                dangerouslySetInnerHTML={{ __html: contenuPropre(planEntrainementJSON.philosophie) }}
                             />
                         )}
 
@@ -691,10 +764,14 @@ export default function PlanEntrainement() {
                                     Running Vincennes Association
                                 </span>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs">
+                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-xs">
                                 <div>
                                     <span className="text-club-600 block font-medium uppercase">VMA</span>
                                     <span className="font-bold text-club-800 text-sm">{vma} km/h</span>
+                                </div>
+                                <div>
+                                    <span className="text-club-600 block font-medium uppercase">Âge</span>
+                                    <span className="font-bold text-club-800 text-sm">{AGE_BRACKETS.find((b) => b.key === ageBracket)?.label ?? ageBracket}</span>
                                 </div>
                                 <div>
                                     <span className="text-club-600 block font-medium uppercase">Durée</span>
@@ -754,6 +831,47 @@ export default function PlanEntrainement() {
                         </div>
                     </div>
                 </section>
+
+                {/* MODAL — Notre méthode d'entraînement (philosophie, repères d'allures, facteur âge) */}
+                <Modal ouvert={modalMethodeOuverte} titre="Notre méthode d'entraînement" onFermer={() => setModalMethodeOuverte(false)} largeurMax="lg">
+                    <div className="space-y-6">
+                        {planEntrainementJSON.philosophie && (
+                            <section>
+                                <h3 className="mb-2 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wide text-accent-700">
+                                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-accent-600" />
+                                    Notre philosophie
+                                </h3>
+                                <p
+                                    className="text-sm leading-relaxed text-club-700"
+                                    dangerouslySetInnerHTML={{ __html: contenuPropre(planEntrainementJSON.philosophie) }}
+                                />
+                            </section>
+                        )}
+
+                        {planEntrainementJSON.repereAllures && (
+                            <section className="border-t border-club-100 pt-5">
+                                <h3 className="mb-2 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wide text-club-700">
+                                    <span className="inline-block h-1.5 w-1.5 rounded-full bg-club-600" />
+                                    Repères d'allures
+                                </h3>
+                                <p
+                                    className="text-sm leading-relaxed text-club-700"
+                                    dangerouslySetInnerHTML={{ __html: contenuPropre(planEntrainementJSON.repereAllures) }}
+                                />
+                            </section>
+                        )}
+
+                        <section className="border-t border-club-100 pt-5">
+                            <h3 className="mb-2 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wide text-club-700">
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-club-600" />
+                                Facteur âge
+                            </h3>
+                            <p className="text-sm leading-relaxed text-club-700">
+                                À VMA égale, la capacité à tenir une intensité élevée diminue avec l'âge (récupération plus lente entre les répétitions et les séances, fatigue plus rapide). Les allures des séances de <b>seuil, fractionné et allure spécifique</b> sont donc légèrement assouplies selon la tranche d'âge sélectionnée. Les allures d'<b>endurance fondamentale et de sortie longue</b> restent inchangées : elles sont déjà conservatrices et ne posent pas ce problème.
+                            </p>
+                        </section>
+                    </div>
+                </Modal>
             </div>
         </>
     );

@@ -3,6 +3,8 @@ import envoiMail from "../../fonctions/mailer/mailer.service.js";
 import { Op } from "sequelize";
 import { genererNombre } from "../../fonctions/utilitaires/genererChaine.js";
 import bdd from "../../bdd/bdd.js";
+import { logger } from "../../fonctions/utilitaires/logger.js";
+
 // Fonction de résolution de chemin asynchrone avec fallback récursif
 const resoudreCheminPage = async (nomPage) => {
     let cheminFormate = path.normalize(nomPage).replace(/^(\.\.[\/\\])+/, "");
@@ -183,7 +185,7 @@ export const verifierCaptcha = gestionErreur(async (req, res) => {
             return res.status(400).json({ etat: false, detail: "Échec de validation du Captcha.", });
         }
     } catch (error) {
-        console.error("Erreur validation Turnstile:", error);
+        logger.error("Erreur validation Turnstile:", error);
         return res.status(500).json({ success: false, message: "Erreur serveur lors de la vérification." });
     }
 }, "controleurVerifierCaptcha", "Erreur lors de la vérification du captcha")

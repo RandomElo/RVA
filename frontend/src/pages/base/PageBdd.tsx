@@ -49,10 +49,7 @@ export default function PageBdd() {
                     description="Chargement de votre page sur Running Vincennes Association."
                     chemin={url ? `/${url}` : "/"}
                 />
-                <div className="flex flex-col items-center justify-center gap-3 py-24 text-club-900/60">
-                    <Loader2 size={28} className="animate-spin text-club-600" />
-                    <p className="text-sm">Chargement de la page…</p>
-                </div>
+                <div className="conteneurPage flex min-h-[calc(100vh-140px)]"></div>
             </>
         );
     }
@@ -72,7 +69,7 @@ export default function PageBdd() {
     }
 
     // Extraction d'un résumé texte propre du HTML pour la meta description SEO (max ~160 chars)
-    const descriptionSeo = donneesPage.contenuHtml
+    const descriptionSeo = donneesPage?.contenuHtml
         .replace(/<[^>]*>/g, "") // Supprime les balises HTML
         .replace(/\s+/g, " ")    // Normalise les espaces
         .trim()
