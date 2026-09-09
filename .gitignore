@@ -45,3 +45,6 @@ contenu-extraction.txt
 /frontend/Dockerfile.dev
 /docker-compose.override.yml
 /frontend/nginx/security-headers.dev.conf
+dist-source/
+.prerender-staging/
+dist/

@@ -27,6 +27,13 @@ export default defineConfig(({ mode }) => {
             }),
         ],
         build: {
+            // IMPORTANT : Vite build ET vite preview servent ce dossier.
+            // On le sépare de `dist/` pour que le prerender ne puisse
+            // jamais écrire dans le dossier que `vite preview` sert
+            // pendant qu'il tourne. `dist/` n'est assemblé qu'à la fin
+            // du script prerender.mjs.
+            outDir: "dist-source",
+
             chunkSizeWarningLimit: 500,
 
             target: "es2022",
@@ -76,6 +83,8 @@ export default defineConfig(({ mode }) => {
             },
         },
         preview: {
+            // Pas besoin de préciser outDir ici : `vite preview` lit
+            // automatiquement `build.outDir` (dist-source) par défaut.
             port: parseInt(env.VITE_PRERENDER_PORT || "3001"),
             host: true,
             proxy: proxyConfig,
