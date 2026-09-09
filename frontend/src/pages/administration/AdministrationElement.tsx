@@ -112,6 +112,7 @@ export default function AdministrationElement({ mode }: Props) {
 
     // Modales spécialiste
     const [modalModifierSpecialiste, setModalModifierSpecialiste] = useState<Specialiste | null>(null)
+    const [modalAjouterSpecialiste, setModalAjouterSpecialiste] = useState<boolean>(false)
 
     const requete = useRequete();
     const aujourdhui = new Date().toISOString().slice(0, 10);
@@ -269,13 +270,22 @@ export default function AdministrationElement({ mode }: Props) {
                         <Plus size={18} />
                         {config.texteBouton}
                     </button>
-
-                    : (
-                        <Link to={(config as { lienNouveau: string }).lienNouveau} className="flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition bg-accent-500 hover:bg-accent-700">
+                    : mode === "specialistesSante" ?
+                        <button
+                            type="button"
+                            className="flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition bg-accent-500 hover:bg-accent-700"
+                            onClick={() => setModalAjouterSpecialiste(true)}
+                        >
                             <Plus size={18} />
                             {config.texteBouton}
-                        </Link>
-                    )}
+                        </button>
+
+                        : (
+                            <Link to={(config as { lienNouveau: string }).lienNouveau} className="flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition bg-accent-500 hover:bg-accent-700">
+                                <Plus size={18} />
+                                {config.texteBouton}
+                            </Link>
+                        )}
             </header>
 
             {/* Filtres */}
@@ -583,6 +593,13 @@ export default function AdministrationElement({ mode }: Props) {
 
             {mode == "specialistesSante" &&
                 <ModalNouveauSpecialiste ouvert={!!modalModifierSpecialiste} onFermer={() => setModalModifierSpecialiste(null)} setSpecialistes={setSpecialistesSante} ancienneDonnees={modalModifierSpecialiste} />}
+            <ModalNouveauSpecialiste
+                ouvert={modalAjouterSpecialiste}
+                onFermer={() => {
+                    setModalAjouterSpecialiste(false);
+                }}
+                setSpecialistes={setSpecialistesSante}
+            />
         </div>
     );
 }

@@ -48,3 +48,4 @@ contenu-extraction.txt
 dist-source/
 .prerender-staging/
 dist/
+/backend/medias

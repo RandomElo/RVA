@@ -640,8 +640,10 @@ export const inviterAdherentCsv = gestionErreur(async (req, res) => {
 
     for (let i = 0; i < lignes.length; i++) {
         const ligne = lignes[i];
-        if (ligne.length !== 3) {
-            erreurs.push(`Ligne ${i + 1} : le format doit être "Prénom;Nom;Adresse mail".`);
+        console.log(ligne)
+        console.log(ligne.length)
+        if (ligne.length !== 4) {
+            erreurs.push(`Ligne ${i + 1} : le format doit être "Prénom;Nom;Date de naissance;Adresse mail".`);
             continue;
         }
 
