@@ -5,7 +5,6 @@ import type { ImageSite } from "../../constantes/types/blog";
 import { useNotifications } from "../../contexts/NotificationsContext";
 import ModalAjouterImage from "../../composants/modal/blog/ModalAjouterImage";
 import ModalSupprimerImage from "../../composants/modal/administration/ModalSupprimerImage";
-import ModalModiferAlbum from "../../composants/modal/administration/ModalModifierAlbum";
 import ModalModifierAlt from "../../composants/modal/administration/ModalModifierAlt";
 
 const CHEMIN_GALERIE = "/images/i";
@@ -78,7 +77,7 @@ export default function GestionImages() {
         });
     }
 
-    const imagesFiltreesBDD = images
+    const imagesFiltreesBDD = images && images
         .filter((img) => img.type === "galerie")
         .filter(
             (img) =>
@@ -86,7 +85,7 @@ export default function GestionImages() {
                 img.nomFichier.toLowerCase().includes(recherche.toLowerCase())
         );
 
-    const imagesFiltreesSysteme = images
+    const imagesFiltreesSysteme = images && images
         .filter((img) => img.type === "systeme")
         .filter(
             (img) =>
@@ -129,7 +128,7 @@ export default function GestionImages() {
                         <ImageIcon size={18} />
                         Galerie (Articles)
                         <span className="ml-1.5 rounded-full bg-club-50 px-2 py-0.5 text-xs font-semibold text-club-700">
-                            {imagesFiltreesBDD.length}
+                            {imagesFiltreesBDD?.length ?? 0}
                         </span>
                     </button>
 
@@ -144,7 +143,7 @@ export default function GestionImages() {
                         <FolderLock size={18} />
                         Images (Pages)
                         <span className="ml-1.5 rounded-full bg-club-50 px-2 py-0.5 text-xs font-semibold text-club-700">
-                            {imagesFiltreesSysteme.length}
+                            {imagesFiltreesSysteme?.length ?? 0}
                         </span>
                     </button>
                 </div>
@@ -170,7 +169,7 @@ export default function GestionImages() {
                             <Loader2 size={32} className="animate-spin" />
                             <span className="text-sm font-medium">Chargement de la galerie...</span>
                         </div>
-                    ) : imagesFiltreesBDD.length === 0 ? (
+                    ) : imagesFiltreesBDD?.length === 0 ? (
                         <div className="flex h-64 flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-club-100 bg-club-50/50 p-6 text-center">
                             <ImageIcon size={40} className="text-club-200" />
                             <div>
@@ -184,7 +183,7 @@ export default function GestionImages() {
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                            {imagesFiltreesBDD.map((image) => {
+                            {imagesFiltreesBDD?.map((image) => {
                                 const url = getUrlImageGalerie(image);
                                 const nombreUtilisations =
                                     detailsUtilisationImages.find((img) => img.nomFichier === image.nomFichier)?.detail
@@ -280,11 +279,11 @@ export default function GestionImages() {
                         </div>
                     </div>
 
-                    {imagesFiltreesSysteme.length === 0 ? (
+                    {imagesFiltreesSysteme?.length === 0 ? (
                         <p className="py-8 text-center text-sm text-club-700">Aucune image système trouvée.</p>
                     ) : (
                         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                            {imagesFiltreesSysteme.map((imgSys) => {
+                            {imagesFiltreesSysteme?.map((imgSys) => {
                                 const urlSys = getUrlImageImage(imgSys);
                                 return (
                                     <div
@@ -364,7 +363,7 @@ export default function GestionImages() {
                 type={typeModal === "ajouter" ? "nouvelleImage" : "remplacerImage"}
                 ouvert={typeModal !== null}
                 onFermer={() => setTypeModal(null)}
-                images={images.filter((img) => img.type === "galerie")}
+                images={images?.filter((img) => img.type === "galerie")}
                 setImages={setImages}
                 ancienneDonnees={ancienneDonnees}
                 editor={
@@ -387,7 +386,11 @@ export default function GestionImages() {
                 setImages={setImages}
             />
 
-            <ModalModifierAlt image={imageModfierAlt} onFermer={() => setImageModifierAlt(null)} setImages={setImages} />
+            <ModalModifierAlt
+                image={imageModfierAlt}
+                onFermer={() => setImageModifierAlt(null)}
+                setImages={setImages as React.Dispatch<React.SetStateAction<ImageSite[] | null>>}
+            />
         </div>
     );
 }

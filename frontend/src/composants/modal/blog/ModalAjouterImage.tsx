@@ -170,7 +170,7 @@ export default function ModalAjouterImage({ ouvert, onFermer, editor, images = [
         setMode(m);
         setErreur(null);
     }
-    
+
     function inserer(src: string, texteAlt: string) {
         if (onImageSelectionnee) {
             onImageSelectionnee(src, texteAlt);
@@ -279,7 +279,7 @@ export default function ModalAjouterImage({ ouvert, onFermer, editor, images = [
             setEnvoiEnCours(true);
             setErreur(null);
             try {
-                const urlDestination = "/images/ajouter?mode=" + (type === "galerieEtNouvelleImage" ? "galerie" : "tout");
+                const urlDestination = "/images/ajouter?mode=tout";
 
                 const resultats = await Promise.all(
                     fichiersAlbum.map(async (f) => {
@@ -375,6 +375,7 @@ export default function ModalAjouterImage({ ouvert, onFermer, editor, images = [
             setEnvoiEnCours(false);
         }
     }
+
     const titreModal = type == "remplacerImage" ? "Remplacer l'image" : estAlbum ? "Ajouter des photos à l'album" : "Ajouter une image";
     const texteBoutonGalerie = estAlbum && imagesSelectionnees.length > 1 ? `Ajouter ${imagesSelectionnees.length} photos` : estAlbum ? "Ajouter à l'album" : "Insérer l'image";
     const texteBoutonUpload =

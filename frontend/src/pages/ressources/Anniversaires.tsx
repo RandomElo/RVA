@@ -224,7 +224,7 @@ function CarteAnniversaire({ personne, setMembreAgrandi }: { personne: Anniversa
                         src={"/utilisateurs/photo/" + personne.cheminTrombinoscope}
                         alt={`${personne.prenom} ${personne.nom}`}
                         className="h-12 w-12 shrink-0 rounded-full object-cover"
-                        onClick={() => setMembreAgrandi(personne?.cheminTrombinoscope)}
+                        onClick={() => setMembreAgrandi(personne.cheminTrombinoscope ?? null)}
                     />
                 ) : (
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-club-50 text-club-400">

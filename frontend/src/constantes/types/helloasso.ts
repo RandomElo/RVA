@@ -88,6 +88,7 @@ export interface HelloAssoUser {
     firstName: string;
     lastName: string;
     email?: string;
+    city?:string;
 }
 
 export interface HelloAssoItem {
@@ -100,6 +101,7 @@ export interface HelloAssoItem {
         firstName: string;
         lastName: string;
         email: string;
+        city?: string;
     };
     user: HelloAssoUser;
     type: string;
