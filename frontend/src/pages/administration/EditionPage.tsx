@@ -111,7 +111,7 @@ export default function EditionTextesPage() {
         );
     }
 
-    // Le test vérifie à présent correctement si les objets sont nulls ou non définis
+    // Page inexistante ou sans textes éditables (ex. slug inconnu) : 404 plutôt qu'un écran vide
     if (!chargement && (!textesEnCours || !textesOriginaux)) return <Erreur404 />;
 
     return (

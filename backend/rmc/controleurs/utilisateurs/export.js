@@ -3,7 +3,7 @@ import path from "path";
 import fs from 'fs'
 import { ZipArchive } from "archiver";
 
-import { cheminDossierAdherents } from "./compte.js";
+import { DOSSIER_ADHERENTS } from "../../../fonctions/utilitaires/enregistrementPhoto.js";
 
 export const exporterDonnees = gestionErreur(async (req, res) => {
     const { id } = req.params;
@@ -21,7 +21,7 @@ export const exporterDonnees = gestionErreur(async (req, res) => {
     if (!utilisateur) {
         return res.status(404).json({ etat: false, detail: "Ressource introuvable" })
     }
-    const cheminPhoto = utilisateur.cheminTrombinoscope ? path.join(cheminDossierAdherents, utilisateur.cheminTrombinoscope) : null;
+    const cheminPhoto = utilisateur.cheminTrombinoscope ? path.join(DOSSIER_ADHERENTS, utilisateur.cheminTrombinoscope) : null;
 
     // On retire le chemin du fichier
     const { cheminTrombinoscope, ...donnees } = utilisateur;

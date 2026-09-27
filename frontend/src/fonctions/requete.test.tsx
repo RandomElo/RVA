@@ -186,4 +186,42 @@ describe("useRequete", () => {
         expect(setErreur).not.toHaveBeenCalled();
         expect(notifier).toHaveBeenCalledWith({ type: "erreur", titre: "Erreur", description: "Code 409" });
     });
+
+    it("en mode silencieux, renvoie null sans notification ni page d'erreur (5xx, réseau, etat false)", async () => {
+        const requete = monterRequete();
+
+        stubFetch(new Response("panne", { status: 502 }));
+        expect(await requete({ url: "/pages/navbar", silencieux: true })).toBeNull();
+
+        vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new TypeError("Failed to fetch")));
+        expect(await requete({ url: "/pages/navbar", silencieux: true })).toBeNull();
+
+        stubFetch(reponseJSON({ etat: false, detail: "X" }));
+        expect(await requete({ url: "/pages/navbar", silencieux: true })).toBeNull();
+
+        expect(setErreur).not.toHaveBeenCalled();
+        expect(notifier).not.toHaveBeenCalled();
+    });
+
+    it("transmet le signal d'annulation à fetch et ignore la requête annulée", async () => {
+        const controleur = new AbortController();
+        const fetchMock = vi.fn().mockImplementation(() => {
+            controleur.abort();
+            return Promise.reject(new DOMException("Aborted", "AbortError"));
+        });
+        vi.stubGlobal("fetch", fetchMock);
+
+        const resultat = await monterRequete()({ url: "/liste", signal: controleur.signal });
+
+        expect(resultat).toBeNull();
+        expect(fetchMock.mock.calls[0][1].signal).toBe(controleur.signal);
+        expect(setErreur).not.toHaveBeenCalled();
+    });
+
+    it("renvoie la même fonction d'un rendu à l'autre", () => {
+        const { result, rerender } = renderHook(() => useRequete());
+        const premiere = result.current;
+        rerender();
+        expect(result.current).toBe(premiere);
+    });
 });

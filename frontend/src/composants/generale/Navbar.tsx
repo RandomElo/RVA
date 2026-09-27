@@ -301,39 +301,23 @@ export default function Navbar() {
         return () => window.removeEventListener("resize", gererRedimensionnement);
     }, []);
 
-    // Chargement des pages
+    // Chargement des pages : le menu en cache (localStorage) est affiché d'abord, puis rafraîchi.
+    // Requête silencieuse : un échec garde le menu en cache au lieu de remplacer la page par une erreur.
     useEffect(() => {
         const controller = new AbortController();
 
         async function recuperation() {
-            try {
-                const reponse = await fetch("/pages/navbar", {
-                    signal: controller.signal,
-                    headers: { Accept: "application/json" },
-                });
+            const donnees = await requete<{ url: string; titre: string }[]>({ url: "/pages/navbar", silencieux: true, signal: controller.signal });
+            if (!Array.isArray(donnees)) return;
 
-                if (!reponse.ok) throw new Error(`Erreur HTTP: ${reponse.status}`);
-
-                const donnees = await reponse.json();
-
-                if (Array.isArray(donnees)) {
-                    const pages = donnees.map((page: { url: string; titre: string }) => ({
-                        href: page.url,
-                        label: page.titre,
-                    }));
-                    setPagesModifiable(pages);
-                    localStorage.setItem(CACHE_KEY, JSON.stringify(pages));
-                }
-            } catch (erreur) {
-                if (!(erreur instanceof Error && erreur.name === "AbortError")) {
-                    console.error("Erreur lors de la mise à jour des pages :", erreur);
-                }
-            }
+            const pages = donnees.map((page) => ({ href: page.url, label: page.titre }));
+            setPagesModifiable(pages);
+            localStorage.setItem(CACHE_KEY, JSON.stringify(pages));
         }
 
         recuperation();
         return () => controller.abort();
-    }, []);
+    }, [requete]);
 
     const RESSOURCES = useMemo(() => {
         return [

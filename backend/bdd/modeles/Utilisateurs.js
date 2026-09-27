@@ -15,6 +15,7 @@ export default function (bdd) {
                 type: DataTypes.STRING(100),
                 allowNull: false,
             },
+            // Jour et mois uniquement ("JJ/MM", sans année) : sert aux anniversaires, pas au calcul d'un âge
             dateNaissance: {
                 type: DataTypes.STRING(5),
                 allowNull: false,
@@ -58,6 +59,12 @@ export default function (bdd) {
                 type: DataTypes.BOOLEAN,
                 defaultValue: true,
                 allowNull: false,
+            },
+            // Identifiant Google (sub) lié au compte administrateur lors de sa première connexion Google
+            googleId: {
+                type: DataTypes.STRING(255),
+                allowNull: true,
+                unique: true,
             }
         },
         {

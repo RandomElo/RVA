@@ -190,132 +190,165 @@ export function formatMin(min: number) {
     return h > 0 ? `${h}h${String(m).padStart(2, "0")}` : `${m} min`;
 }
 
+/** Paramètres communs transmis à chaque constructeur de séance. */
+interface ContexteSeance {
+    vma: number;
+    params: DistParams;
+    factor: number;
+    ageFactor: number;
+}
+
+function seanceEF({ vma, params, factor }: ContexteSeance): Session {
+    const dur = Math.max(DUREE_MIN_EF, roundTo(params.efBaseMin * factor, PAS_ARRONDI_DUREE_MIN));
+    return {
+        kind: "EF",
+        label: "Endurance fondamentale",
+        desc: "Footing continu, aisance respiratoire, discussion possible.",
+        pace: paceRange(vma, PACE_PCT.EF.min, PACE_PCT.EF.max),
+        vol: `${dur} min`,
+        durationMin: dur,
+        distanceKm: distKmForMin(dur, vma, (PACE_PCT.EF.min + PACE_PCT.EF.max) / 2),
+    };
+}
+
+function seanceLongue({ vma, params, factor }: ContexteSeance): Session {
+    const km = Math.max(DISTANCE_MIN_LONGUE_KM, Math.round(params.longueBase * factor * 10) / 10);
+    return {
+        kind: "LONGUE",
+        label: "Sortie longue",
+        desc: "Endurance, allure régulière, terrain roulant.",
+        pace: paceRange(vma, PACE_PCT.LONGUE.min, PACE_PCT.LONGUE.max),
+        vol: `${km} km`,
+        durationMin: minForKm(km, vma, (PACE_PCT.LONGUE.min + PACE_PCT.LONGUE.max) / 2),
+        distanceKm: km,
+    };
+}
+
+function seanceSeuil({ vma, params, factor, ageFactor }: ContexteSeance): Session {
+    const dur = Math.max(DUREE_MIN_EFFORT_CONTINU, roundTo(params.seuilBaseMin * factor, PAS_ARRONDI_DUREE_MIN));
+    const pctMin = PACE_PCT.SEUIL.min * ageFactor;
+    const pctMax = PACE_PCT.SEUIL.max * ageFactor;
+    const pctMid = (pctMin + pctMax) / 2;
+    const { warmMin, coolMin } = calculerEchauffementEtRecuperation(vma);
+    return {
+        kind: "SEUIL",
+        label: "Seuil (tempo)",
+        desc: `Échauffement ${WARMUP_KM} km, effort continu soutenu mais tenable, puis récup ${COOLDOWN_KM} km.`,
+        pace: paceRange(vma, pctMin, pctMax),
+        vol: `${WARMUP_KM}km éch. + ${dur}min continu + ${COOLDOWN_KM}km récup`,
+        durationMin: dur + warmMin + coolMin,
+        distanceKm: distKmForMin(dur, vma, pctMid) + WARMUP_KM + COOLDOWN_KM,
+    };
+}
+
+function seanceAllureSpe({ vma, params, factor, ageFactor }: ContexteSeance): Session {
+    const dur = Math.max(DUREE_MIN_EFFORT_CONTINU, roundTo(params.allureSpeBaseMin * factor, PAS_ARRONDI_DUREE_MIN));
+    const pctMin = params.allureSpePct[0] * ageFactor;
+    const pctMax = params.allureSpePct[1] * ageFactor;
+    const pctMid = (pctMin + pctMax) / 2;
+    const { warmMin, coolMin } = calculerEchauffementEtRecuperation(vma);
+    return {
+        kind: "ALLURE_SPE",
+        label: "Allure spécifique",
+        desc: `Échauffement ${WARMUP_KM} km, effort continu à l'allure visée le jour de la course, puis récup ${COOLDOWN_KM} km.`,
+        pace: paceRange(vma, pctMin, pctMax),
+        vol: `${WARMUP_KM}km éch. + ${dur}min allure spécifique + ${COOLDOWN_KM}km récup`,
+        durationMin: dur + warmMin + coolMin,
+        distanceKm: distKmForMin(dur, vma, pctMid) + WARMUP_KM + COOLDOWN_KM,
+    };
+}
+
+function seanceFracCourt({ vma, params, factor, ageFactor }: ContexteSeance): Session {
+    const reps = Math.max(REPETITIONS_MIN_FRAC_COURT, Math.round(params.fracCourt.reps * factor));
+    const runKm = (reps * params.fracCourt.dist) / 1000;
+    const pctMin = PACE_PCT.FRAC_COURT.min * ageFactor;
+    const pctMax = PACE_PCT.FRAC_COURT.max * ageFactor;
+    const runMin = minForKm(runKm, vma, ((PACE_PCT.FRAC_COURT.min + PACE_PCT.FRAC_COURT.max) / 2) * ageFactor);
+    const recupMin = reps * RECUP_MIN_PAR_FRACTION_COURT;
+    const { warmMin, coolMin } = calculerEchauffementEtRecuperation(vma);
+    return {
+        kind: "FRAC_COURT",
+        label: "Fractionné court",
+        desc: `Échauffement ${WARMUP_KM} km, puis ${reps} × ${params.fracCourt.dist}m (récup trot 1' à 1'30 entre les fractions), puis récup ${COOLDOWN_KM} km.`,
+        pace: paceRange(vma, pctMin, pctMax),
+        vol: `${WARMUP_KM}km éch. + ${reps}×${params.fracCourt.dist}m + ${COOLDOWN_KM}km récup`,
+        durationMin: runMin + recupMin + warmMin + coolMin,
+        distanceKm: runKm + distKmForMin(recupMin, vma, PCT_ALLURE_TROT_ENTRE_FRACTIONS) + WARMUP_KM + COOLDOWN_KM,
+    };
+}
+
+function seanceFracLong({ vma, params, factor, ageFactor }: ContexteSeance): Session {
+    const reps = Math.max(REPETITIONS_MIN_FRAC_LONG, Math.round(params.fracLong.reps * factor));
+    const runKm = (reps * params.fracLong.dist) / 1000;
+    const pctMin = PACE_PCT.FRAC_LONG.min * ageFactor;
+    const pctMax = PACE_PCT.FRAC_LONG.max * ageFactor;
+    const runMin = minForKm(runKm, vma, ((PACE_PCT.FRAC_LONG.min + PACE_PCT.FRAC_LONG.max) / 2) * ageFactor);
+    const recupMin = reps * RECUP_MIN_PAR_FRACTION_LONG;
+    const { warmMin, coolMin } = calculerEchauffementEtRecuperation(vma);
+    return {
+        kind: "FRAC_LONG",
+        label: "Fractionné long",
+        desc: `Échauffement ${WARMUP_KM} km, puis ${reps} × ${params.fracLong.dist}m (récup trot 2' à 3' entre les fractions), puis récup ${COOLDOWN_KM} km.`,
+        pace: paceRange(vma, pctMin, pctMax),
+        vol: `${WARMUP_KM}km éch. + ${reps}×${params.fracLong.dist}m + ${COOLDOWN_KM}km récup`,
+        durationMin: runMin + recupMin + warmMin + coolMin,
+        distanceKm: runKm + distKmForMin(recupMin, vma, PCT_ALLURE_TROT_ENTRE_FRACTIONS) + WARMUP_KM + COOLDOWN_KM,
+    };
+}
+
+function seanceRecup({ vma, factor }: ContexteSeance): Session {
+    const dur = Math.max(DUREE_MIN_RECUP, roundTo(DUREE_BASE_RECUP * factor, PAS_ARRONDI_DUREE_MIN));
+    return {
+        kind: "RECUP",
+        label: "Footing récupération",
+        desc: "Très facile, décrassage, aucune notion de performance.",
+        pace: paceRange(vma, PACE_PCT.RECUP.min, PACE_PCT.RECUP.max),
+        vol: `${dur} min`,
+        durationMin: dur,
+        distanceKm: distKmForMin(dur, vma, (PACE_PCT.RECUP.min + PACE_PCT.RECUP.max) / 2),
+    };
+}
+
+function seancePPG({ factor }: ContexteSeance): Session {
+    const dur = Math.max(DUREE_MIN_PPG, roundTo(DUREE_BASE_PPG * factor, PAS_ARRONDI_DUREE_MIN));
+    return {
+        kind: "PPG",
+        label: "PPG / renforcement",
+        desc: "Gainage, proprioception, renforcement musculaire — pas de course.",
+        pace: "—",
+        vol: `${dur} min`,
+        durationMin: dur,
+        distanceKm: 0,
+    };
+}
+
+/*
+ * Un constructeur par type de séance. Le type Record<SessionKind, …> oblige
+ * TypeScript à signaler tout type de séance ajouté sans constructeur (erreur de
+ * compilation), au lieu d'un plantage à l'exécution.
+ */
+export const CONSTRUCTEURS_SEANCE: Readonly<Record<SessionKind, (ctx: ContexteSeance) => Session>> = {
+    EF: seanceEF,
+    LONGUE: seanceLongue,
+    SEUIL: seanceSeuil,
+    ALLURE_SPE: seanceAllureSpe,
+    FRAC_COURT: seanceFracCourt,
+    FRAC_LONG: seanceFracLong,
+    RECUP: seanceRecup,
+    PPG: seancePPG,
+};
+
 /**
  * @param ageFactor Facteur multiplicatif appliqué au % de VMA des séances de
  * qualité (SEUIL, FRAC_COURT, FRAC_LONG, ALLURE_SPE). 1 = aucun ajustement.
  * Les autres types de séance (EF, LONGUE, RECUP, PPG) l'ignorent.
  */
 export function buildSession(kind: SessionKind, vma: number, params: DistParams, factor: number, ageFactor: number = 1): Session {
-    switch (kind) {
-        case "EF": {
-            const dur = Math.max(DUREE_MIN_EF, roundTo(params.efBaseMin * factor, PAS_ARRONDI_DUREE_MIN));
-            return {
-                kind,
-                label: "Endurance fondamentale",
-                desc: "Footing continu, aisance respiratoire, discussion possible.",
-                pace: paceRange(vma, PACE_PCT.EF.min, PACE_PCT.EF.max),
-                vol: `${dur} min`,
-                durationMin: dur,
-                distanceKm: distKmForMin(dur, vma, (PACE_PCT.EF.min + PACE_PCT.EF.max) / 2),
-            };
-        }
-        case "LONGUE": {
-            const km = Math.max(DISTANCE_MIN_LONGUE_KM, Math.round(params.longueBase * factor * 10) / 10);
-            return {
-                kind,
-                label: "Sortie longue",
-                desc: "Endurance, allure régulière, terrain roulant.",
-                pace: paceRange(vma, PACE_PCT.LONGUE.min, PACE_PCT.LONGUE.max),
-                vol: `${km} km`,
-                durationMin: minForKm(km, vma, (PACE_PCT.LONGUE.min + PACE_PCT.LONGUE.max) / 2),
-                distanceKm: km,
-            };
-        }
-        case "SEUIL": {
-            const dur = Math.max(DUREE_MIN_EFFORT_CONTINU, roundTo(params.seuilBaseMin * factor, PAS_ARRONDI_DUREE_MIN));
-            const pctMin = PACE_PCT.SEUIL.min * ageFactor;
-            const pctMax = PACE_PCT.SEUIL.max * ageFactor;
-            const pctMid = (pctMin + pctMax) / 2;
-            const { warmMin, coolMin } = calculerEchauffementEtRecuperation(vma);
-            return {
-                kind,
-                label: "Seuil (tempo)",
-                desc: `Échauffement ${WARMUP_KM} km, effort continu soutenu mais tenable, puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, pctMin, pctMax),
-                vol: `${WARMUP_KM}km éch. + ${dur}min continu + ${COOLDOWN_KM}km récup`,
-                durationMin: dur + warmMin + coolMin,
-                distanceKm: distKmForMin(dur, vma, pctMid) + WARMUP_KM + COOLDOWN_KM,
-            };
-        }
-        case "ALLURE_SPE": {
-            const dur = Math.max(DUREE_MIN_EFFORT_CONTINU, roundTo(params.allureSpeBaseMin * factor, PAS_ARRONDI_DUREE_MIN));
-            const pctMin = params.allureSpePct[0] * ageFactor;
-            const pctMax = params.allureSpePct[1] * ageFactor;
-            const pctMid = (pctMin + pctMax) / 2;
-            const { warmMin, coolMin } = calculerEchauffementEtRecuperation(vma);
-            return {
-                kind,
-                label: "Allure spécifique",
-                desc: `Échauffement ${WARMUP_KM} km, effort continu à l'allure visée le jour de la course, puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, pctMin, pctMax),
-                vol: `${WARMUP_KM}km éch. + ${dur}min allure spécifique + ${COOLDOWN_KM}km récup`,
-                durationMin: dur + warmMin + coolMin,
-                distanceKm: distKmForMin(dur, vma, pctMid) + WARMUP_KM + COOLDOWN_KM,
-            };
-        }
-        case "FRAC_COURT": {
-            const reps = Math.max(REPETITIONS_MIN_FRAC_COURT, Math.round(params.fracCourt.reps * factor));
-            const runKm = (reps * params.fracCourt.dist) / 1000;
-            const pctMin = PACE_PCT.FRAC_COURT.min * ageFactor;
-            const pctMax = PACE_PCT.FRAC_COURT.max * ageFactor;
-            const runMin = minForKm(runKm, vma, ((PACE_PCT.FRAC_COURT.min + PACE_PCT.FRAC_COURT.max) / 2) * ageFactor);
-            const recupMin = reps * RECUP_MIN_PAR_FRACTION_COURT;
-            const { warmMin, coolMin } = calculerEchauffementEtRecuperation(vma);
-            return {
-                kind,
-                label: "Fractionné court",
-                desc: `Échauffement ${WARMUP_KM} km, puis ${reps} × ${params.fracCourt.dist}m (récup trot 1' à 1'30 entre les fractions), puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, pctMin, pctMax),
-                vol: `${WARMUP_KM}km éch. + ${reps}×${params.fracCourt.dist}m + ${COOLDOWN_KM}km récup`,
-                durationMin: runMin + recupMin + warmMin + coolMin,
-                distanceKm: runKm + distKmForMin(recupMin, vma, PCT_ALLURE_TROT_ENTRE_FRACTIONS) + WARMUP_KM + COOLDOWN_KM,
-            };
-        }
-        case "FRAC_LONG": {
-            const reps = Math.max(REPETITIONS_MIN_FRAC_LONG, Math.round(params.fracLong.reps * factor));
-            const runKm = (reps * params.fracLong.dist) / 1000;
-            const pctMin = PACE_PCT.FRAC_LONG.min * ageFactor;
-            const pctMax = PACE_PCT.FRAC_LONG.max * ageFactor;
-            const runMin = minForKm(runKm, vma, ((PACE_PCT.FRAC_LONG.min + PACE_PCT.FRAC_LONG.max) / 2) * ageFactor);
-            const recupMin = reps * RECUP_MIN_PAR_FRACTION_LONG;
-            const { warmMin, coolMin } = calculerEchauffementEtRecuperation(vma);
-            return {
-                kind,
-                label: "Fractionné long",
-                desc: `Échauffement ${WARMUP_KM} km, puis ${reps} × ${params.fracLong.dist}m (récup trot 2' à 3' entre les fractions), puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, pctMin, pctMax),
-                vol: `${WARMUP_KM}km éch. + ${reps}×${params.fracLong.dist}m + ${COOLDOWN_KM}km récup`,
-                durationMin: runMin + recupMin + warmMin + coolMin,
-                distanceKm: runKm + distKmForMin(recupMin, vma, PCT_ALLURE_TROT_ENTRE_FRACTIONS) + WARMUP_KM + COOLDOWN_KM,
-            };
-        }
-        case "RECUP": {
-            const dur = Math.max(DUREE_MIN_RECUP, roundTo(DUREE_BASE_RECUP * factor, PAS_ARRONDI_DUREE_MIN));
-            return {
-                kind,
-                label: "Footing récupération",
-                desc: "Très facile, décrassage, aucune notion de performance.",
-                pace: paceRange(vma, PACE_PCT.RECUP.min, PACE_PCT.RECUP.max),
-                vol: `${dur} min`,
-                durationMin: dur,
-                distanceKm: distKmForMin(dur, vma, (PACE_PCT.RECUP.min + PACE_PCT.RECUP.max) / 2),
-            };
-        }
-        case "PPG": {
-            const dur = Math.max(DUREE_MIN_PPG, roundTo(DUREE_BASE_PPG * factor, PAS_ARRONDI_DUREE_MIN));
-            return {
-                kind,
-                label: "PPG / renforcement",
-                desc: "Gainage, proprioception, renforcement musculaire — pas de course.",
-                pace: "—",
-                vol: `${dur} min`,
-                durationMin: dur,
-                distanceKm: 0,
-            };
-        }
-        default:
-            throw new Error(`Type de séance inconnu : ${kind}`);
+    // Garde pour les appels non typés (valeur venue de l'extérieur) : le typage garantit le reste.
+    if (!Object.prototype.hasOwnProperty.call(CONSTRUCTEURS_SEANCE, kind)) {
+        throw new Error(`Type de séance inconnu : ${kind}`);
     }
+    return CONSTRUCTEURS_SEANCE[kind]({ vma, params, factor, ageFactor });
 }
 
 export function getSessionKinds(nbSeances: number, weekIndex: number, isLateBlock: boolean): SessionKind[] {

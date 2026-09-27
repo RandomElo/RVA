@@ -86,7 +86,7 @@ export const afficher = gestionErreur(async (req, res) => {
     });
 }, "controleurAfficherPhotoGalerie", "Erreur lors de la récupération de la photo")
 
-// Au début de votre fichier de contrôleur
+// Dossier des images du site : DOSSIER_IMAGES (Docker) ou frontend/public/img (local)
 const CHEMIN_DOSSIER_IMAGES = path.resolve(
     process.env.DOSSIER_IMAGES || path.join(__dirname, "../../../frontend/public/img")
 );
@@ -106,7 +106,6 @@ export const remplacer = gestionErreur(async (req, res) => {
         return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
-    // ✅ Utilisation du chemin dynamique géré par Docker / Local
     const chemin = path.resolve(CHEMIN_DOSSIER_IMAGES, nomFichier);
     const fichier = req.file.buffer;
 

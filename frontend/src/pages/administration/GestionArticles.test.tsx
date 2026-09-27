@@ -48,6 +48,14 @@ describe("GestionArticles", () => {
         expect(document.title).toBe("Gestion blog - Running Vincennes Association");
     });
 
+    it("ne propose pas de modifier une newsletter", async () => {
+        requeteMock.mockResolvedValue([{ url: "newsletter-mai", titre: "Newsletter de mai", categorie: "newsletter", type: "publie", datePublication: "2026-05-02" }]);
+        monter();
+        await screen.findByText("Newsletter de mai");
+
+        expect(screen.queryByRole("link", { name: "Modifier" })).not.toBeInTheDocument();
+    });
+
     it("filtre par recherche et par onglet", async () => {
         requeteMock.mockResolvedValue(ARTICLES);
         monter();

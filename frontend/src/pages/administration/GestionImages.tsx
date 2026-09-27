@@ -17,6 +17,15 @@ interface DetailsUtilisationImage {
     detail: { titre: string; url: string }[];
 }
 
+function filtrerImages(images: ImageSite[], type: NonNullable<ImageSite["type"]>, recherche: string): ImageSite[] {
+    const termes = recherche.toLowerCase();
+    return images.filter(
+        (img) =>
+            img.type === type &&
+            (img.alt.toLowerCase().includes(termes) || img.nomFichier.toLowerCase().includes(termes))
+    );
+}
+
 export default function GestionImages() {
     const [ongletActif, setOngletActif] = useState<Onglet>("articles");
     const [images, setImages] = useState<ImageSite[]>([]);
@@ -84,21 +93,8 @@ export default function GestionImages() {
         });
     }
 
-    const imagesFiltreesBDD = images && images
-        .filter((img) => img.type === "galerie")
-        .filter(
-            (img) =>
-                img.alt.toLowerCase().includes(recherche.toLowerCase()) ||
-                img.nomFichier.toLowerCase().includes(recherche.toLowerCase())
-        );
-
-    const imagesFiltreesSysteme = images && images
-        .filter((img) => img.type === "systeme")
-        .filter(
-            (img) =>
-                img.alt.toLowerCase().includes(recherche.toLowerCase()) ||
-                img.nomFichier.toLowerCase().includes(recherche.toLowerCase())
-        );
+    const imagesFiltreesBDD = useMemo(() => filtrerImages(images, "galerie", recherche), [images, recherche]);
+    const imagesFiltreesSysteme = useMemo(() => filtrerImages(images, "systeme", recherche), [images, recherche]);
 
     return (
         <div className="conteneurPage space-y-6 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">

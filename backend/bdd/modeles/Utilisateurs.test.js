@@ -1,6 +1,7 @@
 import { test, afterEach } from "node:test";
 import assert from "node:assert/strict";
 import jwt from "jsonwebtoken";
+import { Sequelize } from "sequelize";
 
 import definirUtilisateurs from "./Utilisateurs.js";
 
@@ -34,4 +35,15 @@ test("genererTokenSession : secret absent, rejet sans mise à jour", async () =>
     const { Utilisateurs, mises } = modeleFactice();
     await assert.rejects(Utilisateurs.genererTokenSession({ id: 4 }), /JWT_SECRET non défini/);
     assert.equal(mises.length, 0);
+});
+
+test("modèle réel : déclare googleId (nullable, unique) pour la liaison Google des administrateurs", () => {
+    // Instance Sequelize sans connexion : define ne contacte pas la base
+    const bdd = new Sequelize("postgres://u:p@localhost:1/db", { logging: false });
+    const Utilisateurs = definirUtilisateurs(bdd);
+    const attribut = Utilisateurs.rawAttributes.googleId;
+    assert.ok(attribut, "attribut googleId absent du modèle");
+    assert.equal(attribut.allowNull, true);
+    assert.equal(attribut.unique, true);
+    assert.equal(attribut.type.key, "STRING");
 });

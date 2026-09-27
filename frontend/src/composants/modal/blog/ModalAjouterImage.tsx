@@ -60,7 +60,7 @@ import { useRequete } from "../../../fonctions/requete";
 import type { ImageSite } from "../../../constantes/types/blog";
 import { useNotifications } from "../../../contexts/NotificationsContext";
 
-// ⚠️ À ajuster selon la config réelle du projet (ex. variable d'env VITE_URL_BACK)
+// Préfixe des URL publiques des images servies par le backend
 const CHEMIN_UPLOADS = "/images/i";
 
 
@@ -420,12 +420,12 @@ export default function ModalAjouterImage({ ouvert, onFermer, editor, images = [
                         <p className="py-8 text-center text-sm text-club-900/60">Aucune image sur le site pour le moment.</p>
                     ) : (
                         <div className="grid max-h-80 grid-cols-3 gap-x-3 gap-y-34 overflow-y-auto pr-1">
-                            {images.map((image, key) => {
+                            {images.map((image) => {
                                 const active = imagesSelectionnees.some((img) => img.nomFichier === image.nomFichier);
                                 return (
                                     <button
                                         type="button"
-                                        key={key}
+                                        key={image.nomFichier}
                                         onClick={() => cliquerImageGalerie(image)}
                                         className={`group relative aspect-square overflow-hidden rounded-lg border-2 transition cursor-pointer ${active ? "border-club-600" : "border-transparent hover:border-club-200"
                                             }`}

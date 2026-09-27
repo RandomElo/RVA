@@ -191,12 +191,12 @@ export default function Blog() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
-                        {articlesFiltres.map((a, key) => {
+                        {articlesFiltres.map((a) => {
                             const Icone = ICONE_CATEGORIE[a.categorie];
 
                             return (
                                 <Link
-                                    key={key}
+                                    key={a.url}
                                     to={`/article/${a.url}`}
                                     onClick={() => setChargementArticle(a.url)}
                                     className="group flex flex-col overflow-hidden rounded-xl border border-club-100 bg-white transition hover:-translate-y-0.5 hover:border-club-300 hover:shadow-md"

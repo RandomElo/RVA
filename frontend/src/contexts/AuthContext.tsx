@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, type ReactNode } from "react";
 import type { Role } from "../constantes/types/auth";
 
 interface AuthContextType {
@@ -41,10 +41,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
     }, []);
 
-    const deconnexion = () => {
+    const deconnexion = useCallback(() => {
         setRole(null)
         setAuth(false);
-    };
+    }, []);
     useEffect(() => {
         verificationConnexion();
 
@@ -64,7 +64,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         };
     }, [verificationConnexion]);
 
-    return <AuthContext.Provider value={{ estAuth: auth, role, chargement, verificationConnexion, deconnexion }}>{children}</AuthContext.Provider>;
+    const valeur = useMemo(
+        () => ({ estAuth: auth, role, chargement, verificationConnexion, deconnexion }),
+        [auth, role, chargement, verificationConnexion, deconnexion],
+    );
+
+    return <AuthContext.Provider value={valeur}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

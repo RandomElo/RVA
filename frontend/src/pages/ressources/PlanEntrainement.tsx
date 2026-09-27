@@ -130,6 +130,7 @@ export default function PlanEntrainement() {
     // Génère automatiquement un premier plan au chargement
     useEffect(() => {
         setWeeks(generateWeeks(distance, parseFloat(vma) || 0, seances, parseInt(nbSemaines, 10) || 1, parseFloat(targetKm) || 0, ageBracket));
+        // Plan initial généré une seule fois avec les valeurs par défaut : ensuite, c'est le bouton « Générer le plan » qui régénère
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 

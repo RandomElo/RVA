@@ -81,20 +81,18 @@ export const envoyerMailContact = gestionErreur(async (req, res) => {
 
 // Données administration
 export const detailsInterfaceAdministration = gestionErreur(async (req, res) => {
-    const nbrAdherents = await req.Utilisateurs.count({ where: { role: "adherent", derniereConnexion: { [Op.ne]: null, }, } })
-
-    const invitationsEnAttente = await req.Utilisateurs.count({ where: { role: "adherent", derniereConnexion: { [Op.eq]: null, }, } })
-
-    const nbrArticles = await req.Articles.count({ where: { type: "publie" } })
-
-    const prochaineCourse = await req.Courses.findOne({
-        attributes: ["nom", "date"],
-        order: [["date", "ASC"]],
-        raw: true
-    })
-
-    const nbrCoursesSuggestion = await req.Courses.count({ where: { etat: 'suggestion' } })
-    const nbrArticlesSuggestion = await req.Articles.count({ where: { type: 'suggestion' } })
+    const [nbrAdherents, invitationsEnAttente, nbrArticles, prochaineCourse, nbrCoursesSuggestion, nbrArticlesSuggestion] = await Promise.all([
+        req.Utilisateurs.count({ where: { role: "adherent", derniereConnexion: { [Op.ne]: null, }, } }),
+        req.Utilisateurs.count({ where: { role: "adherent", derniereConnexion: { [Op.eq]: null, }, } }),
+        req.Articles.count({ where: { type: "publie" } }),
+        req.Courses.findOne({
+            attributes: ["nom", "date"],
+            order: [["date", "ASC"]],
+            raw: true
+        }),
+        req.Courses.count({ where: { etat: 'suggestion' } }),
+        req.Articles.count({ where: { type: 'suggestion' } }),
+    ])
 
     return res.json({ etat: true, detail: { nbrAdherents, invitationsEnAttente, nbrArticles, prochaineCourse, nbrCoursesSuggestion, nbrArticlesSuggestion } })
 }, "controleurDetailsInterfaceAdministration", "Erreur lors de la récupératin des détails de l'interface d'administration")

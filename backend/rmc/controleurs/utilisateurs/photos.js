@@ -4,7 +4,7 @@ import path from "path";
 import { DOSSIER_ADHERENTS, sauvegarderEnWebp } from "../../../fonctions/utilitaires/enregistrementPhoto.js";
 import { estNomFichierSur } from "../../../fonctions/utilitaires/validation.js";
 import { supprimerFichierSiExiste } from "../../../fonctions/utilitaires/fichiers.js";
-import { cheminDossierAdherents, fonctionRecupererUtilisateurs } from "./compte.js";
+import { fonctionRecupererUtilisateurs } from "./compte.js";
 
 export const enregistrerPhotoControleur = gestionErreur(async (req, res) => {
     if (!req.file) {
@@ -59,7 +59,7 @@ export const photo = gestionErreur(async (req, res) => {
 
     res.setHeader("Cache-Control", "private, max-age=31536000, immutable");
 
-    res.sendFile(nomFichier, { root: cheminDossierAdherents }, (erreur) => {
+    res.sendFile(nomFichier, { root: DOSSIER_ADHERENTS }, (erreur) => {
         if (erreur && !res.headersSent) {
             res.removeHeader("Cache-Control");
             res.status(erreur.status === 404 ? 404 : 500).json({ etat: false, detail: "Photo introuvable" });
@@ -84,7 +84,7 @@ export const supprimerPhoto = gestionErreur(async (req, res) => {
 
     if (utilisateur.cheminTrombinoscope) {
         const cheminFichier = path.join(
-            cheminDossierAdherents,
+            DOSSIER_ADHERENTS,
             utilisateur.cheminTrombinoscope
         );
 

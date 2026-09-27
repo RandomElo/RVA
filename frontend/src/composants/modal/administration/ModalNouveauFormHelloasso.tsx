@@ -86,8 +86,7 @@ export default function ModalNouveauFormHelloasso({ ouvert, onFermer, ancienneDo
         if (modalImageOuverte) {
             chargerImages();
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [modalImageOuverte]);
+    }, [modalImageOuverte, requete]);
 
     function mettreAJour<K extends keyof FormulaireHelloAsso>(cle: K, valeur: FormulaireHelloAsso[K]) {
         setChamps((precedent) => ({ ...precedent, [cle]: valeur }));

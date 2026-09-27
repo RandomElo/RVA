@@ -1,11 +1,5 @@
 import envoiMail from "../../../fonctions/mailer/mailer.service.js";
 import { genererChaine } from "../../../fonctions/utilitaires/genererChaine.js";
-import path from "path";
-import { fileURLToPath } from "url";
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-export const cheminDossierAdherents = path.resolve(__dirname, "../../../medias/adherents");
 
 // Fonctions BDD
 export async function fonctionRecupererUtilisateurs(req, res = null) {

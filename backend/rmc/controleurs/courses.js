@@ -96,7 +96,7 @@ async function recupererToutesLesCourses(req, admin = false) {
             attributes: ["statut"],
             include: [{
                 model: req.Utilisateurs,
-                as: "adherent", // 👈 Modifié 'utilisateur' -> 'adherent'
+                as: "adherent",
                 attributes: ["id", "nom", "prenom", "cheminTrombinoscope"]
             }]
         });
@@ -130,7 +130,7 @@ async function recupererToutesLesCourses(req, admin = false) {
         let etatInteressementUtilisateur = null;
         if (estConnecte) {
             const monInscription = listeAdherents.find(
-                a => a.adherent?.id === req.idUtilisateur // 👈 Modifié 'a.utilisateur' -> 'a.adherent'
+                a => a.adherent?.id === req.idUtilisateur
             );
             etatInteressementUtilisateur = monInscription ? monInscription.statut : null;
         }
@@ -138,7 +138,7 @@ async function recupererToutesLesCourses(req, admin = false) {
         // Mappe la liste des personnes avec leurs infos
         const listePersonnes = estConnecte
             ? listeAdherents.map(item => ({
-                id: item.adherent.id,                   // 👈 Modifié 'item.utilisateur' -> 'item.adherent'
+                id: item.adherent.id,
                 nom: item.adherent.nom,
                 prenom: item.adherent.prenom,
                 cheminTrombinoscope: item.adherent.cheminTrombinoscope,

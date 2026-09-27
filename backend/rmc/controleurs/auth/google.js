@@ -1,6 +1,9 @@
+import { UniqueConstraintError } from "sequelize";
 import gestionErreur from "../../middlewares/gestionErreur.js";
 import { logger } from "../../../fonctions/utilitaires/logger.js";
 import { ouvrirSession } from "./session.js";
+
+const DETAIL_DISCORDANCE_ADMIN = "Ce compte Google ne correspond pas à l'identifiant administrateur enregistré.";
 
 export const connexionGoogle = gestionErreur(async (req, res) => {
     const { token } = req.body;
@@ -115,7 +118,9 @@ export const connexionGoogle = gestionErreur(async (req, res) => {
 
     // 3. Sécurité Administrateur : Vérification de la liaison du compte
     if (utilisateur.role === "administrateur") {
-        if (!utilisateur.googleId) {
+        let googleIdBdd = utilisateur.googleId;
+
+        if (!googleIdBdd) {
             logger.info({
                 type: "AUTH_GOOGLE_LIAISON_ADMIN",
                 email,
@@ -123,21 +128,51 @@ export const connexionGoogle = gestionErreur(async (req, res) => {
                 googleId
             }, `🔗 Premier couplage du compte Google Admin pour ${email}`);
 
-            await utilisateur.update({ googleId });
+            try {
+                // Couplage atomique : ne s'applique que si aucun googleId n'a été enregistré entre-temps
+                const [nbModifies] = await req.Utilisateurs.update(
+                    { googleId },
+                    { where: { id: utilisateur.id, googleId: null } }
+                );
+
+                if (nbModifies === 0) {
+                    // Une requête concurrente a déjà couplé le compte : on relit l'identifiant enregistré
+                    const utilisateurBdd = await req.Utilisateurs.findByPk(utilisateur.id, { attributes: ["googleId"], raw: true });
+                    googleIdBdd = utilisateurBdd?.googleId ?? null;
+                } else {
+                    googleIdBdd = googleId;
+                }
+            } catch (erreur) {
+                if (!(erreur instanceof UniqueConstraintError)) throw erreur;
+
+                logger.warn({
+                    type: "AUTH_GOOGLE_ID_DEJA_LIE",
+                    email,
+                    userId: utilisateur.id,
+                    googleId,
+                    ip: req.ip
+                }, `🚨 Compte Google déjà lié à un autre utilisateur (admin ${email})`);
+
+                return res.status(403).json({
+                    etat: false,
+                    detail: DETAIL_DISCORDANCE_ADMIN,
+                });
+            }
         }
-        else if (utilisateur.googleId !== googleId) {
+
+        if (googleIdBdd !== googleId) {
             logger.error({
                 type: "AUTH_GOOGLE_DESYNCHRO_ADMIN",
                 email,
                 userId: utilisateur.id,
-                googleIdBdd: utilisateur.googleId,
+                googleIdBdd,
                 googleIdRecu: googleId,
                 ip: req.ip
             }, `🚨 Discordance d'ID Google pour l'administrateur ${email}`);
 
             return res.status(403).json({
                 etat: false,
-                detail: "Ce compte Google ne correspond pas à l'identifiant administrateur enregistré.",
+                detail: DETAIL_DISCORDANCE_ADMIN,
             });
         }
     }

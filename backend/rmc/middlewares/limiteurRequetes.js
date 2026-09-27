@@ -5,11 +5,25 @@ import { secretsEgaux } from "../../fonctions/utilitaires/securite.js";
 // Fonction helper pour vérifier si l'on est en mode développement
 const estEnDev = process.env.MODE === "dev" || process.env.NODE_ENV === "development";
 
+// Garde-fou : un reliquat de MODE=dev (ou NODE_ENV=development) en production désactiverait
+// toute protection anti brute-force sans que personne ne s'en aperçoive.
+if (estEnDev && (process.env.NODE_ENV === "production" || process.env.MODE === "production")) {
+    logger.warn(
+        { type: "RATE_LIMIT_DISABLED", MODE: process.env.MODE, NODE_ENV: process.env.NODE_ENV },
+        "⚠️ Mode développement actif en production : tous les limiteurs de requêtes sont désactivés."
+    );
+}
+
+// Adresses de bouclage, lues sur la socket TCP (jamais sur req.ip, dérivé de X-Forwarded-For)
+const ADRESSES_LOCALHOST = new Set(["127.0.0.1", "::1", "::ffff:127.0.0.1"]);
+
 /**
- * Vérifie si la requête provient d'un sous-réseau interne Docker (172.16.0.0 à 172.31.255.255),
- * de localhost, ou possède un header d'authentification interne pour le pre-render.
+ * Exempte des limiteurs les appels internes : en-tête secret (pre-render, cron)
+ * ou connexion TCP réellement ouverte depuis localhost (healthcheck du conteneur).
+ * Aucune plage d'IP (ex. réseau Docker 172.16.0.0/12) n'est exemptée : nginx transmet
+ * l'IP réelle du client via X-Forwarded-For, et cet en-tête est falsifiable.
  */
-const DoitIgnorerLimiter = (req) => {
+export const DoitIgnorerLimiter = (req) => {
     if (estEnDev) return true;
 
     // 1. Bypass via Header secret (Recommandé pour les builds/SSR)
@@ -18,13 +32,8 @@ const DoitIgnorerLimiter = (req) => {
         return true;
     }
 
-    // 2. Bypass via IP (Localhost ou plage Privée Docker 172.16.0.0/12)
-    const ip = req.ip || req.socket.remoteAddress || "";
-    const estLocalhost = ip === "127.0.0.1" || ip === "::1" || ip === "::ffff:127.0.0.1";
-    const estDockerPrivateSubnet = /^::ffff:(172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)$/.test(ip) ||
-        /^(172\.(1[6-9]|2[0-9]|3[0-1])\.\d+\.\d+)$/.test(ip);
-
-    return estLocalhost || estDockerPrivateSubnet;
+    // 2. Bypass si la connexion TCP vient de localhost (non falsifiable par un en-tête)
+    return ADRESSES_LOCALHOST.has(req.socket?.remoteAddress);
 };
 
 /**

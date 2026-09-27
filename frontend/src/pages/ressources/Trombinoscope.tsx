@@ -20,6 +20,20 @@ type Membre = {
     // groupe?: string; // ex. "Groupe 1 — confirmés", "Groupe 2 — intermédiaires"...
 };
 
+// Membre avec une clé React stable : l'API n'envoie pas d'id, on part de prénom + nom
+// et on numérote les homonymes selon l'ordre de réception (indépendant du filtre et du tri).
+type MembreAffiche = Membre & { cle: string };
+
+function ajouterCles(liste: Membre[]): MembreAffiche[] {
+    const occurrences = new Map<string, number>();
+    return liste.map((m) => {
+        const base = `${m.prenom} ${m.nom}`;
+        const n = occurrences.get(base) ?? 0;
+        occurrences.set(base, n + 1);
+        return { ...m, cle: n === 0 ? base : `${base} #${n}` };
+    });
+}
+
 const GROUPES: { value: string; label: string }[] = [
     { value: "tous", label: "Tous" },
     { value: "Groupe 1 — confirmés", label: "Confirmés" },
@@ -32,7 +46,7 @@ function initiales(prenom: string, nom: string) {
 }
 
 export default function Trombinoscope() {
-    const [membres, setMembres] = useState<Membre[] | null>(null);
+    const [membres, setMembres] = useState<MembreAffiche[] | null>(null);
     const [recherche, setRecherche] = useState("");
     const [groupe, setGroupe] = useState("tous");
     const [membreAgrandi, setMembreAgrandi] = useState<Membre | null>(null);
@@ -44,7 +58,7 @@ export default function Trombinoscope() {
 
         async function recupererDonnees() {
             const donnees = await requete<Membre[]>({ url: "/utilisateurs/trombinoscope" })
-            setMembres(donnees)
+            setMembres(donnees ? ajouterCles(donnees) : donnees)
         }
         recupererDonnees()
     }, []);
@@ -113,8 +127,8 @@ export default function Trombinoscope() {
                 </div>
             ) : (
                 <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4">
-                    {membresFiltres.map((m, key) => (
-                        <div key={key} className="flex flex-col items-center gap-2 rounded-xl border border-club-100 bg-white p-4 text-center transition hover:border-club-300 hover:shadow-sm">
+                    {membresFiltres.map((m) => (
+                        <div key={m.cle} className="flex flex-col items-center gap-2 rounded-xl border border-club-100 bg-white p-4 text-center transition hover:border-club-300 hover:shadow-sm">
                             {m.cheminTrombinoscope ? (
                                 <button
                                     type="button"

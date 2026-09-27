@@ -72,6 +72,7 @@ export default function Contact() {
             }
         }
         verificationCanva()
+        // Déclenché uniquement à la validation du captcha ; envoiEnAttente et envoyerMessage (recréé à chaque rendu) sont lus à ce moment-là
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [accesVerifier]);
 

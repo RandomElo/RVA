@@ -336,8 +336,8 @@ export default function Calendrier() {
         setCourses(reponse);
     };
 
-    const prochaineOuverture = getProchaineOuverture(courses);
-    const { aVenir, passees } = separerCoursesParDate(coursesFiltrees);
+    const prochaineOuverture = useMemo(() => getProchaineOuverture(courses), [courses]);
+    const { aVenir, passees } = useMemo(() => separerCoursesParDate(coursesFiltrees), [coursesFiltrees]);
 
     return (
         <>

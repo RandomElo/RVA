@@ -16,5 +16,5 @@ export const estNomFichierSur = (nomFichier) =>
 // Prénom / nom : lettres (accents compris), séparées par un espace, une apostrophe ou un tiret
 export const REGEX_NOM = /^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[ '-][A-Za-zÀ-ÖØ-öø-ÿ]+)*$/;
 
-// Date de naissance sans année : JJ/MM
+// Champ dateNaissance : jour et mois uniquement ("JJ/MM"), sans année, utilisé pour les anniversaires
 export const REGEX_DATE_NAISSANCE = /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])$/;

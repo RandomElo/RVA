@@ -1,4 +1,4 @@
-import { createContext, useCallback, useContext, useRef, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useRef, useState, type ReactNode } from "react";
 import type { ContexteNotifications, Notif, NotifInterne } from "../constantes/types/notifications"
 
 
@@ -39,7 +39,9 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         [fermer],
     );
 
-    return <Contexte.Provider value={{ notifs, notifier, fermer }}>{children}</Contexte.Provider>;
+    const valeur = useMemo(() => ({ notifs, notifier, fermer }), [notifs, notifier, fermer]);
+
+    return <Contexte.Provider value={valeur}>{children}</Contexte.Provider>;
 }
 
 export function useNotifications() {

@@ -1,3 +1,5 @@
+const { logger } = require('./logger');
+
 const BACKEND_URL = process.env.BACKEND_URL || 'http://backend:8100';
 
 async function rapportStatistique() {
@@ -16,9 +18,9 @@ async function rapportStatistique() {
         }
 
         const data = await res.json();
-        console.log('Tâche mensuelle exécutée avec succès:', data);
+        logger.info({ type: 'CRON_RAPPORT_STATISTIQUE', resultat: data }, 'Tâche mensuelle exécutée avec succès');
     } catch (err) {
-        console.error('Échec de la tâche mensuelle:', err.message);
+        logger.error({ type: 'CRON_RAPPORT_STATISTIQUE', erreur: err.message }, 'Échec de la tâche mensuelle');
         process.exit(1);
     }
 }

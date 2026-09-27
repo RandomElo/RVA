@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AGE_PACE_FACTOR, DIST_PARAMS, VMA_MAX, VMA_MIN, buildSession, computeBasePeakKm, computeWeekPlanTypes, estVmaValide, generateWeeks, getSessionKinds, suggestPeakKm, weekTotals, type AgeBracket, type DistanceKey, type SessionKind } from "./planEntrainement";
+import { AGE_PACE_FACTOR, CONSTRUCTEURS_SEANCE, DIST_PARAMS, VMA_MAX, VMA_MIN, buildSession, computeBasePeakKm, computeWeekPlanTypes, estVmaValide, generateWeeks, getSessionKinds, suggestPeakKm, weekTotals, type AgeBracket, type DistanceKey, type SessionKind } from "./planEntrainement";
 
 const DISTANCES = Object.keys(DIST_PARAMS) as DistanceKey[];
 const NB_SEANCES_AUTORISES = [2, 3, 4, 5, 6];
@@ -173,5 +173,21 @@ describe("estVmaValide", () => {
         expect(estVmaValide(VMA_MIN - 0.1)).toBe(false);
         expect(estVmaValide(VMA_MAX + 0.1)).toBe(false);
         expect(estVmaValide(Number.NaN)).toBe(false);
+    });
+});
+
+describe("CONSTRUCTEURS_SEANCE", () => {
+    it("associe un constructeur à chaque type de séance", () => {
+        // Le satisfies fait échouer la compilation si un SessionKind manque dans cette liste.
+        const tousLesTypes = { EF: true, LONGUE: true, SEUIL: true, FRAC_COURT: true, FRAC_LONG: true, ALLURE_SPE: true, RECUP: true, PPG: true } satisfies Record<SessionKind, true>;
+
+        expect(Object.keys(CONSTRUCTEURS_SEANCE).sort()).toEqual(Object.keys(tousLesTypes).sort());
+        for (const constructeur of Object.values(CONSTRUCTEURS_SEANCE)) {
+            expect(typeof constructeur).toBe("function");
+        }
+    });
+
+    it("rejette un type de séance inconnu", () => {
+        expect(() => buildSession("INCONNU" as SessionKind, 15.5, DIST_PARAMS["10km"], 1)).toThrow("Type de séance inconnu : INCONNU");
     });
 });

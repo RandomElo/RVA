@@ -92,7 +92,8 @@ export default function GestionArticles() {
                             <button className="flex h-9 w-9 items-center justify-center rounded-lg text-[#0B2270] transition hover:bg-club-50" onClick={() => setModalModifierAlbum(a.url)}>
                                 <Pencil size={16} />
                             </button>
-                        ) : (
+                        ) : a.categorie === "newsletter" ? null : (
+                            // Les newsletters ne se modifient pas : on les supprime puis on les recrée
                             <Link to={`/administration/modifier-article/${a.url}`} aria-label="Modifier" title="Modifier" className="flex h-9 w-9 items-center justify-center rounded-lg text-[#0B2270] transition hover:bg-club-50">
                                 <Pencil size={16} />
                             </Link>
