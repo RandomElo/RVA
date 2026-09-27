@@ -238,7 +238,6 @@ export const recuperationStatistiques = gestionErreur(async (req, res) => {
 
 export const envoiMailContreRendu = gestionErreur(async (req, res) => {
     let { debut, fin } = req.body;
-    console.log(req.body)
     if (!debut || !fin) {
         return res.status(400).json({ etat: false, detail: "Requête incorrecte" });
     }

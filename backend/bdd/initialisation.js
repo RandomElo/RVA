@@ -1,4 +1,5 @@
 import bdd from "./bdd.js";
+import { logger } from "../fonctions/utilitaires/logger.js";
 
 export async function ajouterDonneesInitiales() {
     try {
@@ -10,7 +11,7 @@ export async function ajouterDonneesInitiales() {
         ]);
 
         if (administrateurExiste.length === 0) {
-            console.log("⚠️ Aucun administrateur enregistré, création...");
+            logger.warn({ type: "INIT_ADMIN" }, "⚠️ Aucun administrateur enregistré, création...");
 
             await bdd.Utilisateurs.bulkCreate([
                 {
@@ -33,7 +34,7 @@ export async function ajouterDonneesInitiales() {
         }
 
         if (!adherantExiste) {
-            console.log("⚠️ Aucun adhérent enregistré, création...");
+            logger.warn({ type: "INIT_ADHERENT" }, "⚠️ Aucun adhérent enregistré, création...");
 
             await bdd.Utilisateurs.create({
                 prenom: "Eloi",
@@ -45,7 +46,7 @@ export async function ajouterDonneesInitiales() {
         }
 
         if (images.length === 0) {
-            console.log("⚠️ Insertion des images système...");
+            logger.info({ type: "INIT_IMAGES" }, "⚠️ Insertion des images système...");
             await bdd.Images.bulkCreate([
                 { alt: "Bannière accueil : photo de groupe", nomFichier: "banniere.webp", type: "systeme" },
                 { alt: "Photo de Thomas Hairault : le coach", nomFichier: "thomas.webp", type: "systeme" },
@@ -53,7 +54,7 @@ export async function ajouterDonneesInitiales() {
         }
 
         if (pages.length === 0) {
-            console.log("⚠️ Insertion des pages système...");
+            logger.info({ type: "INIT_PAGES" }, "⚠️ Insertion des pages système...");
             await bdd.Pages.bulkCreate([
                 // --- ROUTES PUBLIQUES ---
                 { titre: "Running Vincennes Association (RVA)", url: "/", modifiable: false },
@@ -94,9 +95,9 @@ export async function ajouterDonneesInitiales() {
             ]);
         }
 
-        console.log("✅ Insertion des données initiales terminée");
+        logger.info({ type: "INIT_OK" }, "✅ Insertion des données initiales terminée");
     } catch (err) {
-        console.error("❌ Erreur lors de l'insertion des données initiales :", err);
+        logger.error({ type: "INIT_ERREUR", erreur: err?.message }, "❌ Erreur lors de l'insertion des données initiales");
     } finally {
         // Ferme la connexion à la BDD pour libérer la boucle d'événements Node.js
         if (bdd.sequelize) {

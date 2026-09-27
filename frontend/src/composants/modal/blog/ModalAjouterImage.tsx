@@ -287,12 +287,13 @@ export default function ModalAjouterImage({ ouvert, onFermer, editor, images = [
                         formData.append("image", f.file);
                         formData.append("alt", f.legende.trim()); // Utilise le champ alt attendu par la route /images
 
-                        const reponse: ReponseAjoutImage = await requete({
+                        const reponse = await requete<ReponseAjoutImage>({
                             url: urlDestination,
                             methode: "POST",
                             corps: formData,
                             formData: true
                         });
+                        if (!reponse) throw new Error("Échec de l'import d'une photo de l'album");
                         return reponse;
                     })
                 );
@@ -345,12 +346,13 @@ export default function ModalAjouterImage({ ouvert, onFermer, editor, images = [
             if (type == "remplacerImage") {
                 formData.append("nomFichier", ancienneDonnees!.nomFichier.trim());
             }
-            const reponse: ReponseAjoutImage = await requete({
+            const reponse = await requete<ReponseAjoutImage>({
                 url: type == "remplacerImage" ? "/images/remplacer" : "/images/ajouter?mode=" + (type == "galerieEtNouvelleImage" ? "galerie" : "tout"),
                 methode: "POST",
                 corps: formData,
                 formData: true
             });
+            if (!reponse) throw new Error("Échec de l'import de l'image");
 
             setImages?.(reponse.donnees);
 

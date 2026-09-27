@@ -55,6 +55,7 @@ export default function ModalActionsAdherent({ ouvert, onFermer, adherent, setAd
                 url: `/utilisateurs/exporter/${adherent.id}`,
                 blob: true
             });
+            if (!blob) throw new Error("Export indisponible");
 
             const url = URL.createObjectURL(blob);
             const lien = document.createElement("a");
@@ -76,11 +77,12 @@ export default function ModalActionsAdherent({ ouvert, onFermer, adherent, setAd
         setErreur(null);
         setEnCours("photo");
         try {
-            const reponse: Adherent[] = await requete({
+            const reponse = await requete<Adherent[]>({
                 url: `/utilisateurs/supprimer-photo`,
                 methode: "DELETE",
                 corps: { id: adherent.id }
             });
+            if (!reponse) return;
 
             setAdherents(reponse);
             fermer()
@@ -96,7 +98,11 @@ export default function ModalActionsAdherent({ ouvert, onFermer, adherent, setAd
         setErreur(null);
         setEnCours("adherent");
         try {
-            const resultat = await requete({ url: `/utilisateurs/supprimer`, methode: "DELETE", corps: { nom: adherent.mail } });
+            const resultat = await requete<Adherent[]>({ url: `/utilisateurs/supprimer`, methode: "DELETE", corps: { nom: adherent.mail } });
+            if (!resultat) {
+                setEnCours(null);
+                return;
+            }
             setAdherents(resultat);
             fermer();
         } catch {

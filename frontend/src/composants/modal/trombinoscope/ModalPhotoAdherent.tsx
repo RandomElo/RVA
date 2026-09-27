@@ -74,12 +74,13 @@ export default function ModalPhotoAdherent({ adherent, onFermer, setAdherents }:
         try {
             const formData = new FormData();
             formData.append("photo", fichier);
-            const adherentMaj = await requete({
+            const adherentMaj = await requete<Adherent[]>({
                 url: `/utilisateurs/ajouter-photo/${adherent.id}`,
                 methode: "POST",
                 corps: formData,
                 formData: true
             });
+            if (!adherentMaj) return;
 
             setAdherents(adherentMaj);
             fermerEtReinitialiser();

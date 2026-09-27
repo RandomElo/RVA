@@ -3,6 +3,7 @@ import e from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import compression from "compression";
 
 // Middlewares
 import { accessibiliteBdd } from "./rmc/middlewares/accessibiliteBdd.js";
@@ -27,7 +28,6 @@ import routeurHelloasso from "./rmc/routeurs/helloasso.js";
 dotenv.config({ quiet: true, path: "../.env" });
 const { PORT_EXPRESS, IP_FRONTEND } = process.env;
 const port = PORT_EXPRESS || 8100;
-console.log(IP_FRONTEND)
 const app = e();
 
 app.set('trust proxy', 1);
@@ -45,17 +45,18 @@ app.use(cors({
             "http://localhost:4173"
         ];
 
-        if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+        // Fermé par défaut : toute origine n'est acceptée que si CORS_OUVERT=true (dev uniquement)
+        if (allowedOrigins.includes(origin) || process.env.CORS_OUVERT === "true") {
             callback(null, true);
         } else {
-            callback(new Error("Accès bloqué par la politique CORS"));
+            callback(null, false); // Origine refusée : pas d'en-têtes CORS, le navigateur bloque
         }
     },
     credentials: true
 }));
 
+app.use(compression());
 app.use(e.json());
-// app.use(cookieParser());
 app.use(cookieParser(process.env.COOKIE_SECRET));
 app.use(generaleLimiteur);
 

@@ -140,15 +140,16 @@ export default function ModalMailAdherents({ ouvert, onFermer, nombreDestinatair
             formData.append("liens", JSON.stringify(liens.map(({ libelle, url }) => ({ libelle, url }))));
             piecesJointes.forEach((f) => formData.append("piecesJointes", f));
 
-            const reponse = await requete({
+            // detail : message récapitulatif ("N mails envoyés" / "X/N mails non envoyés")
+            const reponse = await requete<string>({
                 url: "/utilisateurs/envoyer-mail-adherents",
                 methode: "POST",
                 corps: formData,
                 formData: true
             });
 
-            if (reponse?.erreur) {
-                setErreur(reponse.detail ?? "Le mail n'a pas pu être envoyé.");
+            if (reponse === null) {
+                setErreur("Le mail n'a pas pu être envoyé.");
                 setEnvoiEnCours(false);
             } else {
                 fermer();

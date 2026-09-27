@@ -169,8 +169,8 @@ export default function Accueil() {
             }
 
             const [articlesDonnees, coursesDonnees] = await Promise.all([
-                requete({ url: "/articles/recuperer-qlq-articles?nbrArticles=3" }),
-                requete({ url: "/courses/courses-accueil" })
+                requete<ArticlePublic[]>({ url: "/articles/recuperer-qlq-articles?nbrArticles=3" }),
+                requete<Course[]>({ url: "/courses/courses-accueil" })
             ]);
 
             setArticles(articlesDonnees);

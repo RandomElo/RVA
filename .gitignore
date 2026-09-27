@@ -49,3 +49,19 @@ dist-source/
 .prerender-staging/
 dist/
 /backend/medias
+.claude
+/audits
+
+# Secrets et fichiers locaux
+.env.*
+!.env.example
+*.pem
+*.key
+build/
+coverage/
+.vite/
+*.sqlite
+*.sqlite3
+*.db
+Thumbs.db
+.env.production

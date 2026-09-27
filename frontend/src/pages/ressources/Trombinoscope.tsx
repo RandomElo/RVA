@@ -43,7 +43,7 @@ export default function Trombinoscope() {
         document.title = "Trombinoscope - Running Vincennes Association";
 
         async function recupererDonnees() {
-            const donnees = await requete({ url: "/utilisateurs/trombinoscope" })
+            const donnees = await requete<Membre[]>({ url: "/utilisateurs/trombinoscope" })
             setMembres(donnees)
         }
         recupererDonnees()

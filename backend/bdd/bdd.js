@@ -64,7 +64,7 @@ try {
     logger.info({ type: "DB_CONNECT" }, "🐘 Connexion à la base de données PostgreSQL réussie");
 
     await sequelize.sync();
-    console.log("✅ Modèles synchronisés");
+    logger.info({ type: "DB_SYNC" }, "✅ Modèles synchronisés");
 } catch (err) {
     logger.error({ type: "DB_ERROR", erreur: err.message }, "💥 Erreur de connexion à la base de données");
 }

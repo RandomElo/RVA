@@ -324,8 +324,8 @@ export default function Navbar() {
                     setPagesModifiable(pages);
                     localStorage.setItem(CACHE_KEY, JSON.stringify(pages));
                 }
-            } catch (erreur: any) {
-                if (erreur?.name !== "AbortError") {
+            } catch (erreur) {
+                if (!(erreur instanceof Error && erreur.name === "AbortError")) {
                     console.error("Erreur lors de la mise à jour des pages :", erreur);
                 }
             }
@@ -350,7 +350,7 @@ export default function Navbar() {
 
     async function gererDeconnexion() {
         setDeconnexionEnCours(true);
-        await requete({ url: "/utilisateurs/deconnexion", methode: "DELETE" });
+        await requete<string>({ url: "/utilisateurs/deconnexion", methode: "DELETE" });
         deconnexion();
         setDeconnexionEnCours(false);
         notifier({ type: "succes", titre: "Succès", description: "Vous êtes correctement déconnecté." });

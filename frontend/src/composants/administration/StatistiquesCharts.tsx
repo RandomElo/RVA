@@ -13,6 +13,9 @@ import {
     Pie,
     Sector,
     DefaultLegendContent,
+    type DefaultLegendContentProps,
+    type PieSectorShapeProps,
+    type TooltipContentProps,
 } from "recharts";
 import type { DonneesDashboardStatistiques } from "../../constantes/types/statistiques";
 
@@ -130,7 +133,7 @@ export function GraphiqueRepartitionPie({
                         nameKey="nom"
                         innerRadius={60}
                         outerRadius={90}
-                        shape={(props: any) => (
+                        shape={(props: PieSectorShapeProps) => (
                             <Sector
                                 {...props}
                                 fill={
@@ -142,9 +145,9 @@ export function GraphiqueRepartitionPie({
                         )}
                     />
                     <Tooltip
-                        content={({ active, payload: tooltipPayload, ...props }: any) => {
+                        content={({ active, activeIndex: indexActif }: TooltipContentProps) => {
                             const activeIndex =
-                                props.activeIndex != null ? Number(props.activeIndex) : -1;
+                                indexActif != null ? Number(indexActif) : -1;
                             const entry = activeIndex !== -1 ? repartition[activeIndex] : null;
                             if (!active || !entry) return null;
                             return (
@@ -169,7 +172,7 @@ export function GraphiqueRepartitionPie({
                     <Legend
                         iconType="circle"
                         iconSize={8}
-                        content={(props: any) => {
+                        content={(props: DefaultLegendContentProps) => {
                             const legendPayload = repartition.map((entry, index) => ({
                                 color: COULEURS_REPARTITION[index % COULEURS_REPARTITION.length],
                                 payload: entry,

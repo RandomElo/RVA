@@ -32,7 +32,8 @@ export default function ModalModifierAlt({ image, setImages, onFermer }: Props) 
             e.preventDefault()
             if (!image) return;
 
-            const reponse = await requete({ url: "/images/modifier-alt", methode: "POST", corps: { nomFichier: image.nomFichier, alt } })
+            const reponse = await requete<ImageSite[]>({ url: "/images/modifier-alt", methode: "POST", corps: { nomFichier: image.nomFichier, alt } })
+            if (!reponse) return;
 
             setImages(reponse)
             notifier({ type: "succes", titre: "Succès !", description: "Texte alternatif modifié avec succès !" })

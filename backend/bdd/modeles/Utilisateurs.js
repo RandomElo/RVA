@@ -1,5 +1,7 @@
 import { DataTypes } from "sequelize";
 import jwt from "jsonwebtoken";
+import { logger } from "../../fonctions/utilitaires/logger.js";
+import { REGEX_DATE_NAISSANCE } from "../../fonctions/utilitaires/validation.js";
 
 export default function (bdd) {
     const Utilisateurs = bdd.define(
@@ -18,7 +20,7 @@ export default function (bdd) {
                 type: DataTypes.STRING(5),
                 allowNull: false,
                 validate: {
-                    is: /^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])$/
+                    is: REGEX_DATE_NAISSANCE
                 }
             },
             nom: {
@@ -86,11 +88,10 @@ export default function (bdd) {
                 })
                 .json(objetRetour);
         } catch (erreur) {
-            console.log(erreur);
-            await req.Erreur.create({
-                emplacement: "generationCookie",
-                detail: JSON.stringify({ nom: erreur.name, message: erreur.message, stack: erreur.stack }),
-            });
+            logger.error({
+                type: "AUTH_GENERATION_TOKEN",
+                erreur: { nom: erreur.name, message: erreur.message, stack: erreur.stack },
+            }, "Erreur lors de la génération du cookie d'authentification");
             return res.json({ etat: false, detail: "Erreur lors de la génération du cookie d'authentification" });
         }
     };

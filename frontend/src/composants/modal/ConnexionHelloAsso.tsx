@@ -13,7 +13,7 @@ export default function ConnexionHelloAsso() {
     const verifierStatut = useCallback(async () => {
         setVerification(true);
         try {
-            const reponse = await requete({ url: "/helloasso/statut-connexion" });
+            const reponse = await requete<boolean>({ url: "/helloasso/statut-connexion" });
             setConnecte(Boolean(reponse));
         } catch (erreur) {
             console.error("Erreur vérification statut HelloAsso :", erreur);

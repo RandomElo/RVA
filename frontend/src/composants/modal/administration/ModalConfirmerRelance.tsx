@@ -18,7 +18,11 @@ export default function ModalConfirmationRelance({ ouvert, mail, onFermer }: Pro
     async function confirmer() {
         setEnvoiEnCours(true);
 
-        const resultat = await requete({ url: "/utilisateurs/relancer-mail-initialisation", methode: "POST", corps: { mail } });
+        const resultat = await requete<{ mail: boolean; detail: string }>({ url: "/utilisateurs/relancer-mail-initialisation", methode: "POST", corps: { mail } });
+        if (!resultat) {
+            setEnvoiEnCours(false);
+            return;
+        }
         if (resultat.mail) {
             notifier({ type: "succes", titre: "Succès", description: resultat.detail })
         } else {

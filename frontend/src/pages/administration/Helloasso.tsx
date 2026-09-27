@@ -1,10 +1,16 @@
 import { useEffect, useState, useMemo } from "react";
 import { useRequete } from "../../fonctions/requete";
 import { ExternalLink, Calendar, Users, Ticket, Heart, Eye, X, Loader2, UserCheck, FileText, Search, MapPin, Tag, Phone } from "lucide-react";
-import type { HelloAssoForm, HelloAssoFormsResponse, HelloAssoItem } from "../../constantes/types/helloasso";
+import type { HelloAssoForm, HelloAssoFormDetail, HelloAssoFormsResponse, HelloAssoItem } from "../../constantes/types/helloasso";
 import { normaliserVille, supprimerAccents } from "../../fonctions/normaliserVille";
 import ModalNouveauFormHelloasso from "../../composants/modal/administration/ModalNouveauFormHelloasso";
 // import ConnexionHelloAsso from "../../composants/modal/ConnexionHelloAsso";
+
+// Page de réponses renvoyée telle quelle par l'API HelloAsso (/helloasso/items/...)
+type PageInscritsHelloAsso = {
+    data: HelloAssoItem[];
+    pagination?: { continuationToken?: string };
+};
 
 export default function Helloasso() {
     const requete = useRequete();
@@ -18,7 +24,7 @@ export default function Helloasso() {
     const [afficherModalNewForm, setAfficherModalNewForm] = useState(false)
 
     // Données du détail
-    const [formDetail, setFormDetail] = useState<any>(null);
+    const [formDetail, setFormDetail] = useState<HelloAssoFormDetail | null>(null);
     const [loadingDetail, setLoadingDetail] = useState<boolean>(false);
 
     // Données des inscrits / réponses
@@ -33,7 +39,7 @@ export default function Helloasso() {
     useEffect(() => {
         async function recuperation() {
             try {
-                const reponse: HelloAssoFormsResponse = await requete({ url: "/helloasso/recuperation-forms" });
+                const reponse = await requete<HelloAssoFormsResponse>({ url: "/helloasso/recuperation-forms" });
                 if (reponse?.data) {
                     const formulairesValides = reponse.data.filter((item) => item.formType !== "Checkout");
                     setForms(formulairesValides);
@@ -65,7 +71,7 @@ export default function Helloasso() {
         try {
             const typeEncode = encodeURIComponent(form.formType);
             const slugEncode = encodeURIComponent(form.formSlug);
-            const reponse = await requete({ url: `/helloasso/forms/${typeEncode}/${slugEncode}` });
+            const reponse = await requete<HelloAssoFormDetail>({ url: `/helloasso/forms/${typeEncode}/${slugEncode}` });
             setFormDetail(reponse);
         } catch (erreur) {
             console.error("Erreur chargement détail :", erreur);
@@ -96,7 +102,7 @@ export default function Helloasso() {
                     url += `&continuationToken=${encodeURIComponent(continuationToken)}`;
                 }
 
-                const reponse = await requete({ url });
+                const reponse: PageInscritsHelloAsso | null = await requete<PageInscritsHelloAsso>({ url });
 
                 if (reponse && Array.isArray(reponse.data) && reponse.data.length > 0) {
                     tousLesInscrits = [...tousLesInscrits, ...reponse.data];
@@ -381,7 +387,7 @@ export default function Helloasso() {
                                                     <div>
                                                         <h3 className="text-sm font-semibold text-gray-900 mb-3">Tarifs proposés</h3>
                                                         <div className="space-y-3">
-                                                            {formDetail.tiers.map((tier: any) => (
+                                                            {formDetail.tiers.map((tier) => (
                                                                 <div key={tier.id} className="p-3 border rounded-lg bg-white shadow-sm flex justify-between items-center">
                                                                     <div>
                                                                         <h4 className="font-bold text-gray-900 text-sm">{tier.label}</h4>

@@ -24,7 +24,7 @@ export default function PageBdd() {
             setDonneesPage(undefined);
 
             try {
-                const reponse = await requete({ url: `/pages/details?url=${url}` });
+                const reponse = await requete<{ page: boolean; detail: Page | 404 }>({ url: `/pages/details?url=${url}` });
 
                 if (reponse?.detail) {
                     setDonneesPage(reponse.detail);

@@ -30,6 +30,12 @@ interface Champs {
     etatInteressementUtilisateur: EtatInteressementUtilisateur
 }
 
+// /courses/cree et /courses/modifier renvoient la liste à jour ; /courses/suggestion un simple message.
+type ReponseEnregistrementCourse =
+    | { course: true; detail: Course[]; notification: string }
+    | { course: true; detail: string }
+    | { course: false; detail: string };
+
 const CHAMPS_INITIAUX: Champs = {
     nom: "",
     date: "",
@@ -70,9 +76,14 @@ export default function ModalNouvelleCourse({ ancienneDonnees, ouvert, onFermer,
         }
 
 
-        const resultat = await requete({ url, methode: "POST", corps: champs });
+        const resultat = await requete<ReponseEnregistrementCourse>({ url, methode: "POST", corps: champs });
+        if (!resultat) {
+            setEnvoiEnCours(false);
+            return;
+        }
         if (resultat.course) {
-            if (role == "adherent") {
+            // Suggestion d'un adhérent : pas de liste renvoyée, seulement un message.
+            if (!("notification" in resultat)) {
                 notifier({ type: "succes", titre: "Merci !", description: resultat.detail });
 
             } else {

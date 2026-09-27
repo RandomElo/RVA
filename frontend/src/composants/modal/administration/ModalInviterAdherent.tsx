@@ -108,7 +108,8 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
         setEnvoiEnCours(true);
         try {
             const chemin = adherent ? "modifier" : "inviter";
-            const reponse = await requete({
+            // Liste à jour des adhérents, ou { inviter: "erreur", detail } si les informations sont refusées
+            const reponse = await requete<Adherent[] | { inviter: "erreur"; detail: string }>({
                 url: "/utilisateurs/" + chemin,
                 methode: "POST",
                 corps: {
@@ -118,7 +119,8 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
                     dateNaissance: dateNaissance.trim()
                 }
             });
-            if (reponse.inviter === "erreur") {
+            if (!reponse) throw new Error("Invitation impossible");
+            if (!Array.isArray(reponse)) {
                 setErreur(reponse.detail);
                 setEnvoiEnCours(false);
             } else {
@@ -160,12 +162,13 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
             const formData = new FormData();
             formData.append("csv", fichierCsv);
 
-            const reponse: ReponseImportCsv = await requete({
+            const reponse = await requete<ReponseImportCsv>({
                 url: "/utilisateurs/inviter-csv",
                 methode: "POST",
                 corps: formData,
                 formData: true
             });
+            if (!reponse) throw new Error("Import CSV impossible");
 
             if (reponse.erreurs.length > 0) {
                 setErreursImport(reponse.erreurs);

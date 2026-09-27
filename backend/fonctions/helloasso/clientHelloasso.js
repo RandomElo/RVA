@@ -21,8 +21,6 @@ const oauthClientCredentials = new ClientCredentials({
         bodyFormat: 'form',
     },
 });
-let clientCredentialsCache = null;
-let clientCredentialsExpiresAt = 0;
 
 let clientCredentialsToken = null;
 
@@ -30,7 +28,6 @@ export async function getAccessToken() {
     if (clientCredentialsToken && !clientCredentialsToken.expired(60)) {
         return clientCredentialsToken.token.access_token;
     }
-    console.log(oauthClientCredentials)
 
     logger.info('[HelloAsso] tokenHost:', process.env.HELLOASSO_BASE_URL || 'https://api.helloasso-sandbox.com');
     logger.info('[HelloAsso] client_id présent:', Boolean(process.env.HELLOASSO_CLIENT_ID));
@@ -40,14 +37,10 @@ export async function getAccessToken() {
         clientCredentialsToken = await oauthClientCredentials.getToken({});
     } catch (err) {
         logger.error('[HelloAsso] échec getToken:', err.data?.payload || err.message);
-        console.log(err)
         logger.error(err.data.payload)
 
         throw err;
     }
-    console.log("=========================")
-    console.log(clientCredentialsCache)
-    console.log("=========================")
     return clientCredentialsToken.token.access_token;
 }
 
@@ -82,7 +75,7 @@ function chargerTokenDepuisDisque() {
             return JSON.parse(contenu);
         }
     } catch (error) {
-        console.error("Impossible de lire le token HelloAsso persisté :", error.message);
+        logger.error({ type: "HELLOASSO_TOKEN_LECTURE", erreur: error.message }, "Impossible de lire le token HelloAsso persisté");
     }
     return null;
 }
@@ -91,7 +84,7 @@ function sauvegarderTokenSurDisque(token) {
     try {
         fs.writeFileSync(CHEMIN_STOCKAGE_TOKEN, JSON.stringify(token), { mode: 0o600 });
     } catch (error) {
-        console.error("Impossible de persister le token HelloAsso :", error.message);
+        logger.error({ type: "HELLOASSO_TOKEN_ECRITURE", erreur: error.message }, "Impossible de persister le token HelloAsso");
     }
 }
 

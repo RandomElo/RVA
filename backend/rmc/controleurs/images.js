@@ -3,9 +3,16 @@ import path from "path";
 import fs from 'fs/promises'
 import { fileURLToPath } from "url";
 import { DOSSIER_GALERIE, sauvegarderEnWebp } from "../../fonctions/utilitaires/enregistrementPhoto.js";
+import { estNomFichierSur } from "../../fonctions/utilitaires/validation.js";
+import { supprimerFichierSiExiste } from "../../fonctions/utilitaires/fichiers.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Noms générés par sauvegarderEnWebp (randomUUID() + ".webp"), repérables directement dans le HTML des articles
+const MOTIF_NOM_IMAGE_GENERE = "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\\.webp";
+const REGEX_NOM_IMAGE_GENERE = new RegExp(`^${MOTIF_NOM_IMAGE_GENERE}$`);
+const REGEX_NOMS_IMAGES_GENERES = new RegExp(MOTIF_NOM_IMAGE_GENERE, "g");
 
 async function recupererImagesGalerie(req) {
     return await req.Images.findAll({
@@ -61,16 +68,21 @@ export const recupererTout = gestionErreur(async (req, res) => {
 export const afficher = gestionErreur(async (req, res) => {
     const { nomFichier } = req.params
 
-    if (!nomFichier) {
+    if (!estNomFichierSur(nomFichier)) {
         return res.status(400).json({
             etat: false,
             detail: "Requête incorrecte",
         });
     }
 
-    const chemin = path.resolve(__dirname, "../../medias/galerie", nomFichier);
+    const dossierGalerie = path.resolve(__dirname, "../../medias/galerie");
     res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
-    res.sendFile(chemin);
+    res.sendFile(nomFichier, { root: dossierGalerie }, (erreur) => {
+        if (erreur && !res.headersSent) {
+            res.removeHeader("Cache-Control");
+            res.status(erreur.status === 404 ? 404 : 500).json({ etat: false, detail: "Photo introuvable" });
+        }
+    });
 }, "controleurAfficherPhotoGalerie", "Erreur lors de la récupération de la photo")
 
 // Au début de votre fichier de contrôleur
@@ -84,7 +96,7 @@ export const remplacer = gestionErreur(async (req, res) => {
     }
     const { alt, nomFichier } = req.body;
 
-    if (!alt || !nomFichier) {
+    if (!alt || !estNomFichierSur(nomFichier)) {
         return res.status(400).json({ etat: false, detail: "Requête incorrecte." });
     }
 
@@ -125,29 +137,35 @@ export const verifierUtilisationImagesDansArticles = gestionErreur(async (req, r
         raw: true
     });
 
-    // 2. Traitement de chaque image
-    const resultat = images.map((image) => {
-        const nomFichier = image.nomFichier;
-        const details = [];
+    // 2. Index nomFichier -> articles utilisant l'image
+    const utilisations = new Map(images.map((image) => [image.nomFichier, []]));
+    // Les noms hors format UUID (anciens fichiers) restent cherchés par sous-chaîne
+    const nomsNonGeneres = [...utilisations.keys()].filter((nom) => !REGEX_NOM_IMAGE_GENERE.test(nom));
 
-        // Parcours de tous les articles pour cette image
-        articles.forEach((article) => {
-            // Vérification dans le contenu HTML de l'article
-            const presenteDansContenu = article.contenuHtml && article.contenuHtml.includes(nomFichier);
+    // 3. Un seul passage par article : extraction des noms d'images présents dans le HTML
+    articles.forEach((article) => {
+        if (!article.contenuHtml) return;
 
-            if (presenteDansContenu) {
-                details.push({
-                    titre: article.titre,
-                    url: article.url
-                });
-            }
+        const nomsTrouves = new Set();
+        for (const [nom] of article.contenuHtml.matchAll(REGEX_NOMS_IMAGES_GENERES)) {
+            nomsTrouves.add(nom);
+        }
+        nomsNonGeneres.forEach((nom) => {
+            if (article.contenuHtml.includes(nom)) nomsTrouves.add(nom);
         });
 
-        return {
-            nomFichier: nomFichier,
-            detail: details
-        };
+        nomsTrouves.forEach((nom) => {
+            utilisations.get(nom)?.push({
+                titre: article.titre,
+                url: article.url
+            });
+        });
     });
+
+    const resultat = images.map((image) => ({
+        nomFichier: image.nomFichier,
+        detail: utilisations.get(image.nomFichier)
+    }));
 
     return res.json({
         etat: true,
@@ -158,23 +176,18 @@ export const verifierUtilisationImagesDansArticles = gestionErreur(async (req, r
 
 export const supprimerPhotoGalerie = gestionErreur(async (req, res) => {
     const { image } = req.body
-    if (!image) {
+    if (!estNomFichierSur(image)) {
         return res.status(400).json({ erreur: "Requête incorrecte." });
     }
 
-    const imageBdd = await req.Images.findOne({ where: { nomFichier: image } })
+    // Seules les images de la galerie sont supprimables : les images système (bannière, coach) sont exclues
+    const imageBdd = await req.Images.findOne({ where: { nomFichier: image, type: "galerie" } })
     if (!imageBdd) {
         return res.status(400).json({ etat: false, detail: "Requête incorrecte." });
     }
 
     const cheminFichier = path.join(path.resolve(__dirname, "../../medias/galerie"), image);
-    try {
-        await fs.unlink(cheminFichier);
-    } catch (err) {
-        if (err.code !== "ENOENT") {
-            throw err;
-        }
-    }
+    await supprimerFichierSiExiste(cheminFichier);
     await imageBdd.destroy()
     return res.json({ etat: true, detail: { donnees: await recupererImages(req), notification: "Image supprimer avec succès." } })
 

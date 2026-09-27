@@ -1,5 +1,6 @@
 import envoiMail from "../../fonctions/mailer/mailer.service.js";
 import gestionErreur from "../middlewares/gestionErreur.js";
+import { estUrl } from "../../fonctions/utilitaires/validation.js";
 
 // Fonctions utilitaires
 
@@ -14,15 +15,6 @@ const estDate = (date) => {
     return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(date);
 };
 
-const estUrl = (url) => {
-    try {
-        new URL(url);
-        return true;
-    } catch {
-        return false;
-    }
-};
-
 // Fonctions BDD
 
 async function enregistrerCourses(req, res, mode) {
@@ -30,10 +22,11 @@ async function enregistrerCourses(req, res, mode) {
 
 
     if (!nom || !date || !lieu || !type || typeof inscriptionsOuvertes !== "boolean") {
-        return res.status(400).json({
+        res.status(400).json({
             etat: false,
             detail: "Requête incorrecte",
         });
+        return { ok: false };
     }
 
     const TYPES_AUTORISES = [
@@ -47,44 +40,49 @@ async function enregistrerCourses(req, res, mode) {
 
     // Date
     if (!estDate(date)) {
-        return res.json({
+        res.json({
             etat: true,
             detail: { course: false, detail: "Date invalide." },
         });
+        return { ok: false };
     }
 
     if (new Date(date) < new Date()) {
-        return res.json({
+        res.json({
             etat: true,
             detail: { course: false, detail: "Date invalide." },
         });
+        return { ok: false };
     }
     // Date d'ouverture (facultative)
     if (dateOuvertureInscription && (!estDate(dateOuvertureInscription) || new Date(dateOuvertureInscription) < new Date())) {
-        return res.json({
+        res.json({
             etat: true,
             detail: {
                 course: false,
                 detail: "Date d'ouverture des inscriptions invalide.",
             },
         });
+        return { ok: false };
     }
 
     // Type
     if (!TYPES_AUTORISES.includes(type)) {
-        return res.json({
+        res.json({
             etat: true,
             detail: { course: false, detail: "Type de course invalide." },
         });
+        return { ok: false };
     }
 
     // URLs
     for (const url of [lienWhatsapp, lienSite, lienInscription]) {
         if (url != null && url !== "" && !estUrl(url)) {
-            return res.json({
+            res.json({
                 etat: true,
                 detail: { course: false, detail: "Un des liens est invalide." },
             });
+            return { ok: false };
         }
     }
 
@@ -93,10 +91,11 @@ async function enregistrerCourses(req, res, mode) {
         const valeur = Number(distance);
 
         if (!Number.isFinite(valeur)) {
-            return res.json({
+            res.json({
                 etat: true,
                 detail: { course: false, detail: "La distance doit être un nombre." },
             });
+            return { ok: false };
         }
     }
     const donnees = {
@@ -125,8 +124,11 @@ async function enregistrerCourses(req, res, mode) {
     }
 
     if (mode !== "suggestion") {
-        return res.json({ etat: true, detail: { course: true, detail: await recupererToutesLesCourses(req), notification: mode == "creation" ? "Course crée avec succès !" : "Course modifiée avec succès !" } })
+        res.json({ etat: true, detail: { course: true, detail: await recupererToutesLesCourses(req), notification: mode == "creation" ? "Course crée avec succès !" : "Course modifiée avec succès !" } });
+        return { ok: true, donnees };
     }
+
+    return { ok: true, donnees };
 }
 
 async function recupererToutesLesCourses(req, admin = false) {
@@ -203,7 +205,7 @@ async function recupererToutesLesCourses(req, admin = false) {
 }
 
 export const cree = gestionErreur(async (req, res) => {
-    return res.json({ etat: true, detail: await enregistrerCourses(req, res, "creation") })
+    await enregistrerCourses(req, res, "creation")
 }, "controleurCree", "Erreur lors de la création de la course");
 
 
@@ -248,7 +250,9 @@ export const recupererCoursesAccueil = gestionErreur(async (req, res) => {
 }, "controleurRecupererCoursesAccueil", "Erreur lors de la récupération des courses")
 
 export const suggestion = gestionErreur(async (req, res) => {
-    const donnees = await enregistrerCourses(req, res, "suggestion")
+    const resultat = await enregistrerCourses(req, res, "suggestion")
+    if (!resultat.ok) return;
+
     const utilisateur = await req.Utilisateurs.findByPk(req.idUtilisateur, { raw: true })
 
     await envoiMail(process.env.EMAIL_ADMINISTRATEUR, "Proposition course – Running Vincennes Association", "suggestionCourse", {
@@ -268,7 +272,6 @@ export const toutesLesCoursesAdmin = gestionErreur(async (req, res) => {
 
 export const modifierInteressement = gestionErreur(async (req, res) => {
     const { idCourse, nouvelEtat } = req.body
-    console.log(req.body)
     if (!idCourse || !nouvelEtat || (nouvelEtat !== "null" && nouvelEtat !== "participe" && nouvelEtat !== "interesse")) {
         return res.status(400).json({
             etat: false,

@@ -77,7 +77,8 @@ export default function GestionPages() {
 
     useEffect(() => {
         async function recuperationDonnees() {
-            const reponse = await requete({ url: "/pages/recuperer-arboresence" })
+            const reponse = await requete<{ arborescence: PageArbre[]; listePages: TexteEnDur[] }>({ url: "/pages/recuperer-arboresence" })
+            if (!reponse) return
 
             setPages(reponse.arborescence)
             setTextesEnDur(reponse.listePages)

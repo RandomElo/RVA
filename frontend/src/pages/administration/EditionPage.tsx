@@ -36,7 +36,7 @@ export default function EditionTextesPage() {
             try {
                 // Remplacement de TOUS les slashes par des underscores
                 const nomFormate = nom.replace(/\//g, "_");
-                const reponse = await requete({ url: `/pages/${nomFormate}/liste-textes-page` });
+                const reponse = await requete<Textes>({ url: `/pages/${nomFormate}/liste-textes-page` });
 
                 if (reponse && Object.keys(reponse).length > 0) {
                     setTextesOriginaux(reponse);
@@ -85,13 +85,17 @@ export default function EditionTextesPage() {
         });
 
         const nomFormate = nom.replace(/\//g, "_");
-        const reponse = await requete({
+        const reponse = await requete<{ donnees: Textes; chemin: string }>({
             url: `/pages/${nomFormate}/modifier-textes-page`,
             methode: "POST",
             corps: { textes: modifications },
         });
+        if (!reponse) {
+            setEnregistrement(false);
+            return;
+        }
 
-        setTextesOriginaux(reponse);
+        setTextesOriginaux(reponse.donnees);
         setEnregistrement(false);
 
         notifier({ type: "succes", titre: "Succès", description: "Textes enregistrés." });

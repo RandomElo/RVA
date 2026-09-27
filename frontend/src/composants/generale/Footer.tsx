@@ -91,8 +91,8 @@ export default function Footer() {
                     setPagesModifiables(pages);
                     localStorage.setItem(CACHE_KEY, JSON.stringify(pages));
                 }
-            } catch (erreur: any) {
-                if (erreur?.name !== "AbortError") {
+            } catch (erreur) {
+                if (!(erreur instanceof Error && erreur.name === "AbortError")) {
                     console.error("Erreur lors de la mise à jour des pages du footer :", erreur);
                 }
             }

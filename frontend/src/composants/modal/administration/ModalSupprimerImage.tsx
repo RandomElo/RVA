@@ -40,7 +40,11 @@ export default function ModalSupprimerImage({ imageASupprimer, setImageASupprime
         }
         setSuppressionEnCours(true)
 
-        const reponse = await requete({ url: "/images/supprimer-image-galerie", methode: "DELETE", corps: { image: imageASupprimer.nomFichier } })
+        const reponse = await requete<{ donnees: ImageSite[]; notification: string }>({ url: "/images/supprimer-image-galerie", methode: "DELETE", corps: { image: imageASupprimer.nomFichier } })
+        if (!reponse) {
+            setSuppressionEnCours(false)
+            return
+        }
         setImages(reponse.donnees)
 
         notifier({ type: "succes", titre: "Succès !", description: reponse.notification })

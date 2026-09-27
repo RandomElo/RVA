@@ -1,14 +1,16 @@
 import envoiMail from "../../fonctions/mailer/mailer.service.js";
 import gestionErreur from "../middlewares/gestionErreur.js";
+import { estUrl } from "../../fonctions/utilitaires/validation.js";
 
 async function enregistrerSpecialistes(req, res, mode) {
     const { nom, specialite, detail, adresse, telephone, lienReservation } = req.body;
 
     if (!nom || !specialite || !detail || !adresse) {
-        return res.status(400).json({
+        res.status(400).json({
             etat: false,
             detail: "Requête incorrecte",
         });
+        return { ok: false };
     }
 
     const SPECIALITES_AUTORISEES = [
@@ -21,27 +23,30 @@ async function enregistrerSpecialistes(req, res, mode) {
 
     // Spécialité
     if (!SPECIALITES_AUTORISEES.includes(specialite)) {
-        return res.json({
+        res.json({
             etat: true,
             detail: { specialiste: false, detail: "Spécialité invalide." },
         });
+        return { ok: false };
     }
 
     // Téléphone (facultatif)
     const REGEX_TELEPHONE = /^(0|\+33\s?)[1-9](\s?\d{2}){4}$/;
     if (telephone != null && telephone !== "" && !REGEX_TELEPHONE.test(telephone.replace(/[.\-]/g, " ").trim())) {
-        return res.json({
+        res.json({
             etat: true,
             detail: { specialiste: false, detail: "Numéro de téléphone invalide." },
         });
+        return { ok: false };
     }
 
     // Lien de réservation (facultatif)
     if (lienReservation != null && lienReservation !== "" && !estUrl(lienReservation)) {
-        return res.json({
+        res.json({
             etat: true,
             detail: { specialiste: false, detail: "Le lien de réservation est invalide." },
         });
+        return { ok: false };
     }
 
     const donnees = {
@@ -61,7 +66,7 @@ async function enregistrerSpecialistes(req, res, mode) {
     }
 
     if (mode == "modification") {
-        return res.json({
+        res.json({
             etat: true,
             detail: {
                 specialiste: true,
@@ -69,9 +74,10 @@ async function enregistrerSpecialistes(req, res, mode) {
                 notification: "Spécialiste modifié avec succès !",
             },
         });
+        return { ok: true, donnees };
 
     } else if (mode !== "suggestion") {
-        return res.json({
+        res.json({
             etat: true,
             detail: {
                 specialiste: true,
@@ -79,7 +85,10 @@ async function enregistrerSpecialistes(req, res, mode) {
                 notification: mode == "creation" ? "Spécialiste créé avec succès !" : "Spécialiste modifié avec succès !",
             },
         });
+        return { ok: true, donnees };
     }
+
+    return { ok: true, donnees };
 }
 
 async function recupererTousLesSpecialistes(req) {
@@ -114,7 +123,9 @@ export const modifierSpecialiste = gestionErreur(async (req, res) => {
 }, "controleurModifierSpecialiste", "Erreur lors de la modification du spécialiste");
 
 export const suggestion = gestionErreur(async (req, res) => {
-    const donnees = await enregistrerSpecialistes(req, res, "suggestion");
+    const resultat = await enregistrerSpecialistes(req, res, "suggestion");
+    if (!resultat.ok) return;
+
     const utilisateur = await req.Utilisateurs.findByPk(req.idUtilisateur, { raw: true });
 
     await envoiMail(process.env.EMAIL_ADMINISTRATEUR, "Proposition d'ajout d'un spécialiste de santé – Running Vincennes Association", "suggestionSpecialiste", {

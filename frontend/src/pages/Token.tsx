@@ -6,6 +6,10 @@ import { useNotifications } from "../contexts/NotificationsContext";
 import { useAuth } from "../contexts/AuthContext";
 import Captcha from "../composants/Captcha";
 
+type ReponseToken =
+    | { token: true; detail: string | { aAfficher: string } }
+    | { token: false; detail: string };
+
 export default function Token() {
     const { token } = useParams();
 
@@ -21,9 +25,10 @@ export default function Token() {
         async function traitementToken() {
             if (!token || !accesVerifier) return;
             
-            const reponse = await requete({ url: "/autres/token", methode: "POST", corps: { token } });
+            const reponse = await requete<ReponseToken>({ url: "/autres/token", methode: "POST", corps: { token } });
+            if (!reponse) return;
             if (reponse.token) {
-                if (reponse.detail.aAfficher) {
+                if (typeof reponse.detail !== "string") {
                     setAfficherCodeConnexion(reponse.detail.aAfficher);
                 } else {
                     notifier({ type: "succes", titre: "Succès", description: reponse.detail });

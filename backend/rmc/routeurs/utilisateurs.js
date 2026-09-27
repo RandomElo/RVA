@@ -1,5 +1,13 @@
 import e from "express"
-import { ajouterPhotosZip, anniversaireDuJour, anniversaires, changementMdp, connexionGoogle, connexionParMail, deconnexion, enregistrerPhotoControleur, envoiMailAdherents, exporterDonnees, inviterAdherent, inviterAdherentCsv, modifierInformationsUtilisateur, photo, recupererUtilisateurs, relancerInitialisationCompte, supprimer, supprimerPhoto, trombinoscope, verification, verificationCode, verifierMotDePasse } from "../controleurs/utilisateurs.js"
+import { connexionParMail, deconnexion, verification, verificationCode, verifierMotDePasse } from "../controleurs/auth/connexion.js"
+import { connexionGoogle } from "../controleurs/auth/google.js"
+import { changementMdp } from "../controleurs/auth/motDePasse.js"
+import { inviterAdherent, modifierInformationsUtilisateur, recupererUtilisateurs, relancerInitialisationCompte, supprimer, trombinoscope } from "../controleurs/utilisateurs/adherents.js"
+import { enregistrerPhotoControleur, photo, supprimerPhoto } from "../controleurs/utilisateurs/photos.js"
+import { ajouterPhotosZip, inviterAdherentCsv } from "../controleurs/utilisateurs/import.js"
+import { exporterDonnees } from "../controleurs/utilisateurs/export.js"
+import { anniversaireDuJour, anniversaires } from "../controleurs/utilisateurs/anniversaires.js"
+import { envoiMailAdherents } from "../controleurs/utilisateurs/mails.js"
 
 import { accesAdmin } from "../middlewares/accesAdmin.js";
 

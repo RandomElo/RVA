@@ -5,45 +5,10 @@ import { genererNombre } from "../../fonctions/utilitaires/genererChaine.js";
 import bdd from "../../bdd/bdd.js";
 import { logger } from "../../fonctions/utilitaires/logger.js";
 
-// Fonction de résolution de chemin asynchrone avec fallback récursif
-const resoudreCheminPage = async (nomPage) => {
-    let cheminFormate = path.normalize(nomPage).replace(/^(\.\.[\/\\])+/, "");
-    if (!cheminFormate.endsWith(".json")) {
-        cheminFormate += ".json";
-    }
-
-    // 1. Essai direct (si le sous-dossier est fourni dans l'URL)
-    let cheminComplet = path.join(CHEMIN_DOSSIER_TEXTES, cheminFormate);
-
-    try {
-        await fs.access(cheminComplet);
-    } catch {
-        // 2. Fallback : Recherche récursive dans toute l'arborescence de /textes
-        const nomFichierSeul = path.basename(cheminFormate);
-        const cheminTrouve = await trouverFichierRecursif(CHEMIN_DOSSIER_TEXTES, nomFichierSeul);
-
-        if (!cheminTrouve) {
-            const err = new Error("PAGE_INTROUVABLE");
-            err.code = "ENOENT";
-            throw err;
-        }
-
-        cheminComplet = cheminTrouve;
-    }
-
-    // Sécurité anti-traversal
-    if (!cheminComplet.startsWith(CHEMIN_DOSSIER_TEXTES)) {
-        throw new Error("ACCES_INTERDIT");
-    }
-
-    const cheminRelatif = path.relative(CHEMIN_DOSSIER_TEXTES, cheminComplet).replace(/\\/g, "/");
-    return { cheminComplet, cheminRelatif };
-};
-
 export const gestionToken = gestionErreur(async (req, res) => {
     const { token } = req.body
     if (!token) {
-        return res.status(401).json({
+        return res.status(400).json({
             etat: false,
             detail: "Requête incorrecte",
         });
@@ -89,7 +54,7 @@ export const gestionToken = gestionErreur(async (req, res) => {
 export const envoyerMailContact = gestionErreur(async (req, res) => {
     const { nom, mail, message } = req.body
     if (!nom || !mail || !message) {
-        return res.status(401).json({
+        return res.status(400).json({
             etat: false,
             detail: "Requête incorrecte",
         });
@@ -97,9 +62,9 @@ export const envoyerMailContact = gestionErreur(async (req, res) => {
 
     const regexNom = /^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[ '-][A-Za-zÀ-ÖØ-öø-ÿ]+)*$/;
     const regexMail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
-    // Bug corrigé : "|" (OR bit-à-bit) remplacé par "||" (OR logique)
-    if (!nom || !mail || !message) {
-        return res.status(401).json({
+    if (typeof nom !== "string" || typeof mail !== "string" || typeof message !== "string"
+        || nom.length > 100 || mail.length > 254 || message.length > 5000) {
+        return res.status(400).json({
             etat: false,
             detail: "Requête incorrecte",
         });

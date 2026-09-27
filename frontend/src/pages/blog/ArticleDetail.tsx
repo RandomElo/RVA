@@ -13,9 +13,12 @@ import { ICONE_CATEGORIE, LABEL_CATEGORIE, STYLE_BADGE, type ArticleFormValue } 
 import RecupererNewsletter from "../../composants/blog/RecupererNewsletter";
 import Album from "../../composants/blog/Album";
 
+// Champs renvoyés par /articles/recuperer-article/:url
+type ArticleDetail = Pick<ArticleFormValue, "titre" | "categorie" | "imageUrl" | "datePublication" | "contenuHtml">;
+
 export default function ArticleDetailPage() {
     const { url } = useParams<{ url: string }>();
-    const [article, setArticle] = useState<ArticleFormValue | null | undefined>(undefined);
+    const [article, setArticle] = useState<ArticleDetail | null | undefined>(undefined);
 
     const requete = useRequete();
 
@@ -29,7 +32,7 @@ export default function ArticleDetailPage() {
             setArticle(undefined);
 
             try {
-                const articleDonnees = await requete({ url: "/articles/recuperer-article/" + url });
+                const articleDonnees = await requete<ArticleDetail>({ url: "/articles/recuperer-article/" + url });
                 if (!annule) {
                     setArticle(articleDonnees ?? null);
                 }

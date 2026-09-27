@@ -16,53 +16,22 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import html2canvas from "html2canvas-pro";
 import { contenuPropre } from "../../fonctions/sanitizeur";
 import { useRequeteJSON } from "../../fonctions/requeteJSON";
-import { Loader2, Download, Clipboard, Check, Lightbulb } from "lucide-react";
+import { Loader2, Download, Clipboard, Check, Lightbulb, AlertCircle } from "lucide-react";
 import SEO from "../../composants/generale/SEO";
 import Modal from "../../composants/modal/Modal";
 import { bloqueurToucheInvalide, bloqueurToucheInvalideEntier, nettoyerEntier, nettoyerNombre } from "../../fonctions/nettoyeurNombre";
-
-/* ============================== TYPES ============================== */
-
-type DistanceKey = "5km" | "10km" | "semi" | "marathon";
-type SessionKind = "EF" | "LONGUE" | "SEUIL" | "FRAC_COURT" | "FRAC_LONG" | "ALLURE_SPE" | "RECUP" | "PPG";
-type WeekType = "build" | "recovery" | "taper";
-type AgeBracket = "<35" | "35-45" | "45-55" | "55+";
-
-interface DistParams {
-    label: string;
-    defWeeks: number;
-    longueBase: number;
-    seuilBaseMin: number;
-    efBaseMin: number;
-    allureSpeBaseMin: number;
-    fracCourt: { reps: number; dist: number };
-    fracLong: { reps: number; dist: number };
-    allureSpePct: [number, number];
-}
-
-interface Session {
-    kind: SessionKind;
-    label: string;
-    desc: string;
-    pace: string;
-    vol: string;
-    durationMin: number;
-    distanceKm: number;
-}
-
-interface Week {
-    num: number;
-    type: WeekType;
-    sessions: Session[];
-}
+import { AGE_PACE_FACTOR, DIST_PARAMS, PACE_PCT, VMA_MAX, VMA_MIN, estVmaValide, formatMin, generateWeeks, suggestPeakKm, weekTotals, type AgeBracket, type DistanceKey, type Week, type WeekType } from "../../fonctions/planEntrainement";
 
 /* ============================== DONNÉES DE BASE ============================== */
-const DONNNEES_PAR_DEFAULT = {
+const DONNEES_PAR_DEFAUT = {
     titre: "Générateur de plans d'entraînement",
     description: "Choisissez la distance, la VMA et le nombre de séances par semaine : les allures et volumes de chaque séance se calculent automatiquement, avec des semaines d'assimilation à volume réduit et un affûtage avant la course.",
     avertissement: "<b>⚠️ Ceci n'est pas un plan encadré par un coach.</b> Cet outil génère automatiquement des idées de séances à partir de formules génériques (VMA, distance, nombre de séances). Il ne remplace pas l'avis d'un entraîneur qui connaît votre historique, vos sensations et vos éventuelles blessures. Utilisez-le comme point de départ pour vous inspirer, pas comme une prescription à suivre à la lettre. En cas de douleur, de fatigue inhabituelle ou de doute, adaptez la séance ou consultez un professionnel (coach du club, médecin du sport).",
     philosophie: "<b>Notre philosophie d'entraînement :</b> progresser sans se blesser. Le plan suit la logique 80/20 : la grande majorité des séances se courent en endurance fondamentale, à allure confortable, et seules 1 à 2 séances par semaine sont réellement intenses (seuil ou fractionné). La charge monte progressivement, avec une semaine allégée tous les 4 semaines pour laisser le corps assimiler le travail, puis un affûtage en fin de préparation pour arriver reposé le jour de la course. La régularité et la récupération comptent souvent plus que l'intensité d'une séance isolée."
 }
+// Textes de la page, surchargés par /textes/ressources/plan-entrainement.json
+type TextesPlanEntrainement = typeof DONNEES_PAR_DEFAUT;
+
 const CATEGORY_VMA: Record<string, number> = {
     "38": 18.5,
     "40": 17.5,
@@ -72,18 +41,6 @@ const CATEGORY_VMA: Record<string, number> = {
     "55": 13.5,
     "60": 12.5,
 };
-
-const DIST_PARAMS: Record<DistanceKey, DistParams> = {
-    "5km": { label: "5 km", defWeeks: 8, longueBase: 10, seuilBaseMin: 18, efBaseMin: 38, allureSpeBaseMin: 14, fracCourt: { reps: 12, dist: 300 }, fracLong: { reps: 6, dist: 600 }, allureSpePct: [0.95, 0.98] },
-    "10km": { label: "10 km", defWeeks: 10, longueBase: 14, seuilBaseMin: 25, efBaseMin: 45, allureSpeBaseMin: 20, fracCourt: { reps: 10, dist: 400 }, fracLong: { reps: 6, dist: 800 }, allureSpePct: [0.9, 0.93] },
-    semi: { label: "Semi-marathon", defWeeks: 12, longueBase: 19, seuilBaseMin: 30, efBaseMin: 50, allureSpeBaseMin: 30, fracCourt: { reps: 10, dist: 400 }, fracLong: { reps: 5, dist: 1000 }, allureSpePct: [0.85, 0.88] },
-    marathon: { label: "Marathon", defWeeks: 14, longueBase: 32, seuilBaseMin: 35, efBaseMin: 60, allureSpeBaseMin: 45, fracCourt: { reps: 8, dist: 400 }, fracLong: { reps: 5, dist: 1000 }, allureSpePct: [0.78, 0.82] },
-};
-
-const DIST_VOLUME_FACTOR: Record<DistanceKey, number> = { "5km": 0.75, "10km": 1.0, semi: 1.15, marathon: 1.35 };
-
-const WARMUP_KM = 6;
-const COOLDOWN_KM = 3;
 
 const WEEK_TYPE_LABEL: Record<WeekType, string> = {
     build: "Semaine de développement",
@@ -95,22 +52,6 @@ const WEEK_TYPE_TAG: Record<WeekType, string> = {
     build: "Charge normale",
     recovery: "Volume réduit ~-35%",
     taper: "Approche de la course",
-};
-
-/*
- * Source unique de vérité pour les % de VMA de chaque type de séance.
- * Utilisée à la fois par buildSession() (calcul réel des allures) et par
- * la modale "Notre méthode" (affichage). Modifier une valeur ici la met
- * à jour automatiquement aux deux endroits — plus de risque de décalage
- * entre le texte affiché et l'allure réellement calculée.
- */
-const PACE_PCT: Record<"RECUP" | "EF" | "LONGUE" | "SEUIL" | "FRAC_LONG" | "FRAC_COURT", { min: number; max: number }> = {
-    RECUP: { min: 0.55, max: 0.65 },
-    EF: { min: 0.58, max: 0.68 },
-    LONGUE: { min: 0.63, max: 0.68 },
-    SEUIL: { min: 0.85, max: 0.9 },
-    FRAC_LONG: { min: 0.9, max: 0.95 },
-    FRAC_COURT: { min: 1.0, max: 1.1 },
 };
 
 /* Libellés + descriptions courtes pour le tableau de la modale. */
@@ -147,269 +88,6 @@ const AGE_BRACKETS: { key: AgeBracket; label: string }[] = [
     { key: "55+", label: "55 ans et +" },
 ];
 
-/*
- * Facteur appliqué au % de VMA des séances de qualité (seuil, fractionné
- * court/long, allure spécifique) uniquement. À VMA identique, la capacité à
- * tenir une intensité élevée diminue avec l'âge (récupération plus lente
- * entre les répétitions et les séances, fatigue plus rapide). Les allures
- * d'endurance fondamentale et de sortie longue ne sont pas modifiées : elles
- * sont déjà conservatrices et ne posent pas ce problème.
- *
- * Ce sont des coefficients de prudence, pas une table scientifique figée —
- * à ajuster si l'expérience du club suggère d'autres valeurs.
- */
-const AGE_PACE_FACTOR: Record<AgeBracket, number> = {
-    "<35": 1,
-    "35-45": 0.99,
-    "45-55": 0.97,
-    "55+": 0.94,
-};
-
-/* ============================== CALCULS ============================== */
-
-function speedFromPct(vma: number, pct: number) {
-    return vma * pct;
-}
-function distKmForMin(min: number, vma: number, pct: number) {
-    return speedFromPct(vma, pct) * (min / 60);
-}
-function minForKm(km: number, vma: number, pct: number) {
-    return (km / speedFromPct(vma, pct)) * 60;
-}
-function roundTo(v: number, step: number) {
-    return Math.round(v / step) * step;
-}
-function paceFromPct(vma: number, pct: number) {
-    const speed = vma * pct;
-    const paceMin = 60 / speed;
-    let m = Math.floor(paceMin);
-    let s = Math.round((paceMin - m) * 60);
-    if (s === 60) {
-        m += 1;
-        s = 0;
-    }
-    return `${m}:${String(s).padStart(2, "0")}`;
-}
-/**
- * Formate une fourchette d'allure de façon non ambiguë : "Entre X et Y /km"
- * plutôt qu'une notation avec flèche (→), qui pouvait laisser penser à une
- * progression pendant la séance alors qu'il s'agit d'une simple fourchette
- * dans laquelle rester.
- */
-function paceRange(vma: number, pctMin: number, pctMax: number) {
-    return `Entre ${paceFromPct(vma, pctMin)} et ${paceFromPct(vma, pctMax)} /km`;
-}
-function formatMin(min: number) {
-    const h = Math.floor(min / 60);
-    const m = Math.round(min % 60);
-    return h > 0 ? `${h}h${String(m).padStart(2, "0")}` : `${m} min`;
-}
-
-/**
- * @param ageFactor Facteur multiplicatif appliqué au % de VMA des séances de
- * qualité (SEUIL, FRAC_COURT, FRAC_LONG, ALLURE_SPE). 1 = aucun ajustement.
- * Les autres types de séance (EF, LONGUE, RECUP, PPG) l'ignorent.
- */
-function buildSession(kind: SessionKind, vma: number, params: DistParams, factor: number, ageFactor: number = 1): Session {
-    switch (kind) {
-        case "EF": {
-            const dur = Math.max(25, roundTo(params.efBaseMin * factor, 5));
-            return {
-                kind,
-                label: "Endurance fondamentale",
-                desc: "Footing continu, aisance respiratoire, discussion possible.",
-                pace: paceRange(vma, PACE_PCT.EF.min, PACE_PCT.EF.max),
-                vol: `${dur} min`,
-                durationMin: dur,
-                distanceKm: distKmForMin(dur, vma, (PACE_PCT.EF.min + PACE_PCT.EF.max) / 2),
-            };
-        }
-        case "LONGUE": {
-            const km = Math.max(5, Math.round(params.longueBase * factor * 10) / 10);
-            return {
-                kind,
-                label: "Sortie longue",
-                desc: "Endurance, allure régulière, terrain roulant.",
-                pace: paceRange(vma, PACE_PCT.LONGUE.min, PACE_PCT.LONGUE.max),
-                vol: `${km} km`,
-                durationMin: minForKm(km, vma, (PACE_PCT.LONGUE.min + PACE_PCT.LONGUE.max) / 2),
-                distanceKm: km,
-            };
-        }
-        case "SEUIL": {
-            const dur = Math.max(10, roundTo(params.seuilBaseMin * factor, 5));
-            const pctMin = PACE_PCT.SEUIL.min * ageFactor;
-            const pctMax = PACE_PCT.SEUIL.max * ageFactor;
-            const pctMid = (pctMin + pctMax) / 2;
-            const warmMin = minForKm(WARMUP_KM, vma, 0.65);
-            const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
-            return {
-                kind,
-                label: "Seuil (tempo)",
-                desc: `Échauffement ${WARMUP_KM} km, effort continu soutenu mais tenable, puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, pctMin, pctMax),
-                vol: `${WARMUP_KM}km éch. + ${dur}min continu + ${COOLDOWN_KM}km récup`,
-                durationMin: dur + warmMin + coolMin,
-                distanceKm: distKmForMin(dur, vma, pctMid) + WARMUP_KM + COOLDOWN_KM,
-            };
-        }
-        case "FRAC_COURT": {
-            const reps = Math.max(4, Math.round(params.fracCourt.reps * factor));
-            const runKm = (reps * params.fracCourt.dist) / 1000;
-            const pctMin = PACE_PCT.FRAC_COURT.min * ageFactor;
-            const pctMax = PACE_PCT.FRAC_COURT.max * ageFactor;
-            const runMin = minForKm(runKm, vma, ((PACE_PCT.FRAC_COURT.min + PACE_PCT.FRAC_COURT.max) / 2) * ageFactor);
-            const recupMin = reps * 1.25;
-            const warmMin = minForKm(WARMUP_KM, vma, 0.65);
-            const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
-            return {
-                kind,
-                label: "Fractionné court",
-                desc: `Échauffement ${WARMUP_KM} km, puis ${reps} × ${params.fracCourt.dist}m (récup trot 1' à 1'30 entre les fractions), puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, pctMin, pctMax),
-                vol: `${WARMUP_KM}km éch. + ${reps}×${params.fracCourt.dist}m + ${COOLDOWN_KM}km récup`,
-                durationMin: runMin + recupMin + warmMin + coolMin,
-                distanceKm: runKm + distKmForMin(recupMin, vma, 0.5) + WARMUP_KM + COOLDOWN_KM,
-            };
-        }
-        case "FRAC_LONG": {
-            const reps = Math.max(3, Math.round(params.fracLong.reps * factor));
-            const runKm = (reps * params.fracLong.dist) / 1000;
-            const pctMin = PACE_PCT.FRAC_LONG.min * ageFactor;
-            const pctMax = PACE_PCT.FRAC_LONG.max * ageFactor;
-            const runMin = minForKm(runKm, vma, ((PACE_PCT.FRAC_LONG.min + PACE_PCT.FRAC_LONG.max) / 2) * ageFactor);
-            const recupMin = reps * 2.5;
-            const warmMin = minForKm(WARMUP_KM, vma, 0.65);
-            const coolMin = minForKm(COOLDOWN_KM, vma, 0.6);
-            return {
-                kind,
-                label: "Fractionné long",
-                desc: `Échauffement ${WARMUP_KM} km, puis ${reps} × ${params.fracLong.dist}m (récup trot 2' à 3' entre les fractions), puis récup ${COOLDOWN_KM} km.`,
-                pace: paceRange(vma, pctMin, pctMax),
-                vol: `${WARMUP_KM}km éch. + ${reps}×${params.fracLong.dist}m + ${COOLDOWN_KM}km récup`,
-                durationMin: runMin + recupMin + warmMin + coolMin,
-                distanceKm: runKm + distKmForMin(recupMin, vma, 0.5) + WARMUP_KM + COOLDOWN_KM,
-            };
-        }
-        case "RECUP": {
-            const dur = Math.max(15, roundTo(20 * factor, 5));
-            return {
-                kind,
-                label: "Footing récupération",
-                desc: "Très facile, décrassage, aucune notion de performance.",
-                pace: paceRange(vma, PACE_PCT.RECUP.min, PACE_PCT.RECUP.max),
-                vol: `${dur} min`,
-                durationMin: dur,
-                distanceKm: distKmForMin(dur, vma, (PACE_PCT.RECUP.min + PACE_PCT.RECUP.max) / 2),
-            };
-        }
-        case "PPG": {
-            const dur = Math.max(20, roundTo(30 * factor, 5));
-            return {
-                kind,
-                label: "PPG / renforcement",
-                desc: "Gainage, proprioception, renforcement musculaire — pas de course.",
-                pace: "—",
-                vol: `${dur} min`,
-                durationMin: dur,
-                distanceKm: 0,
-            };
-        }
-        default:
-            throw new Error(`Type de séance inconnu : ${kind}`);
-    }
-}
-
-function getSessionKinds(nbSeances: number, weekIndex: number, isLateBlock: boolean): SessionKind[] {
-    const qualiteA: SessionKind = weekIndex % 2 === 0 ? "FRAC_COURT" : "FRAC_LONG";
-    const qualiteB: SessionKind = isLateBlock ? "ALLURE_SPE" : "SEUIL";
-    switch (nbSeances) {
-        case 2:
-            return [qualiteA, "LONGUE"];
-        case 3:
-            return [qualiteA, "EF", "LONGUE"];
-        case 4:
-            return [qualiteA, "EF", qualiteB, "LONGUE"];
-        case 5:
-            return [qualiteA, "EF", qualiteB, "EF", "LONGUE"];
-        case 6:
-            return [qualiteA, "EF", qualiteB, "PPG", "EF", "LONGUE"];
-        default:
-            return [qualiteA, "EF", "LONGUE"];
-    }
-}
-
-function computeWeekPlanTypes(nbWeeks: number, distanceKey: DistanceKey): { type: WeekType; factor: number }[] {
-    const taperWeeks = distanceKey === "marathon" || distanceKey === "semi" ? 2 : 1;
-    const peakWeek = Math.max(1, nbWeeks - taperWeeks);
-    const result: { type: WeekType; factor: number }[] = [];
-    for (let i = 1; i <= nbWeeks; i++) {
-        if (i > peakWeek) {
-            const posInTaper = i - peakWeek;
-            result.push({ type: "taper", factor: posInTaper === 1 ? 0.6 : 0.42 });
-        } else if (i % 4 === 0) {
-            result.push({ type: "recovery", factor: 0.62 });
-        } else {
-            const ramp = peakWeek > 1 ? (i - 1) / (peakWeek - 1) : 1;
-            result.push({ type: "build", factor: Math.min(1, 0.7 + 0.3 * ramp) });
-        }
-    }
-    return result;
-}
-
-function suggestPeakKm(vma: string, distanceKey: DistanceKey) {
-    const vmaNumber = parseFloat(vma) || 0;
-    const base = 6 * vmaNumber - 30; // calé sur un 10 km
-    const factor = DIST_VOLUME_FACTOR[distanceKey] || 1;
-    const raw = Math.max(20, base) * factor;
-    return (Math.round(raw / 5) * 5).toString();
-}
-
-function computeBasePeakKm(params: DistParams, nbSeances: number, vma: number) {
-    const kinds = getSessionKinds(nbSeances, 1, false);
-    return kinds.reduce((total, k) => total + buildSession(k, vma, params, 1).distanceKm, 0);
-}
-
-function scaledParamsFor(distanceKey: DistanceKey, nbSeances: number, targetKm: number, vma: number): DistParams {
-    const base = DIST_PARAMS[distanceKey];
-    const basePeak = computeBasePeakKm(base, nbSeances, vma);
-    let scale = basePeak > 0 ? targetKm / basePeak : 1;
-    scale = Math.min(3, Math.max(0.4, scale));
-    return {
-        ...base,
-        efBaseMin: base.efBaseMin * scale,
-        longueBase: base.longueBase * scale,
-        seuilBaseMin: base.seuilBaseMin * scale,
-        allureSpeBaseMin: base.allureSpeBaseMin * scale,
-        fracCourt: { ...base.fracCourt, reps: Math.max(4, Math.round(base.fracCourt.reps * scale)) },
-        fracLong: { ...base.fracLong, reps: Math.max(3, Math.round(base.fracLong.reps * scale)) },
-    };
-}
-
-function weekTotals(w: Week) {
-    let km = 0,
-        min = 0;
-    w.sessions.forEach((s) => {
-        km += s.distanceKm || 0;
-        min += s.durationMin || 0;
-    });
-    return { km: Math.round(km * 10) / 10, durStr: formatMin(min) };
-}
-
-function generateWeeks(distanceKey: DistanceKey, vma: number, nbSeances: number, nbSemaines: number, targetKm: number, ageBracket: AgeBracket): Week[] {
-    const params = scaledParamsFor(distanceKey, nbSeances, targetKm, vma);
-    const ageFactor = AGE_PACE_FACTOR[ageBracket];
-    const planTypes = computeWeekPlanTypes(nbSemaines, distanceKey);
-    const lateBlockStart = nbSemaines - (distanceKey === "marathon" || distanceKey === "semi" ? 4 : 3);
-    return planTypes.map((wt, idx) => {
-        const weekIndex = idx + 1;
-        const isLateBlock = weekIndex > lateBlockStart || wt.type === "taper";
-        const kinds = getSessionKinds(nbSeances, weekIndex, isLateBlock);
-        const sessions = kinds.map((k) => buildSession(k, vma, params, wt.factor, ageFactor));
-        return { num: weekIndex, type: wt.type, sessions };
-    });
-}
-
 /* ============================== COMPOSANT ============================== */
 
 export default function PlanEntrainement() {
@@ -422,7 +100,8 @@ export default function PlanEntrainement() {
     const [targetKm, setTargetKm] = useState<string>(() => suggestPeakKm("15.5", "10km"));
     const [targetKmManual, setTargetKmManual] = useState(false);
     const [weeks, setWeeks] = useState<Week[]>([]);
-    const [planEntrainementJSON, setPlanEntrainementJSON] = useState<any>(DONNNEES_PAR_DEFAULT);
+    const [planEntrainementJSON, setPlanEntrainementJSON] = useState<TextesPlanEntrainement>(DONNEES_PAR_DEFAUT);
+    const [erreurVma, setErreurVma] = useState<string>("");
     const [isExporting, setIsExporting] = useState(false);
     const [generationPlanTexte, setGenerationPlanTexte] = useState<boolean>(false);
     const [copieReussie, setCopieReussie] = useState(false);
@@ -433,7 +112,7 @@ export default function PlanEntrainement() {
 
     useEffect(() => {
         async function recuperation() {
-            const donnees = await requeteJSON("ressources/plan-entrainement", (nouvellesDonnees) => {
+            const donnees = await requeteJSON<TextesPlanEntrainement>("ressources/plan-entrainement", (nouvellesDonnees) => {
                 if (nouvellesDonnees) setPlanEntrainementJSON(nouvellesDonnees)
             });
             if (donnees) setPlanEntrainementJSON(donnees);
@@ -462,7 +141,10 @@ export default function PlanEntrainement() {
 
     function handleCategoryChange(v: string) {
         setCategory(v);
-        if (v !== "custom") setVma(CATEGORY_VMA[v].toString());
+        if (v !== "custom") {
+            setVma(CATEGORY_VMA[v].toString());
+            setErreurVma("");
+        }
     }
     function handleDistanceChange(v: DistanceKey) {
         setDistance(v);
@@ -470,6 +152,11 @@ export default function PlanEntrainement() {
     }
     function handleGenerate() {
         const numVma = parseFloat(vma) || 0;
+        if (!estVmaValide(numVma)) {
+            setErreurVma(`La VMA doit être comprise entre ${VMA_MIN} et ${VMA_MAX} km/h.`);
+            return;
+        }
+        setErreurVma("");
         const numNbSemaines = parseInt(nbSemaines, 10) || 1;
         const numTargetKm = parseFloat(targetKm) || 0;
         setWeeks(generateWeeks(distance, numVma, seances, numNbSemaines, numTargetKm, ageBracket));
@@ -621,13 +308,24 @@ export default function PlanEntrainement() {
                                     type="number"
                                     id="inputVMA"
                                     step={0.1}
-                                    min={8}
-                                    max={24}
+                                    min={VMA_MIN}
+                                    max={VMA_MAX}
                                     value={vma}
                                     onKeyDown={bloqueurToucheInvalide}
-                                    onChange={(e) => setVma(nettoyerNombre(e.target.value))}
-                                    className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none"
+                                    onChange={(e) => {
+                                        setVma(nettoyerNombre(e.target.value));
+                                        setErreurVma("");
+                                    }}
+                                    aria-invalid={erreurVma ? true : undefined}
+                                    aria-describedby={erreurVma ? "erreurVMA" : undefined}
+                                    className={`w-full rounded-lg border px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none ${erreurVma ? "border-red-400" : "border-club-200"}`}
                                 />
+                                {erreurVma && (
+                                    <p id="erreurVMA" className="mt-1 flex items-center gap-1 text-xs text-red-600">
+                                        <AlertCircle size={12} className="shrink-0" />
+                                        {erreurVma}
+                                    </p>
+                                )}
                             </div>
 
                             <div>

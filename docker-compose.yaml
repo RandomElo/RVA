@@ -39,6 +39,7 @@ services:
 
   backend:
     build: ./backend
+    init: true # Récupère les processus zombies (Chromium lancé par Puppeteer)
     restart: unless-stopped
     environment:
       DOSSIER_TEXTES: "/app/donnees/textes"

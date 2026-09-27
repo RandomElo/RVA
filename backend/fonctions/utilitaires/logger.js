@@ -1,7 +1,7 @@
 import pino from 'pino';
 
 export const logger = pino({
-    level: 'info',
+    level: process.env.LOG_LEVEL || 'info',
     timestamp: () => `,"time":"${new Date().toISOString()}"`,
     formatters: {
         level: (label) => ({ level: label.toUpperCase() }),

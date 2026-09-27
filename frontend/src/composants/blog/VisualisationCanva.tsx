@@ -29,7 +29,11 @@ export default function VisualisationCanva({ url, setErreurs }: Props) {
     useEffect(() => {
         async function recuperationCanva() {
             setEnChargement(true);
-            const reponse = await requete({ url: `/articles/apercu-canva?url=${encodeURIComponent(url)}` });
+            const reponse = await requete<{ recuperer: true; detail: DonneesOembed } | { recuperer: false; detail: string }>({ url: `/articles/apercu-canva?url=${encodeURIComponent(url)}` });
+            if (!reponse) {
+                setEnChargement(false);
+                return;
+            }
             if (!reponse.recuperer) {
                 setErreurs!((err) => ({
                     ...err,

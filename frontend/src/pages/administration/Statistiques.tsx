@@ -32,7 +32,7 @@ async function recupererStatistiquesAdmin(
     requete: Requete,
     periode: { debut: string; fin: string }
 ) {
-    return await requete({
+    return await requete<DonneesDashboardStatistiques>({
         url:
             "/statistiques/recuperation?debut=" +
             periode.debut +
@@ -222,11 +222,12 @@ export default function Statistiques() {
 
     async function handleEnvoyerRecap() {
         try {
-            const reponse = await requete({
+            const reponse = await requete<string>({
                 url: "/statistiques/mail",
                 methode: "POST",
                 corps: { debut: periode.debut, fin: periode.fin },
             });
+            if (!reponse) return;
             notifier({ type: "succes", titre: "Succès", description: reponse });
         } catch {
             notifier({

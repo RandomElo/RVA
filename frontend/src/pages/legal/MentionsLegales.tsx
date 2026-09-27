@@ -76,13 +76,15 @@ import { useEffect, useState } from "react";
 import { useRequeteJSON } from "../../fonctions/requeteJSON";
 import SEO from "../../composants/generale/SEO";
 
+type TextesMentionsLegales = typeof DONNEES_PAR_DEFAULT;
+
 export default function MentionsLegales() {
-    const [textes, setTextes] = useState<any>(DONNEES_PAR_DEFAULT)
+    const [textes, setTextes] = useState<TextesMentionsLegales>(DONNEES_PAR_DEFAULT)
 
     const requeteJSON = useRequeteJSON()
     useEffect(() => {
         async function recuperation() {
-            const donnees = await requeteJSON("mentions-legales", (nouvellesDonnees) => {
+            const donnees = await requeteJSON<TextesMentionsLegales>("mentions-legales", (nouvellesDonnees) => {
                 if (nouvellesDonnees) setTextes(nouvellesDonnees)
             })
             if (donnees) setTextes(donnees)

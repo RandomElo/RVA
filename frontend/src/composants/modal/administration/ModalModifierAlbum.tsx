@@ -22,7 +22,8 @@ export default function ModalModiferAlbum({ ouvert, url, onFermer }: Props) {
     useEffect(() => {
         async function recuperationDonnees() {
             if (!url) return;
-            const reponse = await requete({ url: "/articles/recuperer-album?url=" + url });
+            const reponse = await requete<{ contenuHtml: string | PhotoAlbum[] }>({ url: "/articles/recuperer-album?url=" + url });
+            if (!reponse) return;
 
             // Si l'API renvoie du JSON sous forme de chaîne (TEXT) ou déjà parsé
             const donneeParsee = typeof reponse.contenuHtml === "string"
@@ -50,7 +51,8 @@ export default function ModalModiferAlbum({ ouvert, url, onFermer }: Props) {
                     className="desactiver rounded-lg bg-accent-500 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-accent-700 disabled:opacity-50 disabled:cursor-not-allowed"
                     disabled={estInchange}
                     onClick={async () => {
-                        const reponse = await requete({ url: "/articles/modifier-album", methode: "POST", corps: { url, images } })
+                        const reponse = await requete<{ album: boolean; detail: string }>({ url: "/articles/modifier-album", methode: "POST", corps: { url, images } })
+                        if (!reponse) return;
                         if (reponse.album) {
                             notifier({ type: "succes", titre: "Succès !", description: reponse.detail })
                             onFermer()

@@ -21,7 +21,7 @@ export default function Captcha({
 
     async function gererSucces(token: string) {
         if (!import.meta.env.DEV) {
-            const reponse = await requete({ url: '/autres/verifier-captcha', methode: "POST", corps: { token } })
+            const reponse = await requete<string>({ url: '/autres/verifier-captcha', methode: "POST", corps: { token } })
 
             if (reponse) {
                 setEtat("verifie");

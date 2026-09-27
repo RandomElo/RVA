@@ -15,7 +15,11 @@ export function useRequete() {
     const { setErreur } = useErreur();
     const { deconnexion } = useAuth();
 
-    return async function requete({ url, methode = "GET", corps, enTete = {}, formData = false, blob = false }: RequeteParametres): Promise<any> {
+    // `blob: true` renvoie le Blob brut ; sinon `detail` typé par l'appelant (T explicite attendu).
+    // En cas d'erreur, l'erreur est remontée via setErreur et la fonction renvoie null.
+    function requete(parametres: RequeteParametres & { blob: true }): Promise<Blob | null>;
+    function requete<T = unknown>(parametres: RequeteParametres & { blob?: false }): Promise<T | null>;
+    async function requete<T = unknown>({ url, methode = "GET", corps, enTete = {}, formData = false, blob = false }: RequeteParametres): Promise<T | Blob | null> {
         try {
             const req = await fetch(`${url}`, {
                 method: methode,
@@ -32,7 +36,7 @@ export function useRequete() {
 
             if (!req.ok) {
                 if (type.includes("application/json")) {
-                    const erreur = await req.json();
+                    const erreur: { detail?: string } = await req.json();
                     throw new Error(erreur.detail);
                 }
 
@@ -42,18 +46,20 @@ export function useRequete() {
             if (blob) {
                 return await req.blob();
             }
-            const reponse = await req.json();
+            const reponse: { etat: boolean; detail: unknown } = await req.json();
             if (!reponse.etat) {
                 if (reponse.detail == "Vous n'êtes pas connecté" || reponse.detail == "accueil") {
                     deconnexion();
                 } else {
-                    throw new Error(reponse.detail);
+                    throw new Error(reponse.detail as string);
                 }
             }
-            return reponse.detail;
+            return reponse.detail as T;
         } catch (erreur) {
             setErreur(erreur as Error);
             return null;
         }
-    };
+    }
+
+    return requete;
 }

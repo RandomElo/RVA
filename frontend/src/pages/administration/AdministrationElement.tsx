@@ -142,17 +142,17 @@ export default function AdministrationElement({ mode }: Props) {
             setAncienneDonneesCourse(undefined);
 
             if (mode === "blog") {
-                const donnees = await requete({ url: "/articles/recuperer-tous-articles-admin" });
-                setArticles(donnees);
+                const donnees = await requete<ArticleListe[]>({ url: "/articles/recuperer-tous-articles-admin" });
+                if (donnees) setArticles(donnees);
             } else if (mode === "courses") {
-                const donnees = await requete({ url: "/courses/toutes-les-courses-admin" });
-                setCourses(donnees);
+                const donnees = await requete<Course[]>({ url: "/courses/toutes-les-courses-admin" });
+                if (donnees) setCourses(donnees);
             } else if (mode === "adherents") {
-                const donnees = await requete({ url: "/utilisateurs/recuperer-utilisateurs" });
-                setAdherents(donnees);
+                const donnees = await requete<Adherent[]>({ url: "/utilisateurs/recuperer-utilisateurs" });
+                if (donnees) setAdherents(donnees);
             } else if (mode == "specialistesSante") {
-                const donnees = await requete({ url: "/specialistes/toutes-les-specialistes-admin" });
-                setSpecialistesSante(donnees);
+                const donnees = await requete<Specialiste[]>({ url: "/specialistes/toutes-les-specialistes-admin" });
+                if (donnees) setSpecialistesSante(donnees);
             }
         }
         recuperationDonnees();

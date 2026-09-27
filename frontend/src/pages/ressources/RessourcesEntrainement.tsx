@@ -80,8 +80,10 @@ const DONNEES_PAR_DEFAULT = {
     ressource10Description: "Retrouvez votre catégorie FFA."
 };
 
+type TextesRessources = typeof DONNEES_PAR_DEFAULT;
+
 export default function NosRessources() {
-    const [ressourcesJSON, setRessourcesJSON] = useState<any>(DONNEES_PAR_DEFAULT);
+    const [ressourcesJSON, setRessourcesJSON] = useState<TextesRessources>(DONNEES_PAR_DEFAULT);
     const [chargement, setChargement] = useState<string | null>(null);
 
     const requeteJSON = useRequeteJSON();
@@ -89,7 +91,7 @@ export default function NosRessources() {
 
     useEffect(() => {
         async function recuperation() {
-            const donnees = await requeteJSON("ressources", (nouvellesDonnees) => {
+            const donnees = await requeteJSON<TextesRessources>("ressources", (nouvellesDonnees) => {
                 if (nouvellesDonnees) setRessourcesJSON(nouvellesDonnees);
             });
             if (donnees) setRessourcesJSON(donnees);

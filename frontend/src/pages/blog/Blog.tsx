@@ -54,10 +54,13 @@ function CarteSqueletteArticle() {
     );
 }
 
+// Textes d'en-tête de la page, chargés depuis /textes/blog.json
+type TextesBlog = { titre?: string; description?: string };
+
 export default function Blog() {
     const [articles, setArticles] = useState<ArticlePublic[] | null>(null);
     const [onglet, setOnglet] = useState<(typeof ONGLETS)[number]["value"]>("tous");
-    const [JSON, setJSON] = useState<any>(null);
+    const [JSON, setJSON] = useState<TextesBlog | null>(null);
     const [chargementArticle, setChargementArticle] = useState<string>("")
 
     const requeteJSON = useRequeteJSON();
@@ -70,14 +73,14 @@ export default function Blog() {
         async function recuperer() {
             try {
                 // 1. requeteJSON met à jour le state via le callback (cache + serveur)
-                const jsonInitial = await requeteJSON("blog", (nouvellesDonnees) => {
+                const jsonInitial = await requeteJSON<TextesBlog>("blog", (nouvellesDonnees) => {
                     if (nouvellesDonnees) setJSON(nouvellesDonnees);
                 });
 
                 if (jsonInitial) setJSON(jsonInitial);
 
                 // 2. On utilise AWAIT pour la requête d'articles réseau
-                const articlesDonnees = await requete({ url: "/articles/recuperer-tous-articles" });
+                const articlesDonnees = await requete<ArticlePublic[]>({ url: "/articles/recuperer-tous-articles" });
 
                 // 3. On met à jour la liste des articles
                 setArticles(articlesDonnees);

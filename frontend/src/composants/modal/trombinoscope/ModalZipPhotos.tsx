@@ -93,12 +93,13 @@ export default function ModalZipPhotos({ ouvert, onFermer, setAdherents }: Props
             const formData = new FormData();
             formData.append("zip", fichierZip);
 
-            const reponse: ReponseImportZip = await requete({
+            const reponse = await requete<ReponseImportZip>({
                 url: "/utilisateurs/ajouter-photos-zip",
                 methode: "POST",
                 corps: formData,
                 formData: true
             });
+            if (!reponse) throw new Error("Échec de l'import du zip");
 
             setAdherents(reponse.donnees);
 

@@ -40,7 +40,7 @@ export default function BandeauAnniversaire() {
         async function charger() {
             if (!estAuth) return;
 
-            const donnees = await requete({ url: "/utilisateurs/anniversaires-du-jour" });
+            const donnees = await requete<PersonneAnniversaire[]>({ url: "/utilisateurs/anniversaires-du-jour" });
             setPersonnes(donnees ?? []);
         }
         charger();

@@ -2,15 +2,16 @@ import { useState } from "react";
 import { useRequete } from "../../../fonctions/requete";
 import Modal from "../Modal";
 
-interface Props {
+interface Props<T> {
     texte: string | null;
     titre: string;
     onFermer: () => void;
-    setter: React.Dispatch<React.SetStateAction<any>>;
+    /** Reçoit la liste mise à jour renvoyée par `urlApi`. */
+    setter: React.Dispatch<React.SetStateAction<T>>;
     urlApi: string;
 }
 
-export default function ModalConfirmationSuppression({titre, texte, onFermer, setter, urlApi }: Props) {
+export default function ModalConfirmationSuppression<T>({titre, texte, onFermer, setter, urlApi }: Props<T>) {
     const [envoiEnCours, setEnvoiEnCours] = useState(false);
     const requete = useRequete();
 
@@ -19,9 +20,9 @@ export default function ModalConfirmationSuppression({titre, texte, onFermer, se
     async function confirmer() {
         setEnvoiEnCours(true);
 
-        const resultat = await requete({ url: urlApi, methode: "DELETE", corps: { nom: texte } });
+        const resultat = await requete<T>({ url: urlApi, methode: "DELETE", corps: { nom: texte } });
 
-        setter(resultat);
+        if (resultat !== null) setter(resultat);
         setEnvoiEnCours(false);
         onFermer();
     }

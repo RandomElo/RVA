@@ -4,6 +4,7 @@ import { create } from "express-handlebars"
 import hbs from "nodemailer-express-handlebars"
 import path from "path"
 import { fileURLToPath } from "url"
+import { logger } from "../utilitaires/logger.js"
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -44,13 +45,15 @@ transporteur.use(
     })
 );
 
-// --- 4. Vérification de la connexion ---
-transporteur.verify((err) => {
-    if (err) {
-        console.error('[mailer] Erreur de configuration SMTP Brevo :', err.message);
-    } else {
-        console.log('[mailer] Serveur SMTP Brevo prêt à envoyer des mails ✅');
-    }
-});
+// --- 4. Vérification de la connexion (ignorée en test : pas de connexion SMTP réelle) ---
+if (process.env.NODE_ENV !== "test") {
+    transporteur.verify((err) => {
+        if (err) {
+            logger.error({ type: "SMTP_ERREUR", erreur: err.message }, "[mailer] Erreur de configuration SMTP Brevo");
+        } else {
+            logger.info({ type: "SMTP_OK" }, "[mailer] Serveur SMTP Brevo prêt à envoyer des mails ✅");
+        }
+    });
+}
 
 export default transporteur;

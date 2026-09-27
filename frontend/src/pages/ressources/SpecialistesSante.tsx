@@ -31,12 +31,15 @@ const ONGLETS_SPECIALISTE = [
     { value: "tous", label: "Tous" },
 ];
 
+// Textes d'en-tête de la page, chargés depuis /textes/ressources/specialistes-sante.json
+type TextesSpecialistesSante = { titre?: string; description?: string };
+
 export default function SpecialistesSante() {
     const [specialistes, setSpecialistes] = useState<Specialiste[] | null>(null);
     const [onglet, setOnglet] = useState<(typeof ONGLETS_SPECIALISTE)[number]["value"] | "tous">("tous");
     const [recherche, setRecherche] = useState("");
     const [modalOuvert, setModalOuvert] = useState(false);
-    const [specialstesSanteJSON, setSpecialstesSanteJSON] = useState<any>({})
+    const [specialstesSanteJSON, setSpecialstesSanteJSON] = useState<TextesSpecialistesSante>({})
 
     const requete = useRequete()
     const requeteJSON = useRequeteJSON()
@@ -49,7 +52,7 @@ export default function SpecialistesSante() {
             try {
                 // 1. requeteJSON est gérée séparément pour le Stale-While-Revalidate
                 // Le callback met à jour si le serveur renvoie de nouvelles données
-                const donneesInitiales = await requeteJSON("ressources/specialistes-sante", (nouvellesDonnees) => {
+                const donneesInitiales = await requeteJSON<TextesSpecialistesSante>("ressources/specialistes-sante", (nouvellesDonnees) => {
                     if (nouvellesDonnees) setSpecialstesSanteJSON(nouvellesDonnees);
                 });
 
@@ -58,7 +61,7 @@ export default function SpecialistesSante() {
                 }
 
                 // 2. Requête API classique attendue avec await
-                const reponse = await requete({ url: "/specialistes/recuperer" });
+                const reponse = await requete<Specialiste[]>({ url: "/specialistes/recuperer" });
                 setSpecialistes(reponse);
 
             } catch (error) {

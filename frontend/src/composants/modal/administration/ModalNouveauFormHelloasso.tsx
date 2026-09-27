@@ -47,6 +47,11 @@ const CHAMPS_INITIAUX: FormulaireHelloAsso = {
     champs: []
 };
 
+// Forme attendue par ce composant (routes /helloasso/creer et /helloasso/modifier désactivées côté back).
+type ReponseEnregistrementFormulaire =
+    | { formulaire: FormulaireHelloAsso; notification: string; detail: HelloAssoForm[] }
+    | { formulaire?: undefined; detail?: string };
+
 function idAleatoire(): string {
     return Math.random().toString(36).slice(2, 10);
 }
@@ -72,7 +77,7 @@ export default function ModalNouveauFormHelloasso({ ouvert, onFermer, ancienneDo
     useEffect(() => {
         async function chargerImages() {
             try {
-                const resultat = await requete({ url: "/images", methode: "GET" });
+                const resultat = await requete<{ donnees: ImageSite[] }>({ url: "/images", methode: "GET" });
                 setImagesGalerie(resultat?.donnees ?? []);
             } catch (e) {
                 console.error(e);
@@ -195,7 +200,7 @@ export default function ModalNouveauFormHelloasso({ ouvert, onFermer, ancienneDo
             }))
         };
 
-        const resultat = await requete({ url, methode: "POST", corps });
+        const resultat = await requete<ReponseEnregistrementFormulaire>({ url, methode: "POST", corps });
 
         if (resultat?.formulaire) {
             notifier({ type: "succes", titre: "Succès", description: resultat.notification });

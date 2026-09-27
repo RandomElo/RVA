@@ -142,7 +142,8 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
     useEffect(() => {
         document.title = "Rédaction article - Running Vincennes Association";
         async function recuperationImages() {
-            const reponse = await requete({ url: "/images/recuperer-galerie" })
+            const reponse = await requete<ImageSite[]>({ url: "/images/recuperer-galerie" })
+            if (!reponse) return
             setImages(reponse)
         }
         recuperationImages()
@@ -290,15 +291,21 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
             corps = { ...corps, photosAlbum }
         }
 
-        const reponse = await requete({ url, methode: "POST", corps });
+        // donnees : chemin de l'article publié, ou liste des articles (admin, hors publication)
+        const reponse = await requete<{ article: boolean; detail: string; donnees?: string | unknown[] }>({ url, methode: "POST", corps });
+        if (!reponse) {
+            setEnregistrementEnCours(null);
+            return;
+        }
         if (!reponse.article) {
             notifier({ type: "erreur", titre: "Erreur lors de l'enregistrement de l'article", description: reponse.detail });
         } else {
             notifier({ type: "succes", titre: "Succès", description: reponse.detail });
             const donnees = reponse.donnees;
             if (role == "adherent") return navigation("/blog")
-            if (statut == "publie") {
-                navigation("/" + donnees);
+            if (statut == "publie" && typeof donnees === "string") {
+                // Le backend renvoie déjà le chemin complet ("/article/<url>")
+                navigation(donnees);
             } else {
                 navigation("/blog");
             }
@@ -322,7 +329,11 @@ export default function RedactionArticle({ type = "nouvelArticle" }: { type?: "n
             corps = { ...corps, ancienneUrl: donneesLoader.url }
         }
 
-        const reponse = await requete({ url: "/pages/" + (donneesLoader ? "modification" : "creation"), methode: "POST", corps })
+        const reponse = await requete<{ page: boolean; detail?: string }>({ url: "/pages/" + (donneesLoader ? "modification" : "creation"), methode: "POST", corps })
+        if (!reponse) {
+            setEnregistrementEnCours(null);
+            return;
+        }
         if (!reponse.page) {
             notifier({ type: "erreur", titre: "Erreur", description: reponse.detail });
         } else {

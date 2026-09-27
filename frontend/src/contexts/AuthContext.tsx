@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import type { Role } from "../constantes/types/auth";
 
 interface AuthContextType {
@@ -16,28 +16,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const [auth, setAuth] = useState(false);
     const [role, setRole] = useState<Role>(null);
 
-    const verificationConnexion = async () => {
-        const requete = await fetch("/utilisateurs/verification", {
-            method: "GET",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-        });
+    const verificationConnexion = useCallback(async () => {
+        try {
+            const requete = await fetch("/utilisateurs/verification", {
+                method: "GET",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+            });
 
-        const reponse = await requete.json();
-        if (!reponse.etat) {
-            setAuth(false);
-            throw new Error(reponse.detail);
-        } else {
-            if (!reponse.detail) {
+            const reponse = await requete.json();
+            if (!reponse.etat || !reponse.detail) {
                 setAuth(false);
+                setRole(null);
             } else {
                 setAuth(true);
                 setRole(reponse.detail);
             }
+        } catch (erreur) {
+            console.warn("Vérification de connexion échouée :", erreur);
+            setAuth(false);
+            setRole(null);
+        } finally {
+            setChargement(false);
         }
-
-        setChargement(false);
-    };
+    }, []);
 
     const deconnexion = () => {
         setRole(null)

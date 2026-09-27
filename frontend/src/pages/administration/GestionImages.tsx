@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Image as ImageIcon, FolderLock, Plus, Search, Trash2, Copy, Check, HardDrive, Loader2, SquarePen, Pencil } from "lucide-react";
 import { useRequete } from "../../fonctions/requete";
 import type { ImageSite } from "../../constantes/types/blog";
@@ -32,18 +32,25 @@ export default function GestionImages() {
     const requete = useRequete();
     const { notifier } = useNotifications();
 
+    const utilisationsParFichier = useMemo(
+        () => new Map(detailsUtilisationImages.map((d) => [d.nomFichier, d.detail.length])),
+        [detailsUtilisationImages]
+    );
+
     useEffect(() => {
         async function chargerImages() {
             setChargement(true);
             try {
-                const reponse = await requete({
+                const reponse = await requete<ImageSite[]>({
                     url: "/images/recuperer-tout",
                     methode: "GET",
                 });
+                if (!reponse) return;
 
                 setImages(reponse);
 
-                const reponseDetailsImages = await requete({ url: "/images/recuperer-details-utilisation" });
+                const reponseDetailsImages = await requete<DetailsUtilisationImage[]>({ url: "/images/recuperer-details-utilisation" });
+                if (!reponseDetailsImages) return;
                 setDetailsUtilisationImages(reponseDetailsImages);
             } catch {
                 notifier({
@@ -185,9 +192,7 @@ export default function GestionImages() {
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                             {imagesFiltreesBDD?.map((image) => {
                                 const url = getUrlImageGalerie(image);
-                                const nombreUtilisations =
-                                    detailsUtilisationImages.find((img) => img.nomFichier === image.nomFichier)?.detail
-                                        ?.length ?? 0;
+                                const nombreUtilisations = utilisationsParFichier.get(image.nomFichier) ?? 0;
 
                                 return (
                                     <div
@@ -366,17 +371,6 @@ export default function GestionImages() {
                 images={images?.filter((img) => img.type === "galerie")}
                 setImages={setImages}
                 ancienneDonnees={ancienneDonnees}
-                editor={
-                    {
-                        chain: () => ({
-                            focus: () => ({
-                                setImage: () => ({
-                                    run: () => { },
-                                }),
-                            }),
-                        }),
-                    } as any
-                }
             />
 
             <ModalSupprimerImage

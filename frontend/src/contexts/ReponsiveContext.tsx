@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 
 const ResponsiveContext = createContext({
     estMobile: false,
@@ -10,20 +10,32 @@ export function ResponsiveProvider({ children }: { children: ReactNode }) {
     const [taille, setTaille] = useState(window.innerWidth);
 
     useEffect(() => {
+        // Une seule mise à jour par frame, même si "resize" est émis en rafale
+        let idFrame: number | null = null;
         const onResize = () => {
-            setTaille(window.innerWidth);
+            if (idFrame !== null) return;
+            idFrame = requestAnimationFrame(() => {
+                idFrame = null;
+                setTaille(window.innerWidth);
+            });
         };
 
         window.addEventListener("resize", onResize);
 
-        return () => window.removeEventListener("resize", onResize);
+        return () => {
+            window.removeEventListener("resize", onResize);
+            if (idFrame !== null) cancelAnimationFrame(idFrame);
+        };
     }, []);
 
-    const value = {
-        estMobile: taille <= 768,
-        estTablette: taille > 768 && taille <= 1024,
-        estOrdinateur: taille > 1024,
-    };
+    const value = useMemo(
+        () => ({
+            estMobile: taille <= 768,
+            estTablette: taille > 768 && taille <= 1024,
+            estOrdinateur: taille > 1024,
+        }),
+        [taille],
+    );
 
     return <ResponsiveContext.Provider value={value}>{children}</ResponsiveContext.Provider>;
 }

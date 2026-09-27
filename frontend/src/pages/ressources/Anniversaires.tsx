@@ -92,7 +92,7 @@ export default function Anniversaires() {
             if (texteCacheInitial) {
                 setAnniversairesJSON((prev) => ({ ...prev, ...texteCacheInitial }));
             }
-            const donnees = await requete({ url: "/utilisateurs/anniversaires" });
+            const donnees = await requete<Anniversaire[]>({ url: "/utilisateurs/anniversaires" });
             setAnniversaires(donnees);
         }
 

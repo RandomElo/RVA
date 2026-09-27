@@ -15,8 +15,17 @@ interface Props {
     setSpecialistes: React.Dispatch<React.SetStateAction<Specialiste[] | null>>;
 }
 
+type ReponseEnregistrementSpecialiste =
+    | { specialiste: true; detail: Specialiste[]; notification: string }
+    | { specialiste: false; detail: string };
+
 interface SuggestionAdresse {
     label: string;
+}
+
+// Réponse (partielle) de l'API Adresse : https://api-adresse.data.gouv.fr/search/
+interface ReponseApiAdresse {
+    features?: { properties: { label: string } }[];
 }
 
 const CHAMPS_INITIAUX: Specialiste = {
@@ -96,8 +105,8 @@ export default function ModalNouveauSpecialiste({ ancienneDonnees, ouvert, onFer
                 const reponse = await fetch(
                     `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(valeur)}&limit=5`
                 );
-                const donnees = await reponse.json();
-                const resultats: SuggestionAdresse[] = (donnees.features ?? []).map((f: any) => ({
+                const donnees: ReponseApiAdresse = await reponse.json();
+                const resultats: SuggestionAdresse[] = (donnees.features ?? []).map((f) => ({
                     label: f.properties.label,
                 }));
                 setSuggestionsAdresse(resultats);
@@ -173,7 +182,11 @@ export default function ModalNouveauSpecialiste({ ancienneDonnees, ouvert, onFer
             url = "/specialistes/suggestion";
         }
 
-        const resultat = await requete({ url, methode: "POST", corps: champs });
+        const resultat = await requete<ReponseEnregistrementSpecialiste>({ url, methode: "POST", corps: champs });
+        if (!resultat) {
+            setEnvoiEnCours(false);
+            return;
+        }
         if (resultat.specialiste) {
             setSpecialistes(resultat.detail);
             setChamps(CHAMPS_INITIAUX);

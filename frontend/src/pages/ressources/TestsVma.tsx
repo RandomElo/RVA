@@ -161,6 +161,8 @@ function refineMercier(dernierPalierComplet: number, distanceDansPalierSuivant: 
     return Math.round((row.vitesse + fraction * 0.5) * 10) / 10;
 }
 
+type TextesTestsVma = typeof DONNEES_PAR_DEFAULT;
+
 /* ============================== COMPOSANT ============================== */
 
 export default function TestsVMA() {
@@ -168,14 +170,14 @@ export default function TestsVMA() {
     const [distanceInput, setDistanceInput] = useState<string>("");
     const [dernierPalier, setDernierPalier] = useState<string>("");
     const [distancePalierSuivant, setDistancePalierSuivant] = useState<string>("");
-    const [testsVMAJSON, setTestsVMAJSON] = useState<any>(DONNEES_PAR_DEFAULT)
+    const [testsVMAJSON, setTestsVMAJSON] = useState<TextesTestsVma>(DONNEES_PAR_DEFAULT)
 
     const requeteJSON = useRequeteJSON()
 
     useEffect(() => {
 
         async function recuperation() {
-            const donnees = await requeteJSON("ressources/tests-vma", (nouvellesDonnees) => {
+            const donnees = await requeteJSON<TextesTestsVma>("ressources/tests-vma", (nouvellesDonnees) => {
                 if (nouvellesDonnees) {
                     setTestsVMAJSON(nouvellesDonnees)
                 }

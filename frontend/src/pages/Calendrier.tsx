@@ -284,7 +284,8 @@ export default function Calendrier() {
                     setCalendrierJSON(donneesCachees);
                 }
 
-                const coursesDonnees = await requete({ url: "/courses/toutes-les-courses" });
+                const coursesDonnees = await requete<Course[]>({ url: "/courses/toutes-les-courses" });
+                if (!coursesDonnees) return;
                 setCourses(coursesDonnees);
             } catch (error) {
                 console.error("Erreur lors de la récupération des données :", error);
@@ -325,11 +326,12 @@ export default function Calendrier() {
     }, [courses, recherche, typeActif]);
 
     const handleChangerEtatCourse = async (idCourse: string | number, nouvelEtat: EtatInteressementUtilisateur) => {
-        const reponse = await requete({
+        const reponse = await requete<Course[]>({
             url: "/courses/modifier-interessement",
             methode: "POST",
             corps: { idCourse, nouvelEtat: nouvelEtat ? nouvelEtat : "null" }
         });
+        if (!reponse) return;
 
         setCourses(reponse);
     };

@@ -105,7 +105,7 @@ export default function AdminAccueil() {
         document.title = "Administration - Running Vincennes Association";
 
         async function recupererStats() {
-            const reponse = await requete({ url: "/autres/details-interface-administration" })
+            const reponse = await requete<Stats>({ url: "/autres/details-interface-administration" })
             setStats(reponse)
         }
         recupererStats();

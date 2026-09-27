@@ -1,5 +1,7 @@
 import e from "express";
-import { canvaVisualisation, cree, creeAlbum, enregistrerNewsletter, modifier, modifierAlbum, recupererAlbum, recupererArticle, recupererArticleAdmin, recupererNewsletter, recupererQlqArticles, recupererTousArticles, recupererTousArticlesAdmin, suggestion, supprimer } from "../controleurs/blog.js";
+import { cree, modifier, recupererArticle, recupererArticleAdmin, recupererQlqArticles, recupererTousArticles, recupererTousArticlesAdmin, suggestion, supprimer } from "../controleurs/blog/articles.js";
+import { canvaVisualisation, enregistrerNewsletter, recupererNewsletter } from "../controleurs/blog/newsletter.js";
+import { creeAlbum, modifierAlbum, recupererAlbum } from "../controleurs/blog/albums.js";
 import { accesAdmin } from "../middlewares/accesAdmin.js";
 import { accesUtilisateur } from "../middlewares/accesUtilisateurs.js";
 import { formulaireOuMailLimiteur } from "../middlewares/limiteurRequetes.js";

@@ -65,7 +65,7 @@ export default function ModalChangementMdp({ ouvert, onFermer }: Props) {
 
         setEnvoiEnCours(true);
 
-        const resultat = await requete({
+        const resultat = await requete<{ changer: boolean; detail: string }>({
             url: "/utilisateurs/changement-mdp",
             methode: "POST",
             corps: {
@@ -73,6 +73,10 @@ export default function ModalChangementMdp({ ouvert, onFermer }: Props) {
                 nouveauMdp,
             },
         });
+        if (!resultat) {
+            setEnvoiEnCours(false);
+            return;
+        }
 
         if (resultat.changer) {
             notifier({ type: "succes", titre: "Succcès", description: resultat.detail })

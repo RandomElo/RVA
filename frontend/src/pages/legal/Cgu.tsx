@@ -128,14 +128,16 @@ const DONNEES_CGU_PAR_DEFAUT = {
     section17Paragraphe1Apres: "."
 }
 
+type TextesCgu = typeof DONNEES_CGU_PAR_DEFAUT;
+
 export default function CGU() {
-    const [textes, setTextes] = useState<any>(DONNEES_CGU_PAR_DEFAUT);
+    const [textes, setTextes] = useState<TextesCgu>(DONNEES_CGU_PAR_DEFAUT);
 
     const requeteJSON = useRequeteJSON();
 
     useEffect(() => {
         async function recuperation() {
-            const donnees = await requeteJSON("cgu", (nouvellesDonnees) => {
+            const donnees = await requeteJSON<TextesCgu>("cgu", (nouvellesDonnees) => {
                 if (nouvellesDonnees) setTextes(nouvellesDonnees);
             });
 

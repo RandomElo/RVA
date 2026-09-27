@@ -39,11 +39,12 @@ function BoutonGoogleLogin({
         setEnCours(true);
 
         try {
-            const reponse = await requete({
+            const reponse = await requete<{ token: boolean; detail: string }>({
                 url: "/utilisateurs/connexion-google",
                 methode: "POST",
                 corps: { token: accessToken },
             });
+            if (!reponse) throw new Error("Connexion Google refusée");
 
             if (reponse.token) {
                 notifier({ type: "succes", titre: "Succès", description: reponse.detail });
@@ -126,7 +127,11 @@ export default function Connexion() {
 
     // --- Connexion par lien magique (e-mail) ---
     async function onEnvoyerLienConnexion(email: string) {
-        const reponse = await requete({ url: "/utilisateurs/connexion-par-mail", methode: "POST", corps: { mail: email } });
+        const reponse = await requete<{ compte: boolean; detail: string }>({ url: "/utilisateurs/connexion-par-mail", methode: "POST", corps: { mail: email } });
+        if (!reponse) {
+            setEnCours(false);
+            return;
+        }
 
         if (!reponse.compte) {
             if (reponse.detail === "Authentification supplémentaire") {
@@ -148,7 +153,11 @@ export default function Connexion() {
     }
 
     async function onEnvoyerMdp(email: string, mdp: string) {
-        const reponse = await requete({ url: "/utilisateurs/verification-mdp", methode: "POST", corps: { mail: email, mdp } });
+        const reponse = await requete<{ compte: boolean; detail: string }>({ url: "/utilisateurs/verification-mdp", methode: "POST", corps: { mail: email, mdp } });
+        if (!reponse) {
+            setEnCours(false);
+            return;
+        }
 
         if (!reponse.compte) {
             if (reponse.detail === "Authentification supplémentaire") {
@@ -178,7 +187,8 @@ export default function Connexion() {
         setErreurCode(null);
         setEnvoiCodeEnCours(true);
         try {
-            const reponse = await requete({ url: "/utilisateurs/verification-code", methode: "POST", corps: { mail: email.trim(), code: code.trim() } });
+            const reponse = await requete<{ token: boolean; detail: string }>({ url: "/utilisateurs/verification-code", methode: "POST", corps: { mail: email.trim(), code: code.trim() } });
+            if (!reponse) throw new Error("Vérification du code impossible");
 
             if (reponse.token) {
                 notifier({ type: "succes", titre: "Succès", description: reponse.detail });

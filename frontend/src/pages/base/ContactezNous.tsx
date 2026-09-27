@@ -97,7 +97,7 @@ export default function Contact() {
         setEnvoiEnCours(true);
         setErreur("");
         try {
-            const reponse = await requete({ url: "/autres/envoyer-mail-contact", methode: "POST", corps: valeur });
+            const reponse = await requete<{ message: boolean; detail?: string }>({ url: "/autres/envoyer-mail-contact", methode: "POST", corps: valeur });
             if (reponse?.message) {
                 setMessageEnvoye(true);
             } else {
