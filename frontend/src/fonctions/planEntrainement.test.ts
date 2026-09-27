@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AGE_PACE_FACTOR, CONSTRUCTEURS_SEANCE, DIST_PARAMS, VMA_MAX, VMA_MIN, buildSession, computeBasePeakKm, computeWeekPlanTypes, estVmaValide, generateWeeks, getSessionKinds, suggestPeakKm, weekTotals, type AgeBracket, type DistanceKey, type SessionKind } from "./planEntrainement";
+import { AGE_PACE_FACTOR, CONSTRUCTEURS_SEANCE, DIST_PARAMS, NB_SEMAINES_MAX, NB_SEMAINES_MIN, VMA_MAX, VMA_MIN, buildSession, computeBasePeakKm, computeWeekPlanTypes, enchainementsDifficiles, estVmaValide, evaluerObjectif, formaterTemps, generateWeeks, getSessionKinds, lireTemps, placerSeances, roleSeance, suggestPeakKm, weekTotals, type AgeBracket, type DistanceKey, type SessionKind } from "./planEntrainement";
 
 const DISTANCES = Object.keys(DIST_PARAMS) as DistanceKey[];
 const NB_SEANCES_AUTORISES = [2, 3, 4, 5, 6];
@@ -146,8 +146,8 @@ describe("generateWeeks", () => {
 
     it("accepte les bornes du formulaire (3 et 20 semaines)", () => {
         for (const distance of DISTANCES) {
-            expect(generateWeeks(distance, 15.5, 6, 3, 40, "<35")).toHaveLength(3);
-            expect(generateWeeks(distance, 15.5, 6, 20, 40, "<35")).toHaveLength(20);
+            expect(generateWeeks(distance, 15.5, 6, NB_SEMAINES_MIN, 40, "<35")).toHaveLength(NB_SEMAINES_MIN);
+            expect(generateWeeks(distance, 15.5, 6, NB_SEMAINES_MAX, 40, "<35")).toHaveLength(NB_SEMAINES_MAX);
         }
     });
 });
@@ -189,5 +189,88 @@ describe("CONSTRUCTEURS_SEANCE", () => {
 
     it("rejette un type de séance inconnu", () => {
         expect(() => buildSession("INCONNU" as SessionKind, 15.5, DIST_PARAMS["10km"], 1)).toThrow("Type de séance inconnu : INCONNU");
+    });
+});
+
+describe("placerSeances", () => {
+    const joursDe = (kinds: SessionKind[], jours: number[]) => Object.fromEntries(placerSeances(kinds, jours).map((p) => [p.jour, p.kind]));
+
+    it("mardi, jeudi, dimanche : qualité en semaine, sortie longue le dimanche, rien d'enchaîné", () => {
+        const placement = placerSeances(getSessionKinds(3, 1, false), [6, 1, 3]);
+        expect(placement.map((p) => p.jour)).toEqual([1, 3, 6]);
+        expect(roleSeance(placement[0].kind)).toBe("qualite");
+        expect(placement[2].kind).toBe("LONGUE");
+        expect(enchainementsDifficiles(placement)).toEqual([]);
+    });
+
+    it("samedi et dimanche seulement : la qualité avant la sortie longue, jamais l'inverse", () => {
+        const placement = joursDe(["FRAC_COURT", "LONGUE"], [5, 6]);
+        expect(placement).toEqual({ 5: "FRAC_COURT", 6: "LONGUE" });
+    });
+
+    it("sortie longue le dimanche et qualité le lundi : la semaine boucle, l'enchaînement est vu", () => {
+        const placement = placerSeances(["FRAC_COURT", "EF", "LONGUE"], [0, 2, 6]);
+        expect(placement.find((p) => p.jour === 0)?.kind).not.toBe("FRAC_COURT");
+    });
+
+    it("ne met jamais deux séances de qualité à la suite quand un autre placement existe", () => {
+        for (const jours of [[0, 1, 2, 3], [0, 1, 2, 3, 4], [0, 1, 2, 3, 4, 5], [1, 2, 4, 5, 6]]) {
+            const placement = placerSeances(getSessionKinds(jours.length, 1, false), jours);
+            for (const [avant, apres] of enchainementsDifficiles(placement)) {
+                expect([roleSeance(avant.kind), roleSeance(apres.kind)]).not.toEqual(["qualite", "qualite"]);
+            }
+        }
+    });
+
+    it("signale l'enchaînement quand les jours choisis l'imposent", () => {
+        expect(enchainementsDifficiles(placerSeances(["FRAC_COURT", "LONGUE"], [5, 6]))).toHaveLength(1);
+    });
+});
+
+describe("generateWeeks avec options", () => {
+    it("place les séances sur les jours choisis, dans l'ordre de la semaine", () => {
+        const jours = [0, 2, 4, 5];
+        for (const w of generateWeeks("10km", 15.5, 4, 10, 40, "<35", { jours })) {
+            expect(w.sessions.map((s) => s.jour)).toEqual(jours);
+            expect(w.sessions.map((s) => s.kind).sort()).toEqual([...getSessionKinds(4, w.num, w.type === "taper" || w.num > 7)].sort());
+        }
+    });
+
+    it("utilise l'allure objectif pour l'allure spécifique", () => {
+        const s = buildSession("ALLURE_SPE", 15, DIST_PARAMS["10km"], 1, AGE_PACE_FACTOR["55+"], 0.9);
+        expect(s.pace).toBe("4:27 /km (allure objectif)");
+    });
+});
+
+describe("lireTemps / formaterTemps", () => {
+    it("lit mm:ss et h:mm:ss", () => {
+        expect(lireTemps("37:02")).toBe(37 * 60 + 2);
+        expect(lireTemps("1:23:48")).toBe(3600 + 23 * 60 + 48);
+        expect(lireTemps("75:00")).toBe(75 * 60);
+    });
+
+    it("refuse une saisie invalide", () => {
+        for (const texte of ["", "37", "37:5a", "37:60", "1:60:00", "1:2:3:4", "123:00"]) {
+            expect(lireTemps(texte)).toBeNull();
+        }
+    });
+
+    it("formate avec ou sans heures", () => {
+        expect(formaterTemps(37 * 60 + 2)).toBe("37:02");
+        expect(formaterTemps(3600 + 23 * 60 + 48)).toBe("1:23:48");
+        expect(formaterTemps(2 * 3600 + 5)).toBe("2:00:05");
+    });
+});
+
+describe("evaluerObjectif", () => {
+    it("classe les objectifs selon le % de VMA à tenir", () => {
+        expect(evaluerObjectif("10km", 37 * 60 + 2, 19.2, "<35").niveau).toBe("coherent");
+        expect(evaluerObjectif("10km", 30 * 60, 15, "<35").niveau).toBe("irrealiste");
+        expect(evaluerObjectif("5km", 15 * 60 + 50, 19.2, "<35").niveau).toBe("ambitieux");
+        expect(evaluerObjectif("marathon", 6 * 3600, 19.2, "<35").niveau).toBe("prudent");
+    });
+
+    it("calcule le % de VMA", () => {
+        expect(evaluerObjectif("10km", 40 * 60, 15, "<35").pct).toBeCloseTo(1, 5);
     });
 });

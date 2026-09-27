@@ -198,8 +198,6 @@ export default function Statistiques() {
 
     useEffect(() => {
         let ignorer = false;
-        setEnChargement(true);
-        setErreur(null);
 
         recupererStatistiquesAdmin(requete, periode)
             .then((resultat) => {
@@ -219,6 +217,13 @@ export default function Statistiques() {
             ignorer = true;
         };
     }, [periode.debut, periode.fin]);
+
+    // Chaque changement de date relance le chargement (effet ci-dessus)
+    function changerPeriode(borne: "debut" | "fin", valeur: string) {
+        setEnChargement(true);
+        setErreur(null);
+        setPeriode((p) => ({ ...p, [borne]: valeur }));
+    }
 
     async function handleEnvoyerRecap() {
         try {
@@ -262,9 +267,7 @@ export default function Statistiques() {
                                 type="date"
                                 className="inputStyle"
                                 value={periode.debut}
-                                onChange={(e) =>
-                                    setPeriode((p) => ({ ...p, debut: e.target.value }))
-                                }
+                                onChange={(e) => changerPeriode("debut", e.target.value)}
                             />
                         </label>
                         <label className="font-body text-sm text-club-700 flex items-center gap-2">
@@ -273,9 +276,7 @@ export default function Statistiques() {
                                 type="date"
                                 className="inputStyle"
                                 value={periode.fin}
-                                onChange={(e) =>
-                                    setPeriode((p) => ({ ...p, fin: e.target.value }))
-                                }
+                                onChange={(e) => changerPeriode("fin", e.target.value)}
                             />
                         </label>
                     </div>

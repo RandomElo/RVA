@@ -67,12 +67,15 @@ export default function ModalNouveauFormHelloasso({ ouvert, onFermer, ancienneDo
     const requete = useRequete();
     const { notifier } = useNotifications();
 
-    useEffect(() => {
+    // Réinitialise le formulaire à l'ouverture ou quand les données d'origine changent
+    const [precedent, setPrecedent] = useState({ ouvert, ancienneDonnees });
+    if (precedent.ouvert !== ouvert || precedent.ancienneDonnees !== ancienneDonnees) {
+        setPrecedent({ ouvert, ancienneDonnees });
         if (ouvert) {
             setChamps(ancienneDonnees ?? CHAMPS_INITIAUX);
             setErreur(null);
         }
-    }, [ouvert, ancienneDonnees]);
+    }
 
     useEffect(() => {
         async function chargerImages() {

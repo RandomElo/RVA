@@ -51,7 +51,7 @@ function BoutonGoogleLogin({
                 await verificationConnexion();
                 navigation("/");
             }
-        } catch (err) {
+        } catch {
             notifier({ type: "erreur", titre: "Erreur", description: "Échec de la connexion Google." });
         } finally {
             setEnCours(false);
@@ -117,10 +117,7 @@ export default function Connexion() {
         if (role) {
             navigation("/");
         }
-        if (!lienEnvoye) {
-            setAfficherChampCode(false);
-            return;
-        }
+        if (!lienEnvoye) return;
         const delai = setTimeout(() => setAfficherChampCode(true), DELAI_AFFICHAGE_CODE_MS);
         return () => clearTimeout(delai);
     }, [lienEnvoye, role, navigation]);
@@ -303,7 +300,10 @@ export default function Connexion() {
                                     <p className="text-xs text-[#0B2270]/70">
                                         Si <span className="font-medium">{email}</span> est autorisé, un code de connexion vient de vous être envoyé. Pensez à vérifier vos spams.
                                     </p>
-                                    <button type="button" onClick={() => setLienEnvoye(false)} className="mt-1 text-xs font-medium text-club-600 hover:underline">
+                                    <button type="button" onClick={() => {
+                                            setLienEnvoye(false);
+                                            setAfficherChampCode(false);
+                                        }} className="mt-1 text-xs font-medium text-club-600 hover:underline">
                                         Utiliser une autre adresse
                                     </button>
                                 </div>

@@ -3,7 +3,7 @@ import { Outlet, useLocation } from "react-router-dom";
 import "../../styles/Generale.css";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import { NotificationsProvider } from "../../contexts/NotificationsContext";
+import { NotificationsProvider } from "../../contexts/NotificationsProvider";
 import Notifications from "./Notifications";
 import AffichageErreur from "../erreur/AffichageErreur";
 import { useSuiviPage } from "../../fonctions/suivi/useSuiviPage";

@@ -10,7 +10,7 @@
  * qui gère l'attribut `width`.
  */
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import type { Editor } from "@tiptap/react";
 import Modal from "../Modal";
 
@@ -32,9 +32,12 @@ interface Props {
 export default function ModalRedimensionnerImage({ editor, ouvert, onFermer, pos, largeurActuelle }: Props) {
     const [largeur, setLargeur] = useState(largeurActuelle);
 
-    useEffect(() => {
+    // Repart de la largeur actuelle quand elle change ou à l'ouverture/fermeture
+    const [precedent, setPrecedent] = useState({ largeurActuelle, ouvert });
+    if (precedent.largeurActuelle !== largeurActuelle || precedent.ouvert !== ouvert) {
+        setPrecedent({ largeurActuelle, ouvert });
         setLargeur(largeurActuelle);
-    }, [largeurActuelle, ouvert]);
+    }
 
     function appliquer(valeur: string) {
         if (pos === null) return;

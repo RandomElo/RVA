@@ -1,7 +1,8 @@
 import { act, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AuthProvider, useAuth } from "./AuthContext";
+import { AuthProvider } from "./AuthProvider";
+import { useAuth } from "./AuthContext";
 
 // Réponse minimale : seul json() est lu par AuthProvider
 function reponseJSON(corps: unknown) {

@@ -52,10 +52,9 @@ const DONNEES_ACCUEIL_PAR_DEFAUT: AccueilJSON = {
 /*  prefers-reduced-motion.                                           */
 /* ------------------------------------------------------------------ */
 function useReduitMouvement() {
-    const [reduit, setReduit] = useState(false);
+    const [reduit, setReduit] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
     useEffect(() => {
         const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-        setReduit(mq.matches);
         const handler = () => setReduit(mq.matches);
         mq.addEventListener("change", handler);
         return () => mq.removeEventListener("change", handler);
@@ -80,14 +79,13 @@ const EASE_BACK_OUT = "cubic-bezier(0.34, 1.56, 0.64, 1)";
 
 function Reveal({ children, className = "", delai = 0, direction = "bas", as = "div", duree = 900 }: RevealProps) {
     const ref = useRef<HTMLDivElement>(null);
-    const [visible, setVisible] = useState(false);
+    const [estEntre, setEstEntre] = useState(false);
     const reduitMouvement = useReduitMouvement();
+    // Sans animation, le contenu est affiché tout de suite
+    const visible = estEntre || reduitMouvement;
 
     useEffect(() => {
-        if (reduitMouvement) {
-            setVisible(true);
-            return;
-        }
+        if (reduitMouvement) return;
         const noeud = ref.current;
         if (!noeud) return;
 
@@ -95,7 +93,7 @@ function Reveal({ children, className = "", delai = 0, direction = "bas", as = "
             (entrees) => {
                 entrees.forEach((entree) => {
                     if (entree.isIntersecting) {
-                        setVisible(true);
+                        setEstEntre(true);
                         observateur.unobserve(entree.target);
                     }
                 });

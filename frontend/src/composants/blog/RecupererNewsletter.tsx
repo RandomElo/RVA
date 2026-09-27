@@ -143,7 +143,7 @@ const ZOOM_PAS = 0.25;
 function ModalZoomImage({ src, titre, onFermer }: ModalZoomImageProps) {
     const [echelle, setEchelle] = useState(1);
     const [position, setPosition] = useState({ x: 0, y: 0 });
-    const enTrainDeGlisser = useRef(false);
+    const [enTrainDeGlisser, setEnTrainDeGlisser] = useState(false);
     const dernierPoint = useRef({ x: 0, y: 0 });
 
     useEffect(() => {
@@ -173,12 +173,12 @@ function ModalZoomImage({ src, titre, onFermer }: ModalZoomImageProps) {
 
     function surPointerDown(e: React.PointerEvent) {
         if (echelle === ZOOM_MIN) return;
-        enTrainDeGlisser.current = true;
+        setEnTrainDeGlisser(true);
         dernierPoint.current = { x: e.clientX, y: e.clientY };
     }
 
     function surPointerMove(e: React.PointerEvent) {
-        if (!enTrainDeGlisser.current) return;
+        if (!enTrainDeGlisser) return;
         const dx = e.clientX - dernierPoint.current.x;
         const dy = e.clientY - dernierPoint.current.y;
         dernierPoint.current = { x: e.clientX, y: e.clientY };
@@ -186,7 +186,7 @@ function ModalZoomImage({ src, titre, onFermer }: ModalZoomImageProps) {
     }
 
     function surPointerUp() {
-        enTrainDeGlisser.current = false;
+        setEnTrainDeGlisser(false);
     }
 
     // Support Pinch-to-zoom sur mobile
@@ -279,7 +279,7 @@ function ModalZoomImage({ src, titre, onFermer }: ModalZoomImageProps) {
                     style={{
                         transform: `translate(${position.x}px, ${position.y}px) scale(${echelle})`,
                         transformOrigin: "center center",
-                        transition: enTrainDeGlisser.current ? "none" : "transform 0.15s ease-out",
+                        transition: enTrainDeGlisser ? "none" : "transform 0.15s ease-out",
                         cursor: echelle > ZOOM_MIN ? "grab" : "default",
                     }}
                     className="max-h-full max-w-full flex items-center justify-center"

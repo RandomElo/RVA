@@ -1,17 +1,9 @@
-import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
+import { createContext, useContext } from "react";
 interface ErreurContextType {
     erreur: Error | null;
     setErreur: React.Dispatch<React.SetStateAction<Error | null>>;
 }
-const ErreurContext = createContext<ErreurContextType | undefined>(undefined);
-
-export const ErreurProvider = ({ children }: { children: ReactNode }) => {
-    const [erreur, setErreur] = useState<Error | null>(null);
-
-    const valeur = useMemo(() => ({ erreur, setErreur }), [erreur]);
-
-    return <ErreurContext.Provider value={valeur}>{children}</ErreurContext.Provider>;
-};
+export const ErreurContext = createContext<ErreurContextType | undefined>(undefined);
 
 export function useErreur() {
     const context = useContext(ErreurContext);

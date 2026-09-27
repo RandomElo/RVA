@@ -2,9 +2,9 @@ import { createBrowserRouter, RouterProvider, type Params } from "react-router-d
 import { lazy, Suspense } from "react";
 
 // Contextes
-import { ResponsiveProvider } from "./contexts/ReponsiveContext";
-import { ErreurProvider } from "./contexts/ErreurContext";
-import { AuthProvider } from "./contexts/AuthContext";
+import { ResponsiveProvider } from "./contexts/ResponsiveProvider";
+import { ErreurProvider } from "./contexts/ErreurProvider";
+import { AuthProvider } from "./contexts/AuthProvider";
 import { HelmetProvider } from 'react-helmet-async';
 import { PageProtegee } from "./composants/PageProtegee";
 

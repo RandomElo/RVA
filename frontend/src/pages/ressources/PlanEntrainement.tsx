@@ -10,6 +10,11 @@
  * "tenir" une intensité élevée diminue avec l'âge (récupération plus lente
  * entre les répétitions, fatigue plus rapide). Les allures d'endurance
  * fondamentale et de sortie longue ne sont pas concernées.
+ *
+ * Les séances sont placées sur les jours choisis en laissant, autant que
+ * possible, un jour facile entre deux séances exigeantes (qualité, sortie
+ * longue). Un temps visé (facultatif) fixe l'allure des séances d'allure
+ * spécifique et est comparé à la VMA pour signaler un objectif hors de portée.
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -19,8 +24,8 @@ import { useRequeteJSON } from "../../fonctions/requeteJSON";
 import { Loader2, Download, Clipboard, Check, Lightbulb, AlertCircle } from "lucide-react";
 import SEO from "../../composants/generale/SEO";
 import Modal from "../../composants/modal/Modal";
-import { bloqueurToucheInvalide, bloqueurToucheInvalideEntier, nettoyerEntier, nettoyerNombre } from "../../fonctions/nettoyeurNombre";
-import { AGE_PACE_FACTOR, DIST_PARAMS, PACE_PCT, VMA_MAX, VMA_MIN, estVmaValide, formatMin, generateWeeks, suggestPeakKm, weekTotals, type AgeBracket, type DistanceKey, type Week, type WeekType } from "../../fonctions/planEntrainement";
+import { bloqueurToucheInvalide, bloqueurToucheInvalideEntier, nettoyerEntier, nettoyerNombre, nettoyerTemps, plafonner, relever } from "../../fonctions/nettoyeurNombre";
+import { AGE_PACE_FACTOR, BORNES_TEMPS_OBJECTIF, DIST_PARAMS, JOURS_PAR_DEFAUT, JOURS_SEMAINE, KM_HEBDO_MAX, KM_HEBDO_MIN, NB_JOURS_MAX, NB_JOURS_MIN, NB_SEMAINES_MAX, NB_SEMAINES_MIN, PACE_PCT, VMA_MAX, VMA_MIN, enchainementsDifficiles, estVmaValide, evaluerObjectif, formatMin, formaterTemps, generateWeeks, getSessionKinds, lireTemps, paceFromPct, placerSeances, roleSeance, suggestPeakKm, weekTotals, type AgeBracket, type DistanceKey, type NiveauObjectif, type SeancePlacee, type Week, type WeekType } from "../../fonctions/planEntrainement";
 
 /* ============================== DONNÉES DE BASE ============================== */
 const DONNEES_PAR_DEFAUT = {
@@ -88,6 +93,41 @@ const AGE_BRACKETS: { key: AgeBracket; label: string }[] = [
     { key: "55+", label: "55 ans et +" },
 ];
 
+/* Exemple de temps visé affiché dans le champ vide, selon la distance. */
+const EXEMPLE_TEMPS_VISE: Record<DistanceKey, string> = {
+    "5km": "ex. 22:30",
+    "10km": "ex. 45:00",
+    semi: "ex. 1:39:30",
+    marathon: "ex. 3:29:00",
+};
+
+const MESSAGE_OBJECTIF: Record<NiveauObjectif, string> = {
+    irrealiste: "Objectif hors de portée avec cette VMA : revoyez le temps visé ou refaites un test de VMA.",
+    ambitieux: "Objectif ambitieux pour cette VMA : les séances à allure objectif seront exigeantes.",
+    coherent: "Objectif cohérent avec votre VMA.",
+    prudent: "Allure plus lente que l'endurance fondamentale : objectif très prudent, ou VMA surestimée ?",
+};
+
+const COULEUR_OBJECTIF: Record<NiveauObjectif, string> = {
+    irrealiste: "text-red-600",
+    ambitieux: "text-amber-700",
+    coherent: "text-club-600",
+    prudent: "text-amber-700",
+};
+
+/* Explication d'un enchaînement de deux séances exigeantes sur des jours consécutifs. */
+function messageEnchainement([avant, apres]: [SeancePlacee, SeancePlacee]): string {
+    const jours = `${JOURS_SEMAINE[avant.jour]} puis ${JOURS_SEMAINE[apres.jour].toLowerCase()}`;
+    const roleAvant = roleSeance(avant.kind);
+    if (roleAvant === "qualite" && roleSeance(apres.kind) === "qualite") {
+        return `${jours} : deux séances intenses d'affilée. Gardez si possible 48 h entre elles.`;
+    }
+    if (roleAvant === "longue") {
+        return `${jours} : sortie longue puis séance intense, sur des jambes fatiguées. Un jour de repos entre les deux serait préférable.`;
+    }
+    return `${jours} : séance intense puis sortie longue. C'est jouable car la sortie longue se court lentement, mais un jour de repos entre les deux reste préférable.`;
+}
+
 /* ============================== COMPOSANT ============================== */
 
 export default function PlanEntrainement() {
@@ -95,11 +135,17 @@ export default function PlanEntrainement() {
     const [category, setCategory] = useState<string>("custom");
     const [vma, setVma] = useState<string>("15.5");
     const [ageBracket, setAgeBracket] = useState<AgeBracket>("<35");
-    const [seances, setSeances] = useState(3);
+    const [jours, setJours] = useState<number[]>(JOURS_PAR_DEFAUT);
+    const seances = jours.length;
+    const [objectif, setObjectif] = useState("");
+    const [objectifTouche, setObjectifTouche] = useState(false);
     const [nbSemaines, setNbSemaines] = useState<string>(DIST_PARAMS["10km"].defWeeks.toString());
-    const [targetKm, setTargetKm] = useState<string>(() => suggestPeakKm("15.5", "10km"));
+    const [targetKmSaisi, setTargetKmSaisi] = useState<string>("");
     const [targetKmManual, setTargetKmManual] = useState(false);
-    const [weeks, setWeeks] = useState<Week[]>([]);
+    // Suggestion de km hebdo, tant que l'entraîneur n'a pas tapé une valeur perso
+    const targetKm = targetKmManual ? targetKmSaisi : suggestPeakKm(vma, distance);
+    // Plan initial généré une seule fois avec les valeurs par défaut : ensuite, c'est le bouton « Générer le plan » qui régénère
+    const [weeks, setWeeks] = useState<Week[]>(() => generateWeeks(distance, parseFloat(vma) || 0, seances, parseInt(nbSemaines, 10) || 1, parseFloat(targetKm) || 0, ageBracket, { jours }));
     const [planEntrainementJSON, setPlanEntrainementJSON] = useState<TextesPlanEntrainement>(DONNEES_PAR_DEFAUT);
     const [erreurVma, setErreurVma] = useState<string>("");
     const [isExporting, setIsExporting] = useState(false);
@@ -120,25 +166,33 @@ export default function PlanEntrainement() {
         recuperation();
     }, []);
 
-    // Suggestion de km hebdo, tant que l'entraîneur n'a pas tapé une valeur perso
-    useEffect(() => {
-        if (!targetKmManual) {
-            setTargetKm(suggestPeakKm(vma, distance));
-        }
-    }, [vma, distance, targetKmManual]);
-
-    // Génère automatiquement un premier plan au chargement
-    useEffect(() => {
-        setWeeks(generateWeeks(distance, parseFloat(vma) || 0, seances, parseInt(nbSemaines, 10) || 1, parseFloat(targetKm) || 0, ageBracket));
-        // Plan initial généré une seule fois avec les valeurs par défaut : ensuite, c'est le bouton « Générer le plan » qui régénère
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
-
     const categoryHint = useMemo(() => {
         if (category === "custom") return "";
         const label = category === "60" ? "1h" : `0:${category}`;
         return `VMA estimée pour un 10 km en ${label} — ajustez si vous connaissez la VMA réelle.`;
     }, [category]);
+
+    // Temps visé : format et bornes de la distance, puis comparaison à la VMA
+    const secondesObjectif = objectif === "" ? null : lireTemps(objectif);
+    const bornesObjectif = BORNES_TEMPS_OBJECTIF[distance];
+    let erreurObjectif = "";
+    if (objectif !== "" && secondesObjectif === null) {
+        erreurObjectif = "Format attendu : mm:ss ou h:mm:ss.";
+    } else if (secondesObjectif !== null && (secondesObjectif < bornesObjectif.min || secondesObjectif > bornesObjectif.max)) {
+        erreurObjectif = `Le temps visé doit être compris entre ${formaterTemps(bornesObjectif.min)} et ${formaterTemps(bornesObjectif.max)} sur ${DIST_PARAMS[distance].label}.`;
+    }
+    const numVmaSaisie = parseFloat(vma);
+    const evaluation = secondesObjectif !== null && !erreurObjectif && estVmaValide(numVmaSaisie) ? evaluerObjectif(distance, secondesObjectif, numVmaSaisie, ageBracket) : null;
+    const afficherErreurObjectif = objectifTouche && erreurObjectif !== "";
+
+    const alertesEnchainement = useMemo(() => enchainementsDifficiles(placerSeances(getSessionKinds(jours.length, 1, false), jours)), [jours]);
+
+    function basculerJour(jour: number) {
+        setJours((actuels) => {
+            if (actuels.includes(jour)) return actuels.length > NB_JOURS_MIN ? actuels.filter((j) => j !== jour) : actuels;
+            return actuels.length < NB_JOURS_MAX ? [...actuels, jour].sort((a, b) => a - b) : actuels;
+        });
+    }
 
     function handleCategoryChange(v: string) {
         setCategory(v);
@@ -150,6 +204,9 @@ export default function PlanEntrainement() {
     function handleDistanceChange(v: DistanceKey) {
         setDistance(v);
         setNbSemaines(DIST_PARAMS[v].defWeeks.toString());
+        // Les bornes du temps visé changent avec la distance
+        setObjectif("");
+        setObjectifTouche(false);
     }
     function handleGenerate() {
         const numVma = parseFloat(vma) || 0;
@@ -158,9 +215,14 @@ export default function PlanEntrainement() {
             return;
         }
         setErreurVma("");
-        const numNbSemaines = parseInt(nbSemaines, 10) || 1;
-        const numTargetKm = parseFloat(targetKm) || 0;
-        setWeeks(generateWeeks(distance, numVma, seances, numNbSemaines, numTargetKm, ageBracket));
+        setObjectifTouche(true);
+        if (erreurObjectif || evaluation?.niveau === "irrealiste") return;
+        // Champs vides ou hors bornes ramenés dans les limites, et affichés tels qu'utilisés
+        const numNbSemaines = Math.min(NB_SEMAINES_MAX, Math.max(NB_SEMAINES_MIN, parseInt(nbSemaines, 10) || NB_SEMAINES_MIN));
+        setNbSemaines(String(numNbSemaines));
+        const numTargetKm = Math.min(KM_HEBDO_MAX, Math.max(KM_HEBDO_MIN, parseFloat(targetKm) || KM_HEBDO_MIN));
+        if (targetKmManual) setTargetKmSaisi(String(numTargetKm));
+        setWeeks(generateWeeks(distance, numVma, seances, numNbSemaines, numTargetKm, ageBracket, { jours, pctAllureObjectif: evaluation?.pct }));
     }
 
     // Exportation sous forme d'image PNG via html2canvas
@@ -202,7 +264,10 @@ export default function PlanEntrainement() {
             textePlan += `• VMA : ${vma} km/h\n`;
             textePlan += `• Tranche d'âge : ${AGE_BRACKETS.find((b) => b.key === ageBracket)?.label ?? ageBracket}\n`;
             textePlan += `• Durée : ${nbSemaines} semaines\n`;
-            textePlan += `• Séances/semaine : ${seances}\n`;
+            textePlan += `• Séances/semaine : ${seances} (${jours.map((j) => JOURS_SEMAINE[j]).join(", ")})\n`;
+            if (secondesObjectif !== null && evaluation) {
+                textePlan += `• Temps visé : ${formaterTemps(secondesObjectif)} (${paceFromPct(numVmaSaisie, evaluation.pct)} /km)\n`;
+            }
             textePlan += `• Volume max visé : ~${targetKm} km/semaine\n`;
             textePlan += `=========================================\n\n`;
 
@@ -214,7 +279,7 @@ export default function PlanEntrainement() {
                 textePlan += `-----------------------------------------\n`;
 
                 w.sessions.forEach((s, idx) => {
-                    textePlan += `  [Séance ${idx + 1}] ${s.label}\n`;
+                    textePlan += `  [${s.jour !== undefined ? JOURS_SEMAINE[s.jour] : `Séance ${idx + 1}`}] ${s.label}\n`;
                     textePlan += `  • Description : ${s.desc}\n`;
                     textePlan += `  • Allure : ${s.pace}\n`;
                     textePlan += `  • Volume : ${s.vol} (${formatMin(s.durationMin)})\n`;
@@ -314,9 +379,11 @@ export default function PlanEntrainement() {
                                     value={vma}
                                     onKeyDown={bloqueurToucheInvalide}
                                     onChange={(e) => {
-                                        setVma(nettoyerNombre(e.target.value));
+                                        const saisie = nettoyerNombre(e.target.value);
+                                        setVma((precedente) => plafonner(saisie, VMA_MAX, precedente));
                                         setErreurVma("");
                                     }}
+                                    onBlur={() => setVma((v) => relever(v, VMA_MIN))}
                                     aria-invalid={erreurVma ? true : undefined}
                                     aria-describedby={erreurVma ? "erreurVMA" : undefined}
                                     className={`w-full rounded-lg border px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none ${erreurVma ? "border-red-400" : "border-club-200"}`}
@@ -348,21 +415,28 @@ export default function PlanEntrainement() {
                             </div>
 
                             <div>
-                                <label htmlFor="seancesParSemaine" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
-                                    Séances / semaine
+                                <label htmlFor="inputTempsVise" className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
+                                    Temps visé <span className="normal-case text-[10px] text-club-500">(facultatif)</span>
                                 </label>
-                                <select
-                                    id="seancesParSemaine"
-                                    value={seances}
-                                    onChange={(e) => setSeances(parseInt(e.target.value, 10))}
-                                    className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none"
-                                >
-                                    {[2, 3, 4, 5, 6].map((n) => (
-                                        <option key={n} value={n}>
-                                            {n}
-                                        </option>
-                                    ))}
-                                </select>
+                                <input
+                                    type="text"
+                                    id="inputTempsVise"
+                                    inputMode="numeric"
+                                    placeholder={EXEMPLE_TEMPS_VISE[distance]}
+                                    value={objectif}
+                                    onChange={(e) => setObjectif(nettoyerTemps(e.target.value))}
+                                    onBlur={() => setObjectifTouche(true)}
+                                    aria-invalid={afficherErreurObjectif || evaluation?.niveau === "irrealiste" ? true : undefined}
+                                    aria-describedby="aideTempsVise"
+                                    className={`w-full rounded-lg border px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none ${afficherErreurObjectif || evaluation?.niveau === "irrealiste" ? "border-red-400" : "border-club-200"}`}
+                                />
+                                <p id="aideTempsVise" className={`mt-1 text-xs ${afficherErreurObjectif ? "text-red-600" : evaluation ? COULEUR_OBJECTIF[evaluation.niveau] : "text-club-600"}`}>
+                                    {afficherErreurObjectif
+                                        ? erreurObjectif
+                                        : evaluation
+                                            ? `Allure ${paceFromPct(numVmaSaisie, evaluation.pct)} /km, soit ${Math.round(evaluation.pct * 100)} % de VMA. ${MESSAGE_OBJECTIF[evaluation.niveau]}`
+                                            : "Fixe l'allure des séances d'allure spécifique (à partir de 4 séances par semaine)."}
+                                </p>
                             </div>
 
                             <div>
@@ -372,11 +446,15 @@ export default function PlanEntrainement() {
                                 <input
                                     type="number"
                                     id="inputNbrSemaines"
-                                    min={3}
-                                    max={20}
+                                    min={NB_SEMAINES_MIN}
+                                    max={NB_SEMAINES_MAX}
                                     value={nbSemaines}
                                     onKeyDown={bloqueurToucheInvalideEntier}
-                                    onChange={(e) => setNbSemaines(nettoyerEntier(e.target.value))}
+                                    onChange={(e) => {
+                                        const saisie = nettoyerEntier(e.target.value);
+                                        setNbSemaines((precedente) => plafonner(saisie, NB_SEMAINES_MAX, precedente));
+                                    }}
+                                    onBlur={() => setNbSemaines((n) => relever(n, NB_SEMAINES_MIN))}
                                     className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none"
                                 />
                             </div>
@@ -389,14 +467,15 @@ export default function PlanEntrainement() {
                                 <input
                                     type="number"
                                     id="inputKmHebdoVise"
-                                    min={15}
-                                    max={220}
+                                    min={KM_HEBDO_MIN}
+                                    max={KM_HEBDO_MAX}
                                     value={targetKm}
                                     onKeyDown={bloqueurToucheInvalide}
                                     onChange={(e) => {
                                         setTargetKmManual(true);
-                                        setTargetKm(nettoyerNombre(e.target.value));
+                                        setTargetKmSaisi(plafonner(nettoyerNombre(e.target.value), KM_HEBDO_MAX, targetKm));
                                     }}
+                                    onBlur={() => setTargetKmSaisi((km) => relever(km, KM_HEBDO_MIN))}
                                     className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm font-medium text-club-900 focus:border-club-600 focus:outline-none"
                                 />
                                 <button type="button" onClick={() => setTargetKmManual(false)} className="mt-1 text-xs font-medium text-accent-700 hover:text-accent-600">
@@ -404,6 +483,41 @@ export default function PlanEntrainement() {
                                 </button>
                             </div>
                         </div>
+
+                        {/* JOURS D'ENTRAÎNEMENT */}
+                        <fieldset className="mt-6">
+                            <legend className="mb-1 block text-xs font-semibold uppercase tracking-wide text-club-600">
+                                Jours d'entraînement <span className="normal-case text-[10px] text-club-500">({seances} séances / semaine)</span>
+                            </legend>
+                            <div className="flex flex-wrap gap-2">
+                                {JOURS_SEMAINE.map((nom, jour) => {
+                                    const choisi = jours.includes(jour);
+                                    const bloque = choisi ? jours.length <= NB_JOURS_MIN : jours.length >= NB_JOURS_MAX;
+                                    return (
+                                        <button
+                                            key={nom}
+                                            type="button"
+                                            onClick={() => basculerJour(jour)}
+                                            disabled={bloque}
+                                            aria-pressed={choisi}
+                                            className={`min-w-[3.25rem] rounded-lg border px-3 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-60 ${choisi ? "border-club-600 bg-club-600 text-white" : "border-club-200 bg-white text-club-700 hover:bg-club-50"}`}
+                                        >
+                                            {nom.slice(0, 3)}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <p className="mt-1 text-xs text-club-600">
+                                De {NB_JOURS_MIN} à {NB_JOURS_MAX} jours, pour garder au moins un jour de repos. Les séances sont placées pour laisser un jour facile entre deux séances exigeantes (fractionné, seuil, sortie longue).
+                            </p>
+                            {alertesEnchainement.length > 0 && (
+                                <ul className="mt-2 space-y-1 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+                                    {alertesEnchainement.map((paire) => (
+                                        <li key={`${paire[0].jour}-${paire[1].jour}`}>{messageEnchainement(paire)}</li>
+                                    ))}
+                                </ul>
+                            )}
+                        </fieldset>
 
                         {/* CARTE — accès à la méthode (philosophie, repères d'allures, facteur âge) */}
                         <div className="mt-6 flex flex-col items-start justify-between gap-3 rounded-lg border border-club-100 bg-club-50 p-4 sm:flex-row sm:items-center">
@@ -471,7 +585,7 @@ export default function PlanEntrainement() {
                                     Running Vincennes Association
                                 </span>
                             </div>
-                            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-xs">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 text-xs">
                                 <div>
                                     <span className="text-club-600 block font-medium uppercase">VMA</span>
                                     <span className="font-bold text-club-800 text-sm">{vma} km/h</span>
@@ -487,7 +601,15 @@ export default function PlanEntrainement() {
                                 <div>
                                     <span className="text-club-600 block font-medium uppercase">Fréquence</span>
                                     <span className="font-bold text-club-800 text-sm">{seances} séances / sem.</span>
+                                    <span className="block text-club-600">{jours.map((j) => JOURS_SEMAINE[j].slice(0, 3)).join(", ")}</span>
                                 </div>
+                                {secondesObjectif !== null && evaluation && (
+                                    <div>
+                                        <span className="text-club-600 block font-medium uppercase">Temps visé</span>
+                                        <span className="font-bold text-accent-700 text-sm">{formaterTemps(secondesObjectif)}</span>
+                                        <span className="block text-club-600">{paceFromPct(numVmaSaisie, evaluation.pct)} /km</span>
+                                    </div>
+                                )}
                                 <div>
                                     <span className="text-club-600 block font-medium uppercase">Volume max</span>
                                     <span className="font-bold text-accent-700 text-sm">~{targetKm} km / sem.</span>
@@ -524,6 +646,7 @@ export default function PlanEntrainement() {
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                                             {w.sessions.map((s, si) => (
                                                 <div key={si} className="border-b border-r border-club-100 p-5 last:border-r-0">
+                                                    {s.jour !== undefined && <p className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-club-600">{JOURS_SEMAINE[s.jour]}</p>}
                                                     <span className={`mb-2 inline-block rounded-full px-3 py-1 text-[11px] font-medium ${WEEK_TYPE_BADGE[w.type]}`}>{s.label}</span>
                                                     <p className="text-xs leading-relaxed text-club-900/70">{s.desc}</p>
                                                     <p className="mt-3 font-display text-sm font-bold text-accent-700">{s.pace}</p>
@@ -591,6 +714,17 @@ export default function PlanEntrainement() {
                             </div>
                             <p className="mt-2 rounded-lg bg-amber-50 px-3 py-2 text-[11px] leading-relaxed text-amber-900">
                                 ⚠️ Jamais plus de 2 séances d'intensité (seuil / fractionné) par semaine — le reste est EF, récup active ou PPG.
+                            </p>
+                        </section>
+
+                        {/* RÉPARTITION DANS LA SEMAINE */}
+                        <section className="border-t border-club-100 pt-5">
+                            <h3 className="mb-2 flex items-center gap-2 font-display text-xs font-bold uppercase tracking-wide text-club-700">
+                                <span className="inline-block h-1.5 w-1.5 rounded-full bg-club-600" />
+                                Répartition dans la semaine
+                            </h3>
+                            <p className="text-sm leading-relaxed text-club-700">
+                                Les séances exigeantes (fractionné, seuil, allure spécifique et sortie longue) sont espacées d'au moins 48 h, avec un jour de repos ou un footing entre elles. La sortie longue va de préférence le week-end. Si les jours choisis obligent à enchaîner deux séances exigeantes, la séance intense passe avant la sortie longue : celle-ci se court lentement et supporte la fatigue de la veille, alors qu'un fractionné le lendemain d'une sortie longue se fait sur des jambes entamées.
                             </p>
                         </section>
 

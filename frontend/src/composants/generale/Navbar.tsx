@@ -231,13 +231,6 @@ export default function Navbar() {
         });
     }, [navigation]);
 
-    // Reset de la cible une fois la transition terminée
-    useEffect(() => {
-        if (!estEnTransition) {
-            setCibleNavigation(null);
-        }
-    }, [estEnTransition]);
-
     // Préchargement léger au survol
     const prechargerRoute = useCallback((href: string) => {
         const link = document.createElement("link");

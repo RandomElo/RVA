@@ -18,6 +18,21 @@ export const nettoyerEntier = (value: string): string => {
     return value.replace(/[^0-9]/g, "");
 };
 
+/** Refuse une saisie qui dépasse le maximum : on garde la valeur précédente. */
+export const plafonner = (valeur: string, max: number, precedente: string): string => {
+    return parseFloat(valeur) > max ? precedente : valeur;
+};
+
+/** À la sortie du champ, ramène une valeur trop petite au minimum (un champ vide reste vide). */
+export const relever = (valeur: string, min: number): string => {
+    return valeur !== "" && !(parseFloat(valeur) >= min) ? String(min) : valeur;
+};
+
+/** Temps « h:mm:ss » en cours de saisie : chiffres et deux-points uniquement, 7 caractères au plus. */
+export const nettoyerTemps = (value: string): string => {
+    return value.replace(/[^0-9:]/g, "").slice(0, 7);
+};
+
 export const bloqueurToucheInvalideEntier = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const touchesAutorisees = [
         "Backspace", "Delete", "Tab", "Escape", "Enter",

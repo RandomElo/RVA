@@ -23,18 +23,11 @@ function dateDuJour(): string {
 
 export default function BandeauAnniversaire() {
     const [personnes, setPersonnes] = useState<PersonneAnniversaire[]>([]);
-    const [ferme, setFerme] = useState(false);
+    // Déjà fermé aujourd'hui ?
+    const [ferme, setFerme] = useState(() => localStorage.getItem(CLE_STOCKAGE) === dateDuJour());
 
     const requete = useRequete();
     const { estAuth } = useAuth();
-
-    // Vérifie si l'utilisateur a déjà fermé le bandeau aujourd'hui
-    useEffect(() => {
-        const dateFermeture = localStorage.getItem(CLE_STOCKAGE);
-        if (dateFermeture === dateDuJour()) {
-            setFerme(true);
-        }
-    }, []);
 
     useEffect(() => {
         async function charger() {

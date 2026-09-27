@@ -1,7 +1,7 @@
 import { fireEvent, render, within } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
 
-import { bloqueurToucheInvalide, bloqueurToucheInvalideEntier, nettoyerEntier, nettoyerNombre } from "./nettoyeurNombre";
+import { bloqueurToucheInvalide, bloqueurToucheInvalideEntier, nettoyerEntier, nettoyerNombre, nettoyerTemps, plafonner, relever } from "./nettoyeurNombre";
 
 /* fireEvent renvoie false quand le gestionnaire a appelé preventDefault(). */
 function toucheAcceptee(valeur: string, touche: string, options: { ctrlKey?: boolean; metaKey?: boolean } = {}, entier = false) {
@@ -42,6 +42,41 @@ describe("nettoyerEntier", () => {
     it("ne garde que les chiffres", () => {
         expect(nettoyerEntier("12 semaines")).toBe("12");
         expect(nettoyerEntier("-8")).toBe("8");
+    });
+});
+
+describe("plafonner", () => {
+    it("garde la valeur précédente au-delà du maximum", () => {
+        expect(plafonner("50", 24, "19")).toBe("19");
+        expect(plafonner("24.1", 24, "24")).toBe("24");
+    });
+
+    it("accepte une valeur jusqu'au maximum, vide ou en cours de saisie", () => {
+        expect(plafonner("24", 24, "2")).toBe("24");
+        expect(plafonner("1", 24, "")).toBe("1");
+        expect(plafonner("", 24, "1")).toBe("");
+        expect(plafonner("15.", 24, "15")).toBe("15.");
+    });
+});
+
+describe("relever", () => {
+    it("ramène une valeur trop petite au minimum", () => {
+        expect(relever("2", 8)).toBe("8");
+        expect(relever(".", 8)).toBe("8");
+    });
+
+    it("laisse une valeur valide ou vide", () => {
+        expect(relever("8", 8)).toBe("8");
+        expect(relever("15.5", 8)).toBe("15.5");
+        expect(relever("", 8)).toBe("");
+    });
+});
+
+describe("nettoyerTemps", () => {
+    it("ne garde que les chiffres et les deux-points, sur 7 caractères", () => {
+        expect(nettoyerTemps("1h39:30")).toBe("139:30");
+        expect(nettoyerTemps("45:00")).toBe("45:00");
+        expect(nettoyerTemps("1:39:30:00")).toBe("1:39:30");
     });
 });
 
