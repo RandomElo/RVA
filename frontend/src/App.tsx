@@ -28,7 +28,10 @@ const NosPartenaires = lazy(() => import("./pages/NosPartenaires"));
 
 // Administration
 const AdminAccueil = lazy(() => import("./pages/administration/InterfaceAdministration"));
-const AdministrationElement = lazy(() => import("./pages/administration/AdministrationElement"));
+const GestionArticles = lazy(() => import("./pages/administration/GestionArticles"));
+const GestionCourses = lazy(() => import("./pages/administration/GestionCourses"));
+const GestionAdherents = lazy(() => import("./pages/administration/GestionAdherents"));
+const GestionSpecialistes = lazy(() => import("./pages/administration/GestionSpecialistes"));
 const Statistiques = lazy(() => import("./pages/administration/Statistiques"));
 const EditionTextesPage = lazy(() => import("./pages/administration/EditionPage"));
 const GestionImages = lazy(() => import("./pages/administration/GestionImages"));
@@ -73,7 +76,7 @@ async function loaderModifierArticle(params: Params<string>) {
         credentials: "include",
     });
 
-    if (!requete.ok) throw new Response("Erreur lors de la récupération de l'article", { status: 500 });
+    if (!requete.ok) throw new Response("Erreur lors de la récupération de l'article", { status: requete.status });
     const reponse = await requete.json();
     if (!reponse.etat) throw new Response("Impossible de charger les données de l'article", { status: 500 });
     return reponse.detail;
@@ -87,9 +90,9 @@ async function loaderModifierPage(params: Params<string>) {
         credentials: "include",
     });
 
-    if (!requete.ok) throw new Response("Erreur lors de la récupération de l'article", { status: 500 });
+    if (!requete.ok) throw new Response("Erreur lors de la récupération de la page", { status: requete.status });
     const reponse = await requete.json();
-    if (!reponse.etat) throw new Response("Impossible de charger les données de l'article", { status: 500 });
+    if (!reponse.etat) throw new Response("Impossible de charger les données de la page", { status: 500 });
     return reponse.detail;
 }
 
@@ -137,10 +140,10 @@ const router = createBrowserRouter([
                 element: <PageProtegee roleRequis="administrateur" />,
                 children: [
                     { path: "/administration", element: <AdminAccueil /> },
-                    { path: "/administration/blog", element: <AdministrationElement mode="blog" /> },
-                    { path: "/administration/courses", element: <AdministrationElement mode="courses" /> },
-                    { path: "/administration/adherents", element: <AdministrationElement mode="adherents" /> },
-                    { path: "/administration/specialistes-sante", element: <AdministrationElement mode="specialistesSante" /> },
+                    { path: "/administration/blog", element: <GestionArticles /> },
+                    { path: "/administration/courses", element: <GestionCourses /> },
+                    { path: "/administration/adherents", element: <GestionAdherents /> },
+                    { path: "/administration/specialistes-sante", element: <GestionSpecialistes /> },
                     { path: "/administration/statistiques", element: <Statistiques /> },
                     { path: "/administration/edition-page/*", element: <EditionTextesPage /> },
                     { path: "/administration/images", element: <GestionImages /> },

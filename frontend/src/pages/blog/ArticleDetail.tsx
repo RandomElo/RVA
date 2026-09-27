@@ -48,8 +48,9 @@ export default function ArticleDetailPage() {
         return () => {
             annule = true; // Empêche de mettre à jour le state si le composant s'est démonté
         };
-        // ⚠️ Ne pas inclure `requete` si useRequete() n'est pas mémoïsé avec useCallback dans son hook
-        // eslint-disable-next-next-line react-hooks/exhaustive-deps
+        // `requete` est volontairement exclu : useRequete() renvoie une nouvelle fonction à chaque rendu
+        // (pas de useCallback), l'inclure relancerait la requête en boucle
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [url]);
 
     // 1. État de chargement

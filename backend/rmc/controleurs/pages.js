@@ -145,7 +145,7 @@ export const recupererTextesPage = gestionErreur(async (req, res) => {
         return res.json({ etat: true, detail: JSON.parse(contenu) });
     } catch (err) {
         if (err.code === "ENOENT") {
-            return res.status(404).json({ etat: false, detail: "Page introuvable" });
+            return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
         }
         throw err;
     }
@@ -178,7 +178,7 @@ export const modifierTextesPage = gestionErreur(async (req, res) => {
         contenuActuel = await fs.readFile(cheminComplet, "utf-8");
     } catch (err) {
         if (err.code === "ENOENT") {
-            return res.status(404).json({ etat: false, detail: "Page introuvable" });
+            return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
         }
         throw err;
     }
@@ -277,7 +277,7 @@ export const modification = gestionErreur(async (req, res) => {
 
     const pageExistante = await req.Pages.findOne({ where: { url: ancienneUrl }, raw: true });
     if (!pageExistante) {
-        return res.json({ etat: true, detail: { page: false, detail: "La page à modifier n'existe pas." } });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     const verification = await verifierChampsEtRecupererArborescence(req.Pages, { titre, url, ancienneUrl });
@@ -298,19 +298,10 @@ export const modification = gestionErreur(async (req, res) => {
 
 export const supprimer = gestionErreur(async (req, res) => {
     const { nom } = req.body;
-    if (!nom) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
-    }
 
     const page = await req.Pages.findOne({ where: { titre: nom } });
     if (!page) {
-        return res.status(404).json({
-            etat: false,
-            detail: "Ressource inexistante",
-        });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     await page.destroy();
@@ -328,7 +319,7 @@ export const supprimer = gestionErreur(async (req, res) => {
 export const detailsPage = gestionErreur(async (req, res) => {
     const { url } = req.query;
     if (!url) {
-        return res.status(400).json({ erreur: "Requête incorrecte." });
+        return res.status(400).json({ etat: false, detail: "Requête incorrecte." });
     }
     const donnees = await req.Pages.findOne({ where: { modifiable: true, url }, attributes: ["contenuHtml", "titre"], raw: true });
     if (donnees) {
@@ -341,10 +332,13 @@ export const detailsPage = gestionErreur(async (req, res) => {
 export const detailsPageAdmin = gestionErreur(async (req, res) => {
     const { url } = req.params;
     if (!url) {
-        return res.status(400).json({ erreur: "Requête incorrecte." });
+        return res.status(400).json({ etat: false, detail: "Requête incorrecte." });
     }
 
     const donnees = await req.Pages.findOne({ where: { modifiable: true, url }, attributes: ["contenuHtml", "titre", "url", "dansNavigation"], raw: true });
+    if (!donnees) {
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
+    }
 
     return res.json({ etat: true, detail: donnees });
 }, "controleurDetailsPageAdmin", "Erreur lors de la récupération des détails de la page");

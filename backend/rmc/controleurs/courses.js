@@ -1,6 +1,7 @@
 import envoiMail from "../../fonctions/mailer/mailer.service.js";
 import gestionErreur from "../middlewares/gestionErreur.js";
 import { estUrl } from "../../fonctions/utilitaires/validation.js";
+import { dateDuJour } from "../../fonctions/utilitaires/formaterDate.js";
 
 // Fonctions utilitaires
 
@@ -15,121 +16,72 @@ const estDate = (date) => {
     return !Number.isNaN(d.getTime()) && d.toISOString().startsWith(date);
 };
 
-// Fonctions BDD
+// Validation
 
-async function enregistrerCourses(req, res, mode) {
-    const { nom, date, lieu, distance, type, lienWhatsapp, lienSite, lienInscription, inscriptionsOuvertes, dateOuvertureInscription } = req.body;
+const TYPES_AUTORISES = [
+    "5km",
+    "10km",
+    "Semi",
+    "Marathon",
+    "Route",
+    "Trail",
+];
 
+// Refus métier : la requête aboutit (200) mais la course n'est pas enregistrée
+const refusCourse = (detail) => ({ ok: false, statut: 200, corps: { etat: true, detail: { course: false, detail } } });
+
+// Validation sans réponse HTTP : { ok: true, donnees } ou { ok: false, statut, corps } à renvoyer tel quel
+function validerCourse(corpsRequete) {
+    const { nom, date, lieu, distance, type, lienWhatsapp, lienSite, lienInscription, inscriptionsOuvertes, dateOuvertureInscription } = corpsRequete;
 
     if (!nom || !date || !lieu || !type || typeof inscriptionsOuvertes !== "boolean") {
-        res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
-        return { ok: false };
+        return { ok: false, statut: 400, corps: { etat: false, detail: "Requête incorrecte" } };
     }
 
-    const TYPES_AUTORISES = [
-        "5km",
-        "10km",
-        "Semi",
-        "Marathon",
-        "Route",
-        "Trail",
-    ];
-
-    // Date
-    if (!estDate(date)) {
-        res.json({
-            etat: true,
-            detail: { course: false, detail: "Date invalide." },
-        });
-        return { ok: false };
-    }
-
-    if (new Date(date) < new Date()) {
-        res.json({
-            etat: true,
-            detail: { course: false, detail: "Date invalide." },
-        });
-        return { ok: false };
+    // Date ; chaînes "AAAA-MM-JJ" : une course le jour même reste acceptée
+    if (!estDate(date) || date < dateDuJour()) {
+        return refusCourse("Date invalide.");
     }
     // Date d'ouverture (facultative)
-    if (dateOuvertureInscription && (!estDate(dateOuvertureInscription) || new Date(dateOuvertureInscription) < new Date())) {
-        res.json({
-            etat: true,
-            detail: {
-                course: false,
-                detail: "Date d'ouverture des inscriptions invalide.",
-            },
-        });
-        return { ok: false };
+    if (dateOuvertureInscription && (!estDate(dateOuvertureInscription) || dateOuvertureInscription < dateDuJour())) {
+        return refusCourse("Date d'ouverture des inscriptions invalide.");
     }
 
     // Type
     if (!TYPES_AUTORISES.includes(type)) {
-        res.json({
-            etat: true,
-            detail: { course: false, detail: "Type de course invalide." },
-        });
-        return { ok: false };
+        return refusCourse("Type de course invalide.");
     }
 
     // URLs
     for (const url of [lienWhatsapp, lienSite, lienInscription]) {
         if (url != null && url !== "" && !estUrl(url)) {
-            res.json({
-                etat: true,
-                detail: { course: false, detail: "Un des liens est invalide." },
-            });
-            return { ok: false };
+            return refusCourse("Un des liens est invalide.");
         }
     }
 
     // Distance
-    if (type === "Route" || type === "Trail") {
-        const valeur = Number(distance);
-
-        if (!Number.isFinite(valeur)) {
-            res.json({
-                etat: true,
-                detail: { course: false, detail: "La distance doit être un nombre." },
-            });
-            return { ok: false };
-        }
-    }
-    const donnees = {
-        etat: mode == "suggestion" ? "suggestion" : "valider",
-        nom,
-        date,
-        lieu,
-        distance: distance || null,
-        type,
-        lienWhatsapp: lienWhatsapp || null,
-        lienSite: lienSite || null,
-        lienInscription: lienInscription || null,
-        inscriptionsOuvertes,
-        dateOuvertureInscription: dateOuvertureInscription || null,
+    if ((type === "Route" || type === "Trail") && !Number.isFinite(Number(distance))) {
+        return refusCourse("La distance doit être un nombre.");
     }
 
-    if (mode == "creation") {
-        await req.Courses.create(donnees);
-    } else if (mode == "suggestion") {
-        const course = await req.Courses.create(donnees);
-        if (req.body.etatInteressementUtilisateur) {
-            await req.AdherentsCourse.create({ idAdherent: req.idUtilisateur, idCourse: course.id, statut: req.body.etatInteressementUtilisateur })
-        }
-    } else {
-        await req.Courses.update(donnees, { where: { nom } })
-    }
-
-    if (mode !== "suggestion") {
-        res.json({ etat: true, detail: { course: true, detail: await recupererToutesLesCourses(req), notification: mode == "creation" ? "Course crée avec succès !" : "Course modifiée avec succès !" } });
-        return { ok: true, donnees };
-    }
-
-    return { ok: true, donnees };
+    return {
+        ok: true,
+        donnees: {
+            nom,
+            date,
+            lieu,
+            distance: distance || null,
+            type,
+            lienWhatsapp: lienWhatsapp || null,
+            lienSite: lienSite || null,
+            lienInscription: lienInscription || null,
+            inscriptionsOuvertes,
+            dateOuvertureInscription: dateOuvertureInscription || null,
+        },
+    };
 }
+
+// Fonctions BDD
 
 async function recupererToutesLesCourses(req, admin = false) {
     const estConnecte = Boolean(req.idUtilisateur);
@@ -205,7 +157,11 @@ async function recupererToutesLesCourses(req, admin = false) {
 }
 
 export const cree = gestionErreur(async (req, res) => {
-    await enregistrerCourses(req, res, "creation")
+    const validation = validerCourse(req.body);
+    if (!validation.ok) return res.status(validation.statut).json(validation.corps);
+
+    await req.Courses.create({ etat: "valider", ...validation.donnees });
+    return res.json({ etat: true, detail: { course: true, detail: await recupererToutesLesCourses(req), notification: "Course crée avec succès !" } });
 }, "controleurCree", "Erreur lors de la création de la course");
 
 
@@ -215,19 +171,10 @@ export const toutesLesCourses = gestionErreur(async (req, res) => {
 
 export const supprimerCourse = gestionErreur(async (req, res) => {
     const { nom } = req.body
-    if (!nom) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
-    }
 
     const course = await req.Courses.findOne({ where: { nom: nom }, raw: true })
     if (!course) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
     await req.Courses.destroy({ where: { nom: nom } })
     await res.json({ etat: true, detail: await recupererToutesLesCourses(req) })
@@ -235,7 +182,14 @@ export const supprimerCourse = gestionErreur(async (req, res) => {
 }, "controleurSupprimerCourse", "Erreur lors de la suppression de la course")
 
 export const modifierCourse = gestionErreur(async (req, res) => {
-    await enregistrerCourses(req, res, "modification")
+    const validation = validerCourse(req.body);
+    if (!validation.ok) return res.status(validation.statut).json(validation.corps);
+
+    const [nbModifiees] = await req.Courses.update({ etat: "valider", ...validation.donnees }, { where: { nom: validation.donnees.nom } })
+    if (nbModifiees === 0) {
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
+    }
+    return res.json({ etat: true, detail: { course: true, detail: await recupererToutesLesCourses(req), notification: "Course modifiée avec succès !" } });
 }, "controleurModifierCourse", "Erreur lors de la modification de la course")
 
 export const recupererCoursesAccueil = gestionErreur(async (req, res) => {
@@ -250,10 +204,19 @@ export const recupererCoursesAccueil = gestionErreur(async (req, res) => {
 }, "controleurRecupererCoursesAccueil", "Erreur lors de la récupération des courses")
 
 export const suggestion = gestionErreur(async (req, res) => {
-    const resultat = await enregistrerCourses(req, res, "suggestion")
-    if (!resultat.ok) return;
+    const validation = validerCourse(req.body);
+    if (!validation.ok) return res.status(validation.statut).json(validation.corps);
 
+    // Compte supprimé depuis la vérification du cookie : refus avant toute écriture
     const utilisateur = await req.Utilisateurs.findByPk(req.idUtilisateur, { raw: true })
+    if (!utilisateur) {
+        return res.status(403).json({ etat: false, detail: "Vous n'êtes pas connecté" });
+    }
+
+    const course = await req.Courses.create({ etat: "suggestion", ...validation.donnees });
+    if (req.body.etatInteressementUtilisateur) {
+        await req.AdherentsCourse.create({ idAdherent: req.idUtilisateur, idCourse: course.id, statut: req.body.etatInteressementUtilisateur })
+    }
 
     await envoiMail(process.env.EMAIL_ADMINISTRATEUR, "Proposition course – Running Vincennes Association", "suggestionCourse", {
         prenom: utilisateur.prenom,
@@ -281,10 +244,7 @@ export const modifierInteressement = gestionErreur(async (req, res) => {
 
     const course = await req.Courses.findByPk(idCourse, { raw: true })
     if (!course) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     if (course.etat == "suggestion") {

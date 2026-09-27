@@ -5,6 +5,7 @@ import { fileURLToPath } from "url";
 import { DOSSIER_GALERIE, sauvegarderEnWebp } from "../../fonctions/utilitaires/enregistrementPhoto.js";
 import { estNomFichierSur } from "../../fonctions/utilitaires/validation.js";
 import { supprimerFichierSiExiste } from "../../fonctions/utilitaires/fichiers.js";
+import { logger } from "../../fonctions/utilitaires/logger.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -34,11 +35,11 @@ export const ajouterGalerie = gestionErreur(async (req, res) => {
 
     // 1. Validation de tous les champs AVANT d'exécuter la conversion Sharp
     if (!alt) {
-        return res.status(400).json({ erreur: "Requête incorrecte : le champ 'alt' est requis" });
+        return res.status(400).json({ etat: false, detail: "Requête incorrecte : le champ 'alt' est requis" });
     }
 
     if (!req.file) {
-        return res.status(400).json({ erreur: "Aucun fichier reçu" });
+        return res.status(400).json({ etat: false, detail: "Aucun fichier reçu" });
     }
 
     // 2. Conversion et écriture du fichier WebP sur disque
@@ -102,7 +103,7 @@ export const remplacer = gestionErreur(async (req, res) => {
 
     const image = await req.Images.findOne({ where: { nomFichier }, raw: true });
     if (!image) {
-        return res.status(400).json({ etat: false, detail: "Requête incorrecte." });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     // ✅ Utilisation du chemin dynamique géré par Docker / Local
@@ -113,7 +114,7 @@ export const remplacer = gestionErreur(async (req, res) => {
     try {
         await fs.access(chemin);
     } catch {
-        return res.status(440).json({ etat: false, detail: "Le fichier à remplacer n'existe pas sur le serveur." });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     // 2. Remplacement du fichier physique
@@ -177,13 +178,13 @@ export const verifierUtilisationImagesDansArticles = gestionErreur(async (req, r
 export const supprimerPhotoGalerie = gestionErreur(async (req, res) => {
     const { image } = req.body
     if (!estNomFichierSur(image)) {
-        return res.status(400).json({ erreur: "Requête incorrecte." });
+        return res.status(400).json({ etat: false, detail: "Requête incorrecte." });
     }
 
     // Seules les images de la galerie sont supprimables : les images système (bannière, coach) sont exclues
     const imageBdd = await req.Images.findOne({ where: { nomFichier: image, type: "galerie" } })
     if (!imageBdd) {
-        return res.status(400).json({ etat: false, detail: "Requête incorrecte." });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     const cheminFichier = path.join(path.resolve(__dirname, "../../medias/galerie"), image);
@@ -197,12 +198,12 @@ export const modifierAlt = gestionErreur(async (req, res) => {
     const { nomFichier, alt } = req.body;
 
     if (typeof nomFichier !== "string" || typeof alt !== "string") {
-        return res.status(400).json({ erreur: "Requête incorrecte." });
+        return res.status(400).json({ etat: false, detail: "Requête incorrecte." });
     }
 
     const image = await req.Images.findOne({ where: { nomFichier } })
     if (!image) {
-        return res.status(404).json({ erreur: "Image introuvable." });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     await image.update({ alt })
@@ -217,26 +218,30 @@ export const modifierAlt = gestionErreur(async (req, res) => {
     for (const article of articles) {
         if (!article.contenuHtml) continue;
 
-        if (article.contenuHtml.includes(nomFichier)) {
-            // 1. Transformer le JSON string en tableau JavaScript
-            let images = JSON.parse(article.contenuHtml);
+        // 1. Transformer le JSON string en tableau JavaScript ; un album mal formé est ignoré sans bloquer les autres
+        let images;
+        try {
+            images = JSON.parse(article.contenuHtml);
+        } catch (erreur) {
+            logger.warn({ type: "ALBUM_CONTENU_INVALIDE", idArticle: article.id, erreur: erreur?.message }, `Contenu d'album illisible, légende non reportée : ${article.titre}`);
+            continue;
+        }
+        if (!Array.isArray(images)) continue;
 
-            // 2. Modifier la légende de l'image correspondante
-            let aEteModifie = false;
-            images = images.map((img) => {
-                if (img.chemin === nomFichier) {
-                    aEteModifie = true;
-                    return { ...img, legende: alt };
-                }
-                return img;
-            });
-
-            // 3. Si une modification a eu lieu, mettre à jour la BDD
-            if (aEteModifie) {
-                article.contenuHtml = JSON.stringify(images);
-                await article.save(); // Met à jour l'enregistrement en BDD
+        // 2. Modifier la légende de l'image correspondante (comparaison exacte des chemins)
+        let aEteModifie = false;
+        images = images.map((img) => {
+            if (img?.chemin === nomFichier) {
+                aEteModifie = true;
+                return { ...img, legende: alt };
             }
+            return img;
+        });
 
+        // 3. Si une modification a eu lieu, mettre à jour la BDD
+        if (aEteModifie) {
+            article.contenuHtml = JSON.stringify(images);
+            await article.save(); // Met à jour l'enregistrement en BDD
         }
     }
 

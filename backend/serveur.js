@@ -1,7 +1,9 @@
+// Variables d'environnement (doit rester le premier import)
+import "./config/env.js";
+
 // Packages
 import e from "express";
 import cors from "cors";
-import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import compression from "compression";
 
@@ -25,10 +27,10 @@ import { logger } from "./fonctions/utilitaires/logger.js";
 import { loggerRequete } from "./rmc/middlewares/loggerRequere.js";
 import routeurHelloasso from "./rmc/routeurs/helloasso.js";
 
-dotenv.config({ quiet: true, path: "../.env" });
 const { PORT_EXPRESS, IP_FRONTEND } = process.env;
 const port = PORT_EXPRESS || 8100;
 const app = e();
+app.disable("x-powered-by"); // Ne pas annoncer Express dans les en-têtes
 
 app.set('trust proxy', 1);
 

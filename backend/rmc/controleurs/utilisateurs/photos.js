@@ -8,16 +8,13 @@ import { cheminDossierAdherents, fonctionRecupererUtilisateurs } from "./compte.
 
 export const enregistrerPhotoControleur = gestionErreur(async (req, res) => {
     if (!req.file) {
-        return res.status(400).json({ erreur: "Aucun fichier reçu" });
+        return res.status(400).json({ etat: false, detail: "Aucun fichier reçu" });
     }
 
     const utilisateur = await req.Utilisateurs.findByPk(req.params.id, { raw: true });
 
     if (!utilisateur) {
-        return res.status(404).json({
-            etat: false,
-            detail: "Utilisateur introuvable",
-        });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     // 1. Conversion et sauvegarde du nouveau fichier WebP
@@ -56,7 +53,7 @@ export const photo = gestionErreur(async (req, res) => {
     if (!req.idUtilisateur) {
         return res.status(403).json({
             etat: false,
-            detail: "Accès interdit",
+            detail: "Vous n'êtes pas connecté",
         });
     }
 

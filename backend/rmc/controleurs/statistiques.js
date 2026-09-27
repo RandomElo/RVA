@@ -1,6 +1,7 @@
 import envoiMail from "../../fonctions/mailer/mailer.service.js";
 import { formaterDate } from "../../fonctions/utilitaires/formaterDate.js";
 import gestionErreur from "../middlewares/gestionErreur.js";
+import { secretsEgaux } from "../../fonctions/utilitaires/securite.js";
 import { Op, fn, col, literal } from "sequelize";
 
 // Fonctions
@@ -238,9 +239,6 @@ export const recuperationStatistiques = gestionErreur(async (req, res) => {
 
 export const envoiMailContreRendu = gestionErreur(async (req, res) => {
     let { debut, fin } = req.body;
-    if (!debut || !fin) {
-        return res.status(400).json({ etat: false, detail: "Requête incorrecte" });
-    }
 
     await envoyerMailReporting(req, debut, fin)
 
@@ -249,42 +247,39 @@ export const envoiMailContreRendu = gestionErreur(async (req, res) => {
 }, "controleurEnvoiMailContreRendu", "Erreur lors de l'envoi du mail");
 
 export const mailRapport = gestionErreur(
-  async (req, res) => {
-    // 1. Vérification du secret interne
-    const internalSecret = req.headers['x-internal-secret'];
-    const expectedSecret = process.env.INTERNAL_SECRET;
+    async (req, res) => {
+        // 1. Vérification du secret interne (comparaison en temps constant)
+        // On refuse l'accès si le secret est absent, vide ou incorrect
+        if (!secretsEgaux(req.headers["x-internal-secret"], process.env.INTERNAL_SECRET)) {
+            return res.status(403).json({
+                etat: false,
+                detail: "Accès refusé : secret interne invalide ou absent"
+            });
+        }
 
-    // On refuse l'accès si le secret est absent, vide ou incorrect
-    if (!expectedSecret || internalSecret !== expectedSecret) {
-      return res.status(403).json({ 
-        success: false, 
-        message: "Accès refusé : secret interne invalide ou absent" 
-      });
-    }
+        // 2. Gestion sécurisée des dates
+        const maintenant = new Date();
+        const ilYAUnMois = new Date(maintenant);
+        ilYAUnMois.setMonth(ilYAUnMois.getMonth() - 1);
 
-    // 2. Gestion sécurisée des dates
-    const maintenant = new Date();
-    const ilYAUnMois = new Date(maintenant);
-    ilYAUnMois.setMonth(ilYAUnMois.getMonth() - 1);
+        // Ajustement si le mois précédent a moins de jours (ex: 31 mars -> fin février)
+        if (ilYAUnMois.getMonth() === maintenant.getMonth()) {
+            ilYAUnMois.setDate(0);
+        }
 
-    // Ajustement si le mois précédent a moins de jours (ex: 31 mars -> fin février)
-    if (ilYAUnMois.getMonth() === maintenant.getMonth()) {
-      ilYAUnMois.setDate(0);
-    }
+        const debut = ilYAUnMois.toISOString().split("T")[0];
+        const fin = maintenant.toISOString().split("T")[0];
 
-    const debut = ilYAUnMois.toISOString().split("T")[0];
-    const fin = maintenant.toISOString().split("T")[0];
+        // 3. Envoi du mail
+        await envoyerMailReporting(req, debut, fin);
 
-    // 3. Envoi du mail
-    await envoyerMailReporting(req, debut, fin);
-
-    // 4. Réponse de succès (200 OK)
-    return res.status(200).json({ 
-      success: true, 
-      message: "Rapport mensuel généré et envoyé avec succès",
-      periode: { debut, fin }
-    });
-  },
-  "controleurMailRapportStatistiques",
-  "Erreur lors de la génération du mail rapport"
+        // 4. Réponse de succès (200 OK)
+        return res.status(200).json({
+            etat: true,
+            detail: "Rapport mensuel généré et envoyé avec succès",
+            periode: { debut, fin }
+        });
+    },
+    "controleurMailRapportStatistiques",
+    "Erreur lors de la génération du mail rapport"
 );

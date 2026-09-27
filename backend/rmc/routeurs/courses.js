@@ -3,13 +3,14 @@ import { accesAdmin } from "../middlewares/accesAdmin.js";
 import { cree, modifierCourse, modifierInteressement, recupererCoursesAccueil, suggestion, supprimerCourse, toutesLesCourses, toutesLesCoursesAdmin } from "../controleurs/courses.js";
 import { accesUtilisateur } from "../middlewares/accesUtilisateurs.js";
 import { formulaireOuMailLimiteur } from "../middlewares/limiteurRequetes.js";
+import { validerCorps } from "../middlewares/validerCorps.js";
 
 const routeurCourses = e.Router()
 
 routeurCourses.post("/cree", accesAdmin, cree)
 routeurCourses.get("/toutes-les-courses", toutesLesCourses)
 routeurCourses.get("/toutes-les-courses-admin", accesAdmin, toutesLesCoursesAdmin)
-routeurCourses.delete("/supprimer", accesAdmin, supprimerCourse)
+routeurCourses.delete("/supprimer", accesAdmin, validerCorps(["nom"]), supprimerCourse)
 routeurCourses.post("/modifier", accesAdmin, modifierCourse)
 routeurCourses.get("/courses-accueil", recupererCoursesAccueil)
 routeurCourses.post("/suggestion", formulaireOuMailLimiteur, accesUtilisateur, suggestion)

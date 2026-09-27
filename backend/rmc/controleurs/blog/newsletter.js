@@ -9,9 +9,13 @@ import { genererChaine } from "../../../fonctions/utilitaires/genererChaine.js";
 import { estNomFichierSur } from "../../../fonctions/utilitaires/validation.js";
 import { creerLimiteEnvois } from "../../../fonctions/mailer/limiteEnvois.js";
 import { logger } from "../../../fonctions/utilitaires/logger.js";
+import { validerDatePublicationFuture } from "./validationDate.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Type MIME des images de newsletter selon l'extension du fichier enregistré
+const TYPES_IMAGES = { ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".png": "image/png", ".webp": "image/webp" };
 
 async function capturerCanvaEnImage(urlIframe) {
     const navigateur = await puppeteer.launch({
@@ -122,7 +126,11 @@ function estUrlCanvaAutorisee(urlObjet) {
     );
 }
 export const enregistrerNewsletter = gestionErreur(async (req, res) => {
-    const { titre, categorie, url, urlCanva, datePublication, } = req.body.article;
+    const { article } = req.body;
+    if (!article || typeof article !== "object") {
+        return res.status(400).json({ etat: false, detail: "Requête incorrecte" });
+    }
+    const { titre, categorie, url, urlCanva, datePublication, } = article;
 
     if (typeof titre !== "string" || typeof categorie !== "string" || typeof url !== "string" || typeof urlCanva !== "string" || typeof datePublication !== "string" || categorie !== "newsletter") {
         return res.json({ etat: true, detail: { article: false, detail: "Merci de renseigner tous les champs obligatoires." } });
@@ -143,15 +151,10 @@ export const enregistrerNewsletter = gestionErreur(async (req, res) => {
 
     }
 
-    // Vérificationd de la date
-    const dateValide = /^\d{4}-\d{2}-\d{2}$/.test(datePublication) && !Number.isNaN(Date.parse(datePublication));
-
-    if (!dateValide) {
-        return res.json({ etat: true, detail: { article: false, detail: "Date invalide." } });
-    }
-
-    if ((new Date(datePublication)).setHours(0, 0, 0, 0) < (new Date()).setHours(0, 0, 0, 0)) {
-        return res.json({ etat: true, detail: { article: false, detail: "Date déjà passée." } });
+    // Vérification de la date
+    const erreurDate = validerDatePublicationFuture(datePublication);
+    if (erreurDate) {
+        return res.json({ etat: true, detail: { article: false, detail: erreurDate } });
     }
 
     // Vérification titre
@@ -290,7 +293,7 @@ export const recupererNewsletter = gestionErreur(async (req, res) => {
     if (!req.idUtilisateur) {
         return res.status(403).json({
             etat: false,
-            detail: "Accès interdit",
+            detail: "Vous n'êtes pas connecté",
         });
     }
 
@@ -302,8 +305,16 @@ export const recupererNewsletter = gestionErreur(async (req, res) => {
     }
 
     const cheminFichier = path.resolve(__dirname, "../../../medias/newsletters", chemin);
-    const buffer = await fs.readFile(cheminFichier);
-    res.setHeader("Content-Type", "image/webp");
+    let buffer;
+    try {
+        buffer = await fs.readFile(cheminFichier);
+    } catch (erreur) {
+        if (erreur?.code === "ENOENT") {
+            return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
+        }
+        throw erreur;
+    }
+    res.setHeader("Content-Type", TYPES_IMAGES[path.extname(chemin).toLowerCase()] ?? "application/octet-stream");
     res.setHeader("Cache-Control", "private, max-age=31536000, immutable");
     res.send(buffer);
 }, "controleurRecupererNewsletter", "Erreur lors de la récupération de la newsletter.");

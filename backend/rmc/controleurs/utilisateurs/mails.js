@@ -19,7 +19,7 @@ export const envoiMailAdherents = gestionErreur(async (req, res) => {
     }
 
     const utilisateurs = await req.Utilisateurs.findAll({
-        // where: { role: "adherent", recevoirNewsletter: true, derniereConnexion: { [Op.ne]: null, }, },
+        // Envoi volontaire à tous les adhérents, y compris désinscrits de la newsletter : ce sont des messages de l'association
         where: { role: "adherent" },
         attributes: ["id", "prenom", "mail"],
         raw: true,
@@ -50,7 +50,7 @@ export const envoiMailAdherents = gestionErreur(async (req, res) => {
     const echecs = resultats.filter((r) => r.status === "rejected");
     if (echecs.length > 0) {
         const texte = `${echecs.length}/${utilisateurs.length} mails non envoyés`;
-        logger.error(texte, echecs);
+        logger.error({ type: "ENVOI_MAIL_ADHERENTS_ECHECS", erreurs: echecs.map((e) => e.reason?.message) }, texte);
         return res.json({ etat: true, detail: texte });
     } else {
         return res.json({ etat: true, detail: `${utilisateurs.length} mails envoyés` });

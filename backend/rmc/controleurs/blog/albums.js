@@ -1,23 +1,42 @@
+import { Op } from "sequelize";
 import gestionErreur from "../../middlewares/gestionErreur.js";
+import { validerDatePublicationFuture } from "./validationDate.js";
+
+// Une seule requête pour toutes les photos ; lève une erreur nommant la première absente
+async function verifierPhotosExistent(req, photos) {
+    const chemins = photos.map((p) => p.chemin);
+    if (chemins.length === 0) return;
+    const trouvees = await req.Images.findAll({ where: { nomFichier: { [Op.in]: chemins } }, attributes: ["nomFichier"], raw: true });
+    const noms = new Set(trouvees.map((p) => p.nomFichier));
+    const manquante = chemins.find((c) => !noms.has(c));
+    if (manquante !== undefined) throw new Error(`Photo introuvable : ${manquante}`);
+}
+
+// Liste de photos d'album : objets { chemin, legende } avec deux chaînes
+const estListePhotos = (photos) => Array.isArray(photos) && photos.every(
+    (photo) =>
+        photo !== null &&
+        typeof photo === "object" &&
+        typeof photo.chemin === "string" &&
+        typeof photo.legende === "string"
+);
 
 export const creeAlbum = gestionErreur(async (req, res) => {
-    // faire la verification
-    const { photosAlbum } = req.body;
-    const { titre, categorie, url, datePublication, description, imageUrl } = req.body.article;
+    const { photosAlbum, article } = req.body;
+    // photosAlbum null ou absent reste accepté (album vide)
+    if (!article || typeof article !== "object" || (photosAlbum != null && !estListePhotos(photosAlbum))) {
+        return res.status(400).json({ etat: false, detail: "Requête incorrecte" });
+    }
+    const { titre, categorie, url, datePublication, description, imageUrl } = article;
 
     if (typeof titre !== "string" || typeof description !== "string" || typeof categorie !== "string" || typeof url !== "string" || typeof datePublication !== "string" || categorie !== "album_photo") {
         return res.json({ etat: true, detail: { article: false, detail: "Merci de renseigner tous les champs obligatoires." } });
     }
 
-    // Vérificationd de la date
-    const dateValide = /^\d{4}-\d{2}-\d{2}$/.test(datePublication) && !Number.isNaN(Date.parse(datePublication));
-
-    if (!dateValide) {
-        return res.json({ etat: true, detail: { article: false, detail: "Date invalide." } });
-    }
-
-    if ((new Date(datePublication)).setHours(0, 0, 0, 0) < (new Date()).setHours(0, 0, 0, 0)) {
-        return res.json({ etat: true, detail: { article: false, detail: "Date déjà passée." } });
+    // Vérification de la date
+    const erreurDate = validerDatePublicationFuture(datePublication);
+    if (erreurDate) {
+        return res.json({ etat: true, detail: { article: false, detail: erreurDate } });
     }
 
     // Vérification titre
@@ -41,22 +60,10 @@ export const creeAlbum = gestionErreur(async (req, res) => {
     }
 
 
+    // Album sans photo : null (valeur initiale du formulaire) traité comme une liste vide
+    const photos = photosAlbum ?? [];
     try {
-        await Promise.all(
-            photosAlbum.map(async (p) => {
-                const photo = await req.Images.findOne({
-                    where: { nomFichier: p.chemin }
-                });
-
-                if (!photo) {
-                    throw new Error(`Photo introuvable : ${p.chemin}`);
-                }
-
-                return photo;
-            })
-        );
-
-        // Suite du traitement...
+        await verifierPhotosExistent(req, photos);
     } catch (error) {
         return res.json({
             etat: true, detail: {
@@ -66,7 +73,7 @@ export const creeAlbum = gestionErreur(async (req, res) => {
         })
     }
 
-    const contenuHtml = JSON.stringify(photosAlbum);
+    const contenuHtml = JSON.stringify(photos);
     await req.Articles.create({ type: "publie", titre, categorie, url, datePublication, description, imageUrl, contenuHtml })
 
     return res.json({ etat: true, detail: { article: true, detail: `Album enregistré avec succès.`, donnees: "/article/" + url }, });
@@ -84,10 +91,7 @@ export const recupererAlbum = gestionErreur(async (req, res) => {
     }
     const album = await req.Articles.findOne({ where: { url, categorie: "album_photo" }, attributes: ["contenuHtml"], raw: true })
     if (!album) {
-        return res.status(404).json({
-            etat: false,
-            detail: "Album introuvable",
-        });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
     return res.json({ etat: true, detail: album })
 }, "controleurRecupererAlbum", "Erreur lors de la récupération des données de l'album")
@@ -95,14 +99,7 @@ export const recupererAlbum = gestionErreur(async (req, res) => {
 export const modifierAlbum = gestionErreur(async (req, res) => {
     const { url, images } = req.body;
 
-    if (!url || !Array.isArray(images) ||
-        !images.every(
-            (image) =>
-                image !== null &&
-                typeof image === "object" &&
-                typeof image.chemin === "string" &&
-                typeof image.legende === "string"
-        )) {
+    if (!url || !estListePhotos(images)) {
         return res.status(400).json({
             etat: false,
             detail: "Requête incorrecte",
@@ -111,26 +108,11 @@ export const modifierAlbum = gestionErreur(async (req, res) => {
 
     const album = await req.Articles.findOne({ where: { url, categorie: "album_photo" } })
     if (!album) {
-        return res.status(404).json({
-            etat: false,
-            detail: "Album introuvable",
-        });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     try {
-        await Promise.all(
-            images.map(async (p) => {
-                const photo = await req.Images.findOne({
-                    where: { nomFichier: p.chemin }
-                });
-
-                if (!photo) {
-                    throw new Error(`Photo introuvable : ${p.chemin}`);
-                }
-
-                return photo;
-            })
-        );
+        await verifierPhotosExistent(req, images);
 
     } catch (error) {
         return res.json({

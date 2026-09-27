@@ -1,5 +1,5 @@
+import "../config/env.js";
 import { Sequelize } from "sequelize";
-import dotenv from "dotenv";
 import Utilisateurs from "./modeles/Utilisateurs.js";
 import Tokens from "./modeles/Tokens.js";
 import Articles from "./modeles/Articles.js";
@@ -10,8 +10,6 @@ import Images from "./modeles/Images.js";
 import Pages from "./modeles/Pages.js";
 import { logger } from "../fonctions/utilitaires/logger.js";
 import AdherentsCourse from "./modeles/AdherentsCourse.js";
-
-dotenv.config({ quiet: true });
 
 // Initialisation de l'ORM
 const sequelize = new Sequelize(process.env.BDD_URL, {
@@ -58,13 +56,11 @@ bdd.AdherentsCourse.belongsTo(bdd.Courses, {
     as: "course",
 });
 
-// Connexion et synchronisation
+// Connexion. Le schéma n'est jamais modifié ici : il est géré par les migrations (migrations/),
+// appliquées par entrypoint.sh avant le démarrage du serveur.
 try {
     await sequelize.authenticate();
     logger.info({ type: "DB_CONNECT" }, "🐘 Connexion à la base de données PostgreSQL réussie");
-
-    await sequelize.sync();
-    logger.info({ type: "DB_SYNC" }, "✅ Modèles synchronisés");
 } catch (err) {
     logger.error({ type: "DB_ERROR", erreur: err.message }, "💥 Erreur de connexion à la base de données");
 }

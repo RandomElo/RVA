@@ -1,0 +1,8 @@
+// Configuration de sequelize-cli (CommonJS : le CLI charge ce fichier avec require).
+// Le backend est en ESM ("type": "module") : config et migrations sont donc en .cjs.
+const path = require("path");
+
+module.exports = {
+    config: path.resolve(__dirname, "config", "sequelize-cli.cjs"),
+    "migrations-path": path.resolve(__dirname, "migrations"),
+};

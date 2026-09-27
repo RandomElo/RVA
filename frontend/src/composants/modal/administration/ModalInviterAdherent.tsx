@@ -22,6 +22,12 @@ type ReponseImportCsv = {
 
 type Mode = "formulaire" | "csv";
 
+// Liste à jour des adhérents, refus des informations, ou compte créé sans que le mail d'activation parte
+type ReponseInvitation =
+    | Adherent[]
+    | { inviter: "erreur"; detail: string }
+    | { inviter: "avertissement"; detail: string; donnees: Adherent[] };
+
 export default function ModalInviterAdherent({ ouvert, onFermer, setter, adherent }: Props) {
     const [mode, setMode] = useState<Mode>("csv");
 
@@ -31,6 +37,7 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
     const [mail, setMail] = useState("");
     const [dateNaissance, setDateNaissance] = useState("");
     const [erreur, setErreur] = useState<string | null>(null);
+    const [avertissement, setAvertissement] = useState<string | null>(null);
     const [envoiEnCours, setEnvoiEnCours] = useState(false);
 
     // --- Mode CSV ---
@@ -66,6 +73,7 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
         setMail("");
         setDateNaissance("");
         setErreur(null);
+        setAvertissement(null);
         setEnvoiEnCours(false);
         setFichierCsv(null);
         setErreurCsv(null);
@@ -79,9 +87,16 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
         onFermer();
     }
 
+    // Toute modification du formulaire efface l'avertissement pour permettre une nouvelle invitation
+    function saisir(maj: (valeur: string) => void, valeur: string) {
+        maj(valeur);
+        setAvertissement(null);
+    }
+
     function changerMode(m: Mode) {
         setMode(m);
         setErreur(null);
+        setAvertissement(null);
         setErreurCsv(null);
         setErreursImport([]);
     }
@@ -98,8 +113,6 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
         }
 
         if (!/^(0[1-9]|[12][0-9]|3[01])\/(0[1-9]|1[0-2])$/.test(dateNaissance.trim())) {
-
-            console.log(dateNaissance)
             setErreur("Cette date n'a pas l'air valide.");
             return;
         }
@@ -108,8 +121,7 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
         setEnvoiEnCours(true);
         try {
             const chemin = adherent ? "modifier" : "inviter";
-            // Liste à jour des adhérents, ou { inviter: "erreur", detail } si les informations sont refusées
-            const reponse = await requete<Adherent[] | { inviter: "erreur"; detail: string }>({
+            const reponse = await requete<ReponseInvitation>({
                 url: "/utilisateurs/" + chemin,
                 methode: "POST",
                 corps: {
@@ -119,9 +131,19 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
                     dateNaissance: dateNaissance.trim()
                 }
             });
-            if (!reponse) throw new Error("Invitation impossible");
+            if (!reponse) {
+                // Erreur déjà affichée par useRequete (notification ou page d'erreur)
+                setEnvoiEnCours(false);
+                return;
+            }
             if (!Array.isArray(reponse)) {
-                setErreur(reponse.detail);
+                if (reponse.inviter === "avertissement") {
+                    // Le compte existe : on affiche la liste à jour et on laisse l'avertissement visible
+                    setter(reponse.donnees);
+                    setAvertissement(reponse.detail);
+                } else {
+                    setErreur(reponse.detail);
+                }
                 setEnvoiEnCours(false);
             } else {
                 setter(reponse);
@@ -205,7 +227,7 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
             value = month ? `${day}/${month}` : `${day}/`;
         }
 
-        setDateNaissance(value);
+        saisir(setDateNaissance, value);
     };
 
     return (
@@ -237,14 +259,14 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
                         <label htmlFor="prenom" className="text-sm font-medium text-club-700">
                             Prénom
                         </label>
-                        <input id="prenom" type="text" value={prenom} autoComplete="off" onChange={(e) => setPrenom(e.target.value)} placeholder="Camille" className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm text-club-900 outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200" />
+                        <input id="prenom" type="text" value={prenom} autoComplete="off" onChange={(e) => saisir(setPrenom, e.target.value)} placeholder="Camille" className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm text-club-900 outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200" />
                     </div>
 
                     <div className="flex flex-col gap-1">
                         <label htmlFor="nom" className="text-sm font-medium text-club-700">
                             Nom
                         </label>
-                        <input id="nom" type="text" value={nom} autoComplete="off" onChange={(e) => setNom(e.target.value)} placeholder="Dupont" className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm text-club-900 outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200" />
+                        <input id="nom" type="text" value={nom} autoComplete="off" onChange={(e) => saisir(setNom, e.target.value)} placeholder="Dupont" className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm text-club-900 outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200" />
                     </div>
 
                     <div className="flex flex-col gap-1">
@@ -268,19 +290,26 @@ export default function ModalInviterAdherent({ ouvert, onFermer, setter, adheren
                         <label htmlFor="mail" className="text-sm font-medium text-club-700">
                             Adresse e-mail
                         </label>
-                        <input id="mail" type="email" value={mail} autoComplete="off" onChange={(e) => setMail(e.target.value)} placeholder="camille.dupont@exemple.com" className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm text-club-900 outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200" />
+                        <input id="mail" type="email" value={mail} autoComplete="off" onChange={(e) => saisir(setMail, e.target.value)} placeholder="camille.dupont@exemple.com" className="w-full rounded-lg border border-club-200 px-3 py-2 text-sm text-club-900 outline-none transition focus:border-club-600 focus:ring-2 focus:ring-club-200" />
                     </div>
 
                     {erreur && <p className="text-sm text-red-600">{erreur}</p>}
 
+                    {avertissement && (
+                        <p role="alert" className="flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-medium text-amber-800">
+                            <AlertTriangle size={16} className="shrink-0" aria-hidden="true" />
+                            {avertissement}
+                        </p>
+                    )}
+
                     <div className="mt-2 flex items-center justify-end gap-2">
                         <button type="button" onClick={fermer} className="rounded-lg px-4 py-2 text-sm font-medium text-club-700 transition hover:bg-club-50">
-                            Annuler
+                            {avertissement ? "Fermer" : "Annuler"}
                         </button>
                         <button
                             type="button"
                             onClick={envoyerInvitation}
-                            disabled={envoiEnCours}
+                            disabled={envoiEnCours || avertissement !== null}
                             className="flex items-center gap-2 rounded-lg bg-accent-500 px-4 py-2 text-sm font-medium text-white transition hover:bg-accent-700 disabled:opacity-50"
                         >
                             {envoiEnCours && <Loader2 size={16} className="animate-spin" />}

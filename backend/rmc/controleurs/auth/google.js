@@ -1,5 +1,6 @@
 import gestionErreur from "../../middlewares/gestionErreur.js";
 import { logger } from "../../../fonctions/utilitaires/logger.js";
+import { ouvrirSession } from "./session.js";
 
 export const connexionGoogle = gestionErreur(async (req, res) => {
     const { token } = req.body;
@@ -150,7 +151,7 @@ export const connexionGoogle = gestionErreur(async (req, res) => {
     }, `🔑 Connexion Google réussie pour ${email}`);
 
     // 4. Génération du jeton d'application
-    return await req.Utilisateurs.generationToken(req, res, utilisateur, {
+    return await ouvrirSession(req, res, utilisateur, {
         etat: true,
         detail: { token: true, detail: "Vous êtes correctement authentifié." },
     });

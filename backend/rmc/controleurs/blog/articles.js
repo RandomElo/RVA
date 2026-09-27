@@ -41,64 +41,62 @@ async function recupererBaseArticle(req, limit = null) {
         raw: true,
     });
 }
-// il suffit de modifier statut pour faire un truc en suggestion
-async function enregistrerArticle(req, res, mode, article, statut, id) {
+// Refus métier : la requête aboutit (200) mais l'article n'est pas enregistré
+const refusArticle = (detail) => ({ ok: false, statut: 200, corps: { etat: true, detail: { article: false, detail } } });
+
+// Validation sans réponse HTTP : { ok: true, donnees } ou { ok: false, statut, corps } à renvoyer tel quel
+// Titre et lien déjà publiés ne sont refusés que pour un nouvel article
+async function validerArticle(req, article, { nouvelArticle }) {
     const { titre, categorie, url, imageUrl, contenuHtml, datePublication, description } = article
     if (!(titre && categorie && url && contenuHtml && datePublication)) {
-        res.json({
-            etat: true,
-            detail: { article: false, detail: "Merci de renseigner tous les champs obligatoires." },
-        });
-        return { ok: false };
+        return refusArticle("Merci de renseigner tous les champs obligatoires.");
     }
 
-    const verificationTitre = await req.Articles.findOne({ where: { titre, type: "publie" }, raw: true })
-    if (mode !== "modification" && verificationTitre) {
-        res.json({
-            etat: true,
-            detail: { article: false, detail: "Un article a déjà ce titre." },
-        });
-        return { ok: false };
+    if (nouvelArticle) {
+        const verificationTitre = await req.Articles.findOne({ where: { titre, type: "publie" }, raw: true })
+        if (verificationTitre) return refusArticle("Un article a déjà ce titre.");
+
+        const verificationLien = await req.Articles.findOne({ where: { url, type: "publie" }, raw: true })
+        if (verificationLien) return refusArticle("Un article a déjà ce lien.");
     }
 
-    const verificationLien = await req.Articles.findOne({ where: { url, type: "publie" }, raw: true })
-    if (mode !== "modification" && verificationLien) {
-        res.json({
-            etat: true,
-            detail: { article: false, detail: "Un article a déjà ce lien." },
-        });
-        return { ok: false };
-    }
+    return { ok: true, donnees: { titre, categorie, url, imageUrl, contenuHtml, datePublication, description } };
+}
 
-    const corps = { type: statut, titre, categorie, url, imageUrl, contenuHtml, datePublication, description }
-    if (mode == "creation") {
-        await req.Articles.create(corps)
-    } else {
-        await req.Articles.update(corps, { where: { id } })
-    }
-
+// Auteur de la requête : { ok: true, donnees: utilisateur } ou refus 403 à renvoyer tel quel
+// Un adhérent ne peut que suggérer
+async function verifierAuteur(req, { adherentAutorise }) {
     const utilisateur = await req.Utilisateurs.findByPk(req.idUtilisateur)
-    if (utilisateur.role !== "adherent") {
-        const donnees = statut == "publie" ? "/article/" + url : await recupererBaseArticlesAdministrateur(req)
-
-        res.json({ etat: true, detail: { article: true, detail: `Article ${mode == "creation" ? "enregistré" : "modifié"} avec succès.`, donnees }, });
-        return { ok: true, donnees };
+    // Compte supprimé depuis la vérification du cookie
+    if (!utilisateur) {
+        return { ok: false, statut: 403, corps: { etat: false, detail: "Vous n'êtes pas connecté" } };
     }
+    if (utilisateur.role === "adherent" && !adherentAutorise) {
+        return { ok: false, statut: 403, corps: { etat: false, detail: "Accès interdit" } };
+    }
+    return { ok: true, donnees: utilisateur };
+}
 
-    return { ok: true };
+// Réponse d'enregistrement côté administration : lien de l'article publié, sinon liste d'administration
+async function repondreEnregistrement(req, res, corps, message) {
+    const donnees = corps.type == "publie" ? "/article/" + corps.url : await recupererBaseArticlesAdministrateur(req)
+    return res.json({ etat: true, detail: { article: true, detail: message, donnees }, });
 }
 
 // Contrôleurs
 export const cree = gestionErreur(async (req, res) => {
     const { article, statut } = req.body
-    if (!article || !statut) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
-    }
 
-    await enregistrerArticle(req, res, "creation", article, statut)
+    const validation = await validerArticle(req, article, { nouvelArticle: true })
+    if (!validation.ok) return res.status(validation.statut).json(validation.corps);
+
+    const auteur = await verifierAuteur(req, { adherentAutorise: false })
+    if (!auteur.ok) return res.status(auteur.statut).json(auteur.corps);
+
+    // `statut` est enregistré comme type de l'article
+    const corps = { type: statut, ...validation.donnees }
+    await req.Articles.create(corps)
+    return repondreEnregistrement(req, res, corps, "Article enregistré avec succès.")
 
 }, "controleurCreeArticle", "Erreur lors de l'enregistrement de l'article")
 
@@ -114,8 +112,8 @@ export const recupererArticle = gestionErreur(async (req, res) => {
 
     const article = await req.Articles.findOne({ where: { url }, raw: true })
 
-    if (article.type == "brouillon" || new Date(article.datePublication) > new Date() || (article.categorie == "actu_interne" && !req.idUtilisateur)) {
-        return res.status(404).json({ etat: false, detail: "404" })
+    if (!article || article.type == "brouillon" || new Date(article.datePublication) > new Date() || (article.categorie == "actu_interne" && !req.idUtilisateur)) {
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" })
     }
 
     const { titre, categorie, imageUrl, datePublication, contenuHtml } = article;
@@ -157,7 +155,7 @@ export const recupererArticleAdmin = gestionErreur(async (req, res) => {
     const article = await req.Articles.findOne({ where: { url }, raw: true })
 
     if (!article) {
-        return res.status(404).json({ etat: false, detail: "404" })
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" })
     }
 
     const { id, type, titre, description, categorie, imageUrl, datePublication, contenuHtml } = article;
@@ -173,24 +171,27 @@ export const modifier = gestionErreur(async (req, res) => {
             detail: "Requête incorrecte",
         });
     }
-    await enregistrerArticle(req, res, "modification", article, statut, id)
+
+    const validation = await validerArticle(req, article, { nouvelArticle: false })
+    if (!validation.ok) return res.status(validation.statut).json(validation.corps);
+
+    const auteur = await verifierAuteur(req, { adherentAutorise: false })
+    if (!auteur.ok) return res.status(auteur.statut).json(auteur.corps);
+
+    const corps = { type: statut, ...validation.donnees }
+    const [nbModifies] = await req.Articles.update(corps, { where: { id } })
+    if (nbModifies === 0) {
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
+    }
+    return repondreEnregistrement(req, res, corps, "Article modifié avec succès.")
 }, "controleurModifierArticle", "Erreur lors de la modification de l'article")
 
 export const supprimer = gestionErreur(async (req, res) => {
     const { nom } = req.body
-    if (!nom) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
-    }
 
     const article = await req.Articles.findOne({ where: { titre: nom }, raw: true })
     if (!article) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
     await req.Articles.destroy({ where: { titre: nom } })
 
@@ -199,18 +200,25 @@ export const supprimer = gestionErreur(async (req, res) => {
 
 export const suggestion = gestionErreur(async (req, res) => {
     const { article } = req.body
-    if (!article) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
+
+    const validation = await validerArticle(req, article, { nouvelArticle: true })
+    if (!validation.ok) return res.status(validation.statut).json(validation.corps);
+
+    const auteur = await verifierAuteur(req, { adherentAutorise: true })
+    if (!auteur.ok) return res.status(auteur.statut).json(auteur.corps);
+
+    const corps = { type: "suggestion", ...validation.donnees }
+    await req.Articles.create(corps)
+
+    // Un administrateur reçoit la réponse d'enregistrement : pas de mail de suggestion
+    if (auteur.donnees.role !== "adherent") {
+        return repondreEnregistrement(req, res, corps, "Article enregistré avec succès.")
     }
 
-    const resultat = await enregistrerArticle(req, res, "creation", article, "suggestion")
-    // Un administrateur a déjà reçu la réponse d'enregistrement : pas de mail de suggestion
-    if (!resultat.ok || res.headersSent) return;
-
     const utilisateur = await req.Utilisateurs.findByPk(req.idUtilisateur, { raw: true })
+    if (!utilisateur) {
+        return res.status(403).json({ etat: false, detail: "Vous n'êtes pas connecté" });
+    }
 
     await envoiMail(process.env.EMAIL_ADMINISTRATEUR, "Proposition d'article – Running Vincennes Association", "suggestionArticle", {
         prenom: utilisateur.prenom,

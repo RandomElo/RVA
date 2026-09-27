@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import bcrypt from "bcrypt";
 
 import { appeler, fauxUtilisateurs, instance, intercepterMails } from "../testsUtilitaires.js";
-import { verificationCode, verifierMotDePasse } from "./connexion.js";
+import { verification, verificationCode, verifierMotDePasse } from "./connexion.js";
 
 const mailsEnvoyes = intercepterMails();
 afterEach(() => {
@@ -128,6 +128,27 @@ test("verificationCode : code valide, token détruit et session créée", async 
     const res = await appeler(verificationCode, { body: { mail: "a@b.fr", code: "c" }, Utilisateurs, Tokens: fauxTokens(token) });
     assert.equal(res.corps.detail.token, true);
     assert.equal(token.detruit, true);
-    assert.equal(utilisateur.mises.length, 1);
+    // derniereConnexion est mise à jour une seule fois, par genererTokenSession
+    assert.equal(utilisateur.mises.length, 0);
     assert.deepEqual(Utilisateurs.tokensGeneres, [1]);
+});
+
+// ---------- verification ----------
+
+test("verification : visiteur non connecté, detail false", async () => {
+    const res = await appeler(verification, {});
+    assert.deepEqual(res.corps, { etat: true, detail: false });
+});
+
+test("verification : rôle de l'utilisateur connecté renvoyé", async () => {
+    const Utilisateurs = { async findByPk() { return { role: "adherent" }; } };
+    const res = await appeler(verification, { idUtilisateur: 2, Utilisateurs });
+    assert.deepEqual(res.corps, { etat: true, detail: "adherent" });
+});
+
+test("verification : compte supprimé avec un cookie encore valide, 403", async () => {
+    const Utilisateurs = { async findByPk() { return null; } };
+    const res = await appeler(verification, { idUtilisateur: 2, Utilisateurs });
+    assert.equal(res.statut, 403);
+    assert.deepEqual(res.corps, { etat: false, detail: "Vous n'êtes pas connecté" });
 });

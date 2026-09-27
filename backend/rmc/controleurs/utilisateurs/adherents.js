@@ -4,16 +4,11 @@ import path from "path";
 import { REGEX_DATE_NAISSANCE, REGEX_NOM } from "../../../fonctions/utilitaires/validation.js";
 import { supprimerFichierSiExiste } from "../../../fonctions/utilitaires/fichiers.js";
 import { cheminDossierAdherents, envoyerMailCreationCompte, fonctionRecupererUtilisateurs } from "./compte.js";
+import { logger } from "../../../fonctions/utilitaires/logger.js";
 
 async function verificationInformationsAdherent(req, res) {
+    // Présence des quatre champs vérifiée par validerCorps dans le routeur
     const { prenom, nom, mail, dateNaissance } = req.body
-
-    if (!prenom || !nom || !mail || !dateNaissance) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
-    }
 
     const regexMail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (!regexMail.test(mail)) {
@@ -52,7 +47,14 @@ export const inviterAdherent = gestionErreur(async (req, res) => {
             role: "adherent"
         })
 
-        await envoyerMailCreationCompte(req, mail, prenom, nouvelUtilisateur.id)
+        try {
+            await envoyerMailCreationCompte(req, mail, prenom, nouvelUtilisateur.id)
+        } catch (erreur) {
+            // Le compte existe déjà : l'admin doit passer par « relancer » plutôt que réinviter
+            logger.error({ type: "INVITATION_ECHEC_MAIL", mail, erreur: erreur?.message }, "Compte créé mais mail d'activation non envoyé");
+            const donnees = await fonctionRecupererUtilisateurs(req)
+            return res.json({ etat: true, detail: { inviter: "avertissement", detail: "Compte créé mais l'envoi du mail a échoué. Utilisez « relancer » pour renvoyer l'invitation.", donnees } });
+        }
         await fonctionRecupererUtilisateurs(req, res)
     }
 
@@ -70,19 +72,10 @@ export const trombinoscope = gestionErreur(async (req, res) => {
 
 export const supprimer = gestionErreur(async (req, res) => {
     const { nom } = req.body
-    if (!nom) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
-    }
 
     const utilisateur = await req.Utilisateurs.findOne({ where: { mail: nom }, raw: true })
     if (!utilisateur) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     if (utilisateur.cheminTrombinoscope) {
@@ -100,7 +93,10 @@ export const supprimer = gestionErreur(async (req, res) => {
 export const modifierInformationsUtilisateur = gestionErreur(async (req, res) => {
     const { prenom, nom, mail, dateNaissance } = await verificationInformationsAdherent(req, res)
     if (prenom) {
-        await req.Utilisateurs.update({ prenom, nom, mail, dateNaissance }, { where: { mail } })
+        const [nbModifies] = await req.Utilisateurs.update({ prenom, nom, mail, dateNaissance }, { where: { mail } })
+        if (nbModifies === 0) {
+            return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
+        }
         await fonctionRecupererUtilisateurs(req, res)
     }
 }, "controleurModifierInfosUtilisateur", "Erreur lors de la modification des données de l'utilisateur")
@@ -114,7 +110,7 @@ export const relancerInitialisationCompte = gestionErreur(async (req, res) => {
 
     const utilisateur = await req.Utilisateurs.findOne({ where: { mail }, raw: true })
     if (!utilisateur) {
-        return res.status(404).json({ etat: false, detail: "Utilisateur inexistant." });
+        return res.status(404).json({ etat: false, detail: "Ressource introuvable" });
     }
 
     const token = await req.Tokens.findOne({ where: { type: "lienConnexion", details: { "idUtilisateur": utilisateur.id } } })

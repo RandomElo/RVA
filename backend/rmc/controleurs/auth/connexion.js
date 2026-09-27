@@ -3,6 +3,7 @@ import envoiMail from "../../../fonctions/mailer/mailer.service.js";
 import { genererChaine } from "../../../fonctions/utilitaires/genererChaine.js";
 import bcrypt from "bcrypt"
 import { logger } from "../../../fonctions/utilitaires/logger.js";
+import { ouvrirSession } from "./session.js";
 
 async function envoiMailConnexion(req, res, utilisateur) {
     const chaine = genererChaine(10)
@@ -162,9 +163,6 @@ export const verificationCode = gestionErreur(async (req, res) => {
     // 7. Destruction du token
     await tokenBdd.destroy();
 
-    // 8. Mise à jour de la dernière connexion
-    await utilisateur.update({ derniereConnexion: new Date() });
-
     logger.info({
         type: "AUTH_CODE_SUCCES",
         mail,
@@ -172,8 +170,8 @@ export const verificationCode = gestionErreur(async (req, res) => {
         ip: req.ip
     }, `🔑 Code validé avec succès pour ${mail}. Connexion établie.`);
 
-    // 9. Génération du token de session et réponse finale
-    return await req.Utilisateurs.generationToken(req, res, utilisateur, {
+    // 8. Génération du token de session (met aussi à jour la dernière connexion) et réponse finale
+    return await ouvrirSession(req, res, utilisateur, {
         etat: true,
         detail: { token: true, detail: "Vous êtes correctement authentifié." }
     });
@@ -182,12 +180,6 @@ export const verificationCode = gestionErreur(async (req, res) => {
 
 export const connexionParMail = gestionErreur(async (req, res) => {
     const { mail } = req.body;
-    if (!mail) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
-    }
 
     const utilisateur = await req.Utilisateurs.findOne({ where: { mail }, raw: true });
     if (!utilisateur) {
@@ -224,8 +216,11 @@ export const connexionParMail = gestionErreur(async (req, res) => {
 export const verification = gestionErreur(
     async (req, res) => {
         if (!!req.idUtilisateur) {
-            const { role } = await req.Utilisateurs.findByPk(req.idUtilisateur);
-            return res.json({ etat: true, detail: role });
+            const utilisateur = await req.Utilisateurs.findByPk(req.idUtilisateur);
+            if (!utilisateur) {
+                return res.status(403).json({ etat: false, detail: "Vous n'êtes pas connecté" });
+            }
+            return res.json({ etat: true, detail: utilisateur.role });
         } else {
             return res.json({ etat: true, detail: false });
         }

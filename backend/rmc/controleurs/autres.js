@@ -7,12 +7,6 @@ import { logger } from "../../fonctions/utilitaires/logger.js";
 
 export const gestionToken = gestionErreur(async (req, res) => {
     const { token } = req.body
-    if (!token) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
-    }
 
     const tokenBdd = await req.Tokens.findOne({ where: { token } })
     if (!tokenBdd) {
@@ -48,18 +42,13 @@ export const gestionToken = gestionErreur(async (req, res) => {
         return res.json({ etat: true, detail: { token: true, detail: "Vous êtes désinscrit de la newsletter." } })
     }
 
+    // Autres types (ex. codeConnexion) : non utilisables comme lien
+    return res.status(400).json({ etat: false, detail: "Type de lien non pris en charge." })
 
 }, "controleurGestionToken", "Erreur lors de la gestion du lien")
 
 export const envoyerMailContact = gestionErreur(async (req, res) => {
     const { nom, mail, message } = req.body
-    if (!nom || !mail || !message) {
-        return res.status(400).json({
-            etat: false,
-            detail: "Requête incorrecte",
-        });
-    }
-
     const regexNom = /^[A-Za-zÀ-ÖØ-öø-ÿ]+(?:[ '-][A-Za-zÀ-ÖØ-öø-ÿ]+)*$/;
     const regexMail = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     if (typeof nom !== "string" || typeof mail !== "string" || typeof message !== "string"

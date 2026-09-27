@@ -17,6 +17,9 @@ export const changementMdp = gestionErreur(async (req, res) => {
     }
 
     const utilisateur = await req.Utilisateurs.findByPk(req.idUtilisateur)
+    if (!utilisateur) {
+        return res.status(403).json({ etat: false, detail: "Vous n'êtes pas connecté" });
+    }
 
     const mdpValide = await bcrypt.compare(ancienMdp, utilisateur.motDePasse);
     if (!mdpValide) {

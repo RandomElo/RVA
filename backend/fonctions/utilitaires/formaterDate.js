@@ -8,3 +8,13 @@ export const formaterDate = (date) =>
         timeZone: "UTC",
     }).format(new Date(date));
 
+// Date du jour "AAAA-MM-JJ" à Paris (l'association y est), indépendante du fuseau du serveur.
+// Comparable directement, en tant que chaîne, à une date "AAAA-MM-JJ" validée.
+export const dateDuJour = () =>
+    new Intl.DateTimeFormat("en-CA", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        timeZone: "Europe/Paris",
+    }).format(new Date());
+

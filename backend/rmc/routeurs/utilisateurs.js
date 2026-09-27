@@ -15,13 +15,16 @@ import { enregistrerPiecesJointesMail, enregistrerTrombinoscope } from "../../fo
 import multer from "multer";
 import { accesUtilisateur } from "../middlewares/accesUtilisateurs.js";
 import { authLimiteur, uploadLimiteur } from "../middlewares/limiteurRequetes.js";
+import { validerCorps } from "../middlewares/validerCorps.js";
 
 const upload = multer({ storage: multer.memoryStorage() });
+
+const champsAdherent = validerCorps(["prenom", "nom", "mail", "dateNaissance"]);
 
 const routeurUtilisateurs = e.Router()
 
 // Connexion
-routeurUtilisateurs.post("/connexion-par-mail", authLimiteur, connexionParMail)
+routeurUtilisateurs.post("/connexion-par-mail", authLimiteur, validerCorps(["mail"]), connexionParMail)
 routeurUtilisateurs.post("/connexion-google", authLimiteur, connexionGoogle)
 routeurUtilisateurs.post("/verification-mdp", authLimiteur, verifierMotDePasse)
 routeurUtilisateurs.post("/verification-code", authLimiteur, verificationCode)
@@ -34,12 +37,12 @@ routeurUtilisateurs.post("/ajouter-photos-zip", uploadLimiteur, accesAdmin, uplo
 routeurUtilisateurs.delete("/supprimer-photo", accesAdmin, supprimerPhoto)
 
 // Invitations
-routeurUtilisateurs.post("/inviter", accesAdmin, inviterAdherent)
+routeurUtilisateurs.post("/inviter", accesAdmin, champsAdherent, inviterAdherent)
 routeurUtilisateurs.post("/inviter-csv", uploadLimiteur, accesAdmin, upload.single("csv"), inviterAdherentCsv)
 
 // Édition
-routeurUtilisateurs.delete("/supprimer", accesAdmin, supprimer)
-routeurUtilisateurs.post("/modifier", accesAdmin, modifierInformationsUtilisateur)
+routeurUtilisateurs.delete("/supprimer", accesAdmin, validerCorps(["nom"]), supprimer)
+routeurUtilisateurs.post("/modifier", accesAdmin, champsAdherent, modifierInformationsUtilisateur)
 
 // Autres
 routeurUtilisateurs.get("/verification", verification);

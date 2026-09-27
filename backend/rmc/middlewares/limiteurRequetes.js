@@ -1,5 +1,6 @@
 import rateLimit from "express-rate-limit";
 import { logger } from "../../fonctions/utilitaires/logger.js";
+import { secretsEgaux } from "../../fonctions/utilitaires/securite.js";
 
 // Fonction helper pour vérifier si l'on est en mode développement
 const estEnDev = process.env.MODE === "dev" || process.env.NODE_ENV === "development";
@@ -13,7 +14,7 @@ const DoitIgnorerLimiter = (req) => {
 
     // 1. Bypass via Header secret (Recommandé pour les builds/SSR)
     const secretHeader = req.headers["x-internal-secret"];
-    if (process.env.INTERNAL_API_SECRET && secretHeader === process.env.INTERNAL_API_SECRET) {
+    if (secretsEgaux(secretHeader, process.env.INTERNAL_SECRET)) {
         return true;
     }
 

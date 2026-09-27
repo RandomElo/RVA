@@ -1,6 +1,5 @@
 import { DataTypes } from "sequelize";
 import jwt from "jsonwebtoken";
-import { logger } from "../../fonctions/utilitaires/logger.js";
 import { REGEX_DATE_NAISSANCE } from "../../fonctions/utilitaires/validation.js";
 
 export default function (bdd) {
@@ -68,32 +67,18 @@ export default function (bdd) {
             updatedAt: false,
         },
     );
-    Utilisateurs.generationToken = async function (req, res, utilisateur, objetRetour) {
-        try {
-            if (!process.env.CHAINE_JWT_COOKIE) {
-                throw new Error("JWT_SECRET non défini");
-            }
-
-            await req.Utilisateurs.update({ derniereConnexion: new Date() }, { where: { id: utilisateur.id } });
-
-            const tokenJWT = jwt.sign({ id: utilisateur.id }, process.env.CHAINE_JWT_COOKIE, {
-                expiresIn: "3d",
-            });
-            return res
-                .cookie("utilisateur", tokenJWT, {
-                    maxAge: 3 * 24 * 60 * 60 * 1000,
-                    httpOnly: true,
-                    sameSite: "Strict",
-                    secure: process.env.MODE == "production",
-                })
-                .json(objetRetour);
-        } catch (erreur) {
-            logger.error({
-                type: "AUTH_GENERATION_TOKEN",
-                erreur: { nom: erreur.name, message: erreur.message, stack: erreur.stack },
-            }, "Erreur lors de la génération du cookie d'authentification");
-            return res.json({ etat: false, detail: "Erreur lors de la génération du cookie d'authentification" });
+    // Met à jour la date de dernière connexion et renvoie le jeton JWT de session.
+    // La pose du cookie et la réponse HTTP restent côté contrôleur (rmc/controleurs/auth/session.js).
+    Utilisateurs.genererTokenSession = async function (utilisateur) {
+        if (!process.env.CHAINE_JWT_COOKIE) {
+            throw new Error("JWT_SECRET non défini");
         }
+
+        await Utilisateurs.update({ derniereConnexion: new Date() }, { where: { id: utilisateur.id } });
+
+        return jwt.sign({ id: utilisateur.id }, process.env.CHAINE_JWT_COOKIE, {
+            expiresIn: "3d",
+        });
     };
     return Utilisateurs;
 }

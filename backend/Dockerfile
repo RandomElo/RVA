@@ -23,4 +23,6 @@ COPY . .
 EXPOSE 8100
 
 USER node
+# Migrations (entrypoint.sh), puis données initiales, puis serveur
+ENTRYPOINT ["sh", "/app/entrypoint.sh"]
 CMD ["sh", "-c", "node bdd/initialisation.js && node serveur.js"]
